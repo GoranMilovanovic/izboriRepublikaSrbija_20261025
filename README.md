@@ -36,7 +36,7 @@ What this does **not** say: *why* the gap exists. See [What the findings do and 
 
 ### What this repository contains
 
-Two reports, both written in R Markdown and knitted to self-contained HTML (open the `.html` files in any browser; no installation needed):
+Three documents, each rendered to a self-contained HTML file (open the `.html` files in any browser; no installation needed):
 
 | File | What it is |
 |---|---|
@@ -44,7 +44,10 @@ Two reports, both written in R Markdown and knitted to self-contained HTML (open
 | [`Ipsos-Izbori-2026-SR.Rmd`](Ipsos-Izbori-2026-SR.Rmd) → [`Ipsos-Izbori-2026-SR.html`](Ipsos-Izbori-2026-SR.html) | **Summary for the public (Serbian).** A compact, non-technical version in the simplest possible language, with all figures and all essential numbers. The Serbian report links to the English technical report for details. |
 | [`Ipsos-Izbori-2026.ipynb`](Ipsos-Izbori-2026.ipynb) → [`Ipsos-Izbori-2026-py.html`](Ipsos-Izbori-2026-py.html) | **Technical report, Python edition.** A 1:1 translation of the R technical report into a Jupyter notebook (numpy/scipy/pandas/plotnine): same chunks, same narrative, same figures and tables. The only differences are in the stochastic simulations, which use a different random-number generator; the exact and asymptotic results agree to the digit. |
 
-All reports compute every number from the same data and code, so they always agree (up to Monte Carlo noise between the R and Python simulations, which is reported in the notebook).
+All three documents compute every number from the same data. Two kinds of numbers appear in them:
+
+- **Exact, deterministic results** — the headline (the exact multinomial test, obtained by enumerating all 1.57 billion possible outcomes of the poll), the binomial tails, the joint tail, the chi-square approximations, the effective sample size and all "what would it take" scenarios. These involve no randomness and are **identical to the last digit** in the R and Python editions, and in the Serbian summary.
+- **Simulation results** — Figure 3 (100,000 random polls), the Monte Carlo floor (2,000,000 random polls) and the importance-sampling estimate. These depend on random numbers, and R and Python use different random-number generators that cannot be seeded to produce the same draws, so these figures **differ slightly between the two technical reports** (for example, the most extreme simulated poll in Figure 3, or 3 × 10<sup>−37</sup> versus 2 × 10<sup>−37</sup> for importance sampling). The differences are of the size Monte Carlo noise produces and never affect a conclusion. The Serbian summary takes its simulation figures from the R edition.
 
 ### The question
 
@@ -149,7 +152,7 @@ Ovako mali brojevi nemaju svakodnevno značenje, pa evo poređenja sa astronomsk
 
 ### Šta se nalazi u ovom repozitorijumu
 
-Dva izveštaja, oba napisana u R Markdownu i pretvorena u samostalne HTML dokumente (otvorite `.html` fajl u bilo kom pregledaču; nije potrebna nikakva instalacija):
+Tri dokumenta, svaki pretvoren u samostalan HTML fajl (otvorite `.html` fajl u bilo kom pregledaču; nije potrebna nikakva instalacija):
 
 | Fajl | Šta je to |
 |---|---|
@@ -157,7 +160,10 @@ Dva izveštaja, oba napisana u R Markdownu i pretvorena u samostalne HTML dokume
 | [`Ipsos-Izbori-2026-SR.Rmd`](Ipsos-Izbori-2026-SR.Rmd) → [`Ipsos-Izbori-2026-SR.html`](Ipsos-Izbori-2026-SR.html) | **Sažetak za javnost (srpski).** Kratka, netehnička verzija na najjednostavnijem mogućem jeziku, sa svim graficima i svim bitnim brojevima. Srpski izveštaj upućuje na engleski tehnički izveštaj za detalje. |
 | [`Ipsos-Izbori-2026.ipynb`](Ipsos-Izbori-2026.ipynb) → [`Ipsos-Izbori-2026-py.html`](Ipsos-Izbori-2026-py.html) | **Tehnički izveštaj, Python verzija.** Prevod tehničkog izveštaja iz R-a u Jupyter beležnicu (numpy/scipy/pandas/plotnine), 1:1: isti koraci, isti tekst, isti grafici i tabele. Razlikuju se jedino stohastičke simulacije, koje koriste drugi generator slučajnih brojeva; tačni i asimptotski rezultati poklapaju se do poslednje cifre. |
 
-Svi izveštaji računaju sve brojeve iz istih podataka i istog koda, pa se uvek slažu (do Monte Karlo šuma između simulacija u R-u i Pythonu, koji je prikazan u beležnici).
+Sva tri dokumenta računaju sve brojeve iz istih podataka. U njima se javljaju dve vrste brojeva:
+
+- **Tačni, deterministički rezultati** — glavni broj (tačan multinomni test, dobijen nabrajanjem svih 1,57 milijardi mogućih ishoda ankete), binomni repovi, zajednički rep, hi-kvadrat aproksimacije, stvarna veličina uzorka i svi scenariji „šta bi bilo potrebno“. U njima nema slučajnosti i **do poslednje cifre su isti** u R i Python verziji, kao i u srpskom sažetku.
+- **Rezultati simulacija** — Slika 3 (100.000 slučajnih anketa), Monte Karlo granica (2.000.000 slučajnih anketa) i procena uzorkovanjem po važnosti. Oni zavise od slučajnih brojeva, a R i Python koriste različite generatore slučajnih brojeva koji se ne mogu podesiti da daju iste izvlačenja, pa se ove brojke **malo razlikuju između dva tehnička izveštaja** (na primer najekstremnija simulirana anketa na Slici 3, ili 3 × 10<sup>−37</sup> naspram 2 × 10<sup>−37</sup> kod uzorkovanja po važnosti). Razlike su veličine Monte Karlo šuma i nikad ne menjaju zaključak. Srpski sažetak preuzima simulacione brojke iz R verzije.
 
 ### Pitanje
 
