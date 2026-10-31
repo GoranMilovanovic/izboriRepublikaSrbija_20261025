@@ -37,7 +37,7 @@ table.table { font-variant-numeric: tabular-nums; }
 
 ```{r helpers}
 col <- c("Studentska lista" = "#2a78d6", "Ujedinjena Srbija" = "#eb6834", "Manjinske liste" = "#1baf7a", "Ostali" = "#898781",
-         "RIK (zvanično)" = "#2a78d6", "Ipsos (anketa)" = "#eb6834", "NSPM (anketa)" = "#1baf7a")
+         "RIK (zvanično)" = "#2a78d6", "Ipsos (anketa)" = "#eb6834")
 theme_report <- function(base_size = 13) {
   theme_minimal(base_size = base_size) +
     theme(plot.background = element_rect(fill = "#fcfcfb", colour = NA), panel.grid.minor = element_blank(),
@@ -171,11 +171,6 @@ voters_05_comb <- t_05c * (p_turnout[1] - p_ips_A[1]) * sum(votes_t)
 # scenario 3: neodlučni
 undec <- map_dfr(c(0.20, 0.25, 0.33, 0.40), function(u) { q <- (p_rik_A - (1 - u) * p_ips_A) / u
   tibble(u = u, sl = 100 * q[1], us = 100 * q[2], other = 100 * (q[3] + q[4])) })
-# NSPM
-p3 <- c(p_rik_A[1], p_rik_A[2], 1 - p_rik_A[1] - p_rik_A[2])
-bench <- tibble(poll = c("Ipsos", "NSPM"), n = c(n_primary, 1050), sl = c(40.0, 44.5), us = c(47.4, 42.7)) |>
-  mutate(k = pmap(list(sl, us, 100 - sl - us, n), ~ pct_to_counts(c(..1, ..2, ..3), ..4, 3)),
-         log10_p = map_dbl(k, ~ g_test(.x, p3)["log10_p_G"]))
 ```
 
 # Ukratko
@@ -188,7 +183,6 @@ bench <- tibble(poll = c("Ipsos", "NSPM"), n = c(n_primary, 1050), sl = c(40.0, 
 - Promašaj od `r fmt_d(gap_sl)` poena za jednu i `r fmt_d(gap_us)` poena za drugu listu je oko **`r sprintf("%.0f", abs(z_A[1]))` odnosno `r sprintf("%.0f", z_A[2])` puta veći** od uobičajene greške ankete te veličine.
 - Od **dva miliona** simuliranih slučajnih anketa iz stvarnog biračkog tela, **nijedna** nije ni blizu Ipsosovog rezultata.
 - Da bi Ipsosov rezultat bio obična „loša sreća“, oko **`r fmt_n(round(voters_05, -3))` birača** moralo bi da pređe na *Studentsku listu* u tri dana između ankete i izbora.
-- Druga objavljena anketa (NSPM) takođe je promašila u istom smeru, ali je Ipsosov rezultat oko `r fmt_pow(bench$log10_p[2] - bench$log10_p[1])` puta manje verovatan od njenog.
 
 **Šta ovo znači:** slučajna greška uzorka *ne može* objasniti razliku. **Šta ovo ne znači:** ovaj dokument ne utvrđuje *zašto* je razlika nastala. Mogući razlozi su kasni preokret raspoloženja, drugačija izlaznost, ponašanje neodlučnih, metodološka pristrasnost ankete, ili to da objavljene brojke ne odražavaju ono što je anketa izmerila. Brojevi sami ne mogu da izaberu između tih objašnjenja, i ovaj dokument ne iznosi nikakvu tvrdnju o namerama.
 </div>
@@ -309,11 +303,11 @@ tibble(l10 = log10_sim) |> ggplot(aes(x = l10)) +
 Do istog zaključka vodi i sama Ipsosova objavljena preciznost: Ipsos je za *Studentsku listu* naveo raspon 37,9–42,1%. Stvarni rezultat, `r fmt_pct(scheme_a$rik_pct[1])`, bio je **`r fmt_d(own_out)` poena iznad gornje granice** tog raspona, `r sprintf("%.0f", (scheme_a$rik_pct[1] - 40) / own_se)` puta dalje od procene nego što Ipsosova sopstvena mera greške dopušta. Raspon od 95% sme da promaši jednom u dvadeset puta, i to obično za deo poena, ne za jedanaest.
 </div>
 
-```{r fig6, fig.height=6.5, fig.cap="Slika 6. Gde slučajne ankete padaju (sivi oblak: 20.000 simulacija iz stvarnog biračkog tela), Ipsosov rezultat (narandžasto) sa Ipsosovim sopstvenim rasponom greške (isprekidani okvir), anketa NSPM (zeleno) i zvanični rezultat (plavi krstić)."}
+```{r fig6, fig.height=6.5, fig.cap="Slika 6. Gde slučajne ankete padaju (sivi oblak: 20.000 simulacija iz stvarnog biračkog tela), Ipsosov rezultat (narandžasto) sa Ipsosovim sopstvenim rasponom greške (isprekidani okvir) i zvanični rezultat (plavi krstić)."}
 cloud <- tibble(sl = 100 * sim_A[1, 1:20000] / n_primary, us = 100 * sim_A[2, 1:20000] / n_primary)
-pts <- tibble(who = c("RIK (zvanično)", "Ipsos (anketa)", "NSPM (anketa)"), sl = c(100 * p_rik_A[1], 40.0, 44.5), us = c(100 * p_rik_A[2], 47.4, 42.7),
-              note = c("Zvanični rezultat\n(RIK, preliminarno)", sprintf("Ipsos, 20–22. okt.\n%s razgovora, stvarni uzorak ≈ %s", fmt_n(ipsos_n), fmt_n(n_primary)), "NSPM, 25. sep. – 5. okt.\nn = 1.050"),
-              hjust = c(1, 0, 1), lx = c(52.3, 42.6, 44.0), ly = c(36.2, 47.4, 43.6)) |>
+pts <- tibble(who = c("RIK (zvanično)", "Ipsos (anketa)"), sl = c(100 * p_rik_A[1], 40.0), us = c(100 * p_rik_A[2], 47.4),
+              note = c("Zvanični rezultat\n(RIK, preliminarno)", sprintf("Ipsos, 20–22. okt.\n%s razgovora, stvarni uzorak ≈ %s", fmt_n(ipsos_n), fmt_n(n_primary))),
+              hjust = c(1, 0), lx = c(52.3, 42.6), ly = c(36.2, 47.4)) |>
   mutate(lbl = sprintf("%s\n(%s, %s)", note, fmt_pct(sl), fmt_pct(us)))
 ggplot() +
   geom_point(data = cloud, aes(x = sl, y = us), colour = "#898781", alpha = 0.15, size = 0.9) +
@@ -321,7 +315,7 @@ ggplot() +
   annotate("text", x = 42.1, y = 49.5, label = "Ipsosov sopstveni raspon greške", hjust = 1, vjust = -0.5, size = 3.4, colour = "#eb6834") +
   geom_point(data = pts, aes(x = sl, y = us, colour = who, shape = who), size = 4, stroke = 1.6) +
   geom_text(data = pts, aes(x = lx, y = ly, label = lbl, hjust = hjust), size = 3.4, colour = "#52514e", lineheight = 0.95) +
-  scale_colour_manual(values = col) + scale_shape_manual(values = c("RIK (zvanično)" = 4, "Ipsos (anketa)" = 16, "NSPM (anketa)" = 16)) +
+  scale_colour_manual(values = col) + scale_shape_manual(values = c("RIK (zvanično)" = 4, "Ipsos (anketa)" = 16)) +
   scale_x_continuous(labels = pct_lab) + scale_y_continuous(labels = pct_lab) +
   labs(x = "Udeo Studentske liste", y = "Udeo Ujedinjene Srbije", title = "Sve što slučaj može da proizvede, i gde je Ipsos završio",
        subtitle = sprintf("Sivo: 20.000 slučajnih anketa od po %s ispitanika iz stvarnog biračkog tela. Uz tačke: (Studentska, Ujedinjena).", fmt_n(n_primary))) + theme_report()
@@ -372,18 +366,16 @@ ggplot(swing_df, aes(x = voters, y = log10_p)) +
 
 **3. Neodlučni.** Ipsosovi procenti opisuju samo ispitanike koji su imenovali listu. Ako je četvrtina birača bila neodlučna, oni bi morali da glasaju **`r sprintf("%.0f%%", undec$sl[2])` za *Studentsku listu*** da bi se brojke poklopile; ako je bila petina, ne postoji nikakva podela koja to postiže. I u svakom slučaju male liste ispadnu *negativne*: pošto je Ipsos i njih precenio, nikakvo ponašanje neodlučnih ne može da pomiri celu sliku.
 
-**4. Poređenje sa drugom anketom.** Jedina druga objavljena anketa, NSPM (terenski rad 25. septembar – 5. oktobar, 1.050 ispitanika), imala je *Studentsku listu* 44,5% i *Ujedinjenu Srbiju* 42,7%. I ona je promašila u istom smeru, ali za `r fmt_d(abs(bench$sl[2] - 100 * p3[1]))` poena na *Studentskoj listi*, naspram Ipsosovih `r fmt_d(abs(bench$sl[1] - 100 * p3[1]))`, i to sa anketom završenom tri nedelje, a ne tri dana pred izbore. Ipsosov rezultat je oko **`r fmt_pow(bench$log10_p[2] - bench$log10_p[1])` puta manje verovatan** od NSPM-ovog. Obična loša anketa i Ipsosova anketa nisu u istoj kategoriji.
-
 # Zaključak
 
 <div class="callout callout-warn">
 **Šta brojevi pokazuju.** Pretpostavka da su Ipsosove objavljene brojke ono što bi dao slučajan uzorak stvarnih glasača, uz slučaj kao jedini izvor greške, odbačena je svakim načinom računanja: verovatnoća je reda **`r sub(" \\(.*$", "", fmt_p(log10_p_exact))`**, odnosno između `r fmt_pow(range_all[2])` i `r fmt_pow(range_all[1])` u zavisnosti od pristupa. Nikakav razuman izbor veličine uzorka, definicije biračkog tela ili načina računanja to ne menja. Ipsosova sopstvena objavljena preciznost vodi istom zaključku.
 
-**Šta brojevi ne pokazuju: uzrok.** Preostala objašnjenja su: kasni preokret daleko veći od svega za šta postoje nezavisni dokazi; pomak u izlaznosti ili među neodlučnima kakav literatura ne opisuje; metodološka pristrasnost ankete (koga telefon dosegne, ko odbija ili krije nameru, način ponderisanja) znatno veća od one koju je pokazala druga anketa istih izbora; ili to da objavljene brojke ne odražavaju ono što je anketa izmerila. Moguća je i kombinacija. **Statistika sama ne može da izabere između njih**, niti između bilo kog od njih i pogrešnog izveštavanja. To što je anketu naručio jedan od učesnika izbora razlog je da se traži transparentnost, a ne dokaz namere; ovaj dokument ne iznosi nikakvu tvrdnju o namerama. Razrešenje zahteva ono što proračun ne može da pruži: Ipsosove sirove podatke, shemu ponderisanja i postupanje sa neodlučnima.
+**Šta brojevi ne pokazuju: uzrok.** Preostala objašnjenja su: kasni preokret daleko veći od svega za šta postoje nezavisni dokazi; pomak u izlaznosti ili među neodlučnima kakav literatura ne opisuje; metodološka pristrasnost ankete (koga telefon dosegne, ko odbija ili krije nameru, način ponderisanja) daleko veća od one koju završne predizborne ankete obično nose; ili to da objavljene brojke ne odražavaju ono što je anketa izmerila. Moguća je i kombinacija. **Statistika sama ne može da izabere između njih**, niti između bilo kog od njih i pogrešnog izveštavanja. To što je anketu naručio jedan od učesnika izbora razlog je da se traži transparentnost, a ne dokaz namere; ovaj dokument ne iznosi nikakvu tvrdnju o namerama. Razrešenje zahteva ono što proračun ne može da pruži: Ipsosove sirove podatke, shemu ponderisanja i postupanje sa neodlučnima.
 </div>
 
 <div class="callout">
 **Napomene.** Rezultati RIK-a su preliminarni (`r fmt_n(rik_meta$stations_done)` od `r fmt_n(rik_meta$stations_total)` biračkih mesta) i ovde se uzimaju kao istina; preostalih `r fmt_pct(100 * (1 - rik_meta$stations_done / rik_meta$stations_total))` biračkih mesta ne može pomeriti udele za više od nekoliko desetih delova poena. Veličina uzorka od `r fmt_n(n_primary)` izvedena je iz Ipsosovih objavljenih raspona greške, a ne iz Ipsosove izjave. Ovo je sažetak. Potpuna analiza, sa svim formulama, kodom, proverama i izvorima, nalazi se u tehničkom izveštaju na engleskom jeziku: [*Could Ipsos Have Obtained Its Numbers by Chance?*](Ipsos-Izbori-2026.html). Tehnički izveštaj postoji u dve verzije, u programskim jezicima R i Python ([Ipsos-Izbori-2026-py.html](Ipsos-Izbori-2026-py.html)), sa istim tekstom i istim koracima. Glavni broj, `r sub(" \\(.*$", "", fmt_p(log10_p_exact))`, i svi ostali tačni rezultati dobijeni su bez ikakve slučajnosti i do poslednje cifre su isti u obe verzije. Brojke koje potiču iz simulacija (recimo najekstremnija od 100.000 simuliranih anketa na Slici 3) malo se razlikuju između dve verzije, jer R i Python koriste različite generatore slučajnih brojeva; te razlike su veličine „šuma“ simulacije i ne utiču ni na jedan zaključak. Ovaj sažetak preuzima simulacione brojke iz R verzije. Sva tri dokumenta, sa izvornim kodom, dostupna su na [GitHubu](https://github.com/GoranMilovanovic/izboriRepublikaSrbija_20261025).
 
-*Izvori:* Ipsos Strategic Marketing, [saopštenje od 22. oktobra 2026](https://www.ipsos.com/sr-rs/rezultati-istrazivanja-pred-parlamentarne-izbore-oktobar-2026) · Republička izborna komisija, [portal rezultata](https://www.rik.parlament.gov.rs/542645/rezultati/), očitano `r rik_meta$snapshot` · NSPM, [Srbija, jesen 2026 (I)](https://www.nspm.rs/istrazivanja-javnog-mnjenja/srbija-jesen-2026.-i.html).
+*Izvori:* Ipsos Strategic Marketing, [saopštenje od 22. oktobra 2026](https://www.ipsos.com/sr-rs/rezultati-istrazivanja-pred-parlamentarne-izbore-oktobar-2026) · Republička izborna komisija, [portal rezultata](https://www.rik.parlament.gov.rs/542645/rezultati/), očitano `r rik_meta$snapshot`.
 </div>

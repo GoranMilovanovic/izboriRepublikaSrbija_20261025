@@ -62,7 +62,6 @@ The analysis treats the official result as the true composition of the electorat
 - By Ipsos's **own** published margin of error, the true *Studentska lista* share lay 10.9 points outside the top of its 95% interval.
 - The conclusion does not depend on the assumed sample size (1,500 to 3,624), on whether Kosovo i Metohija and the diaspora are excluded, or on whether invalid ballots are included in the base.
 - **What would it take to rescue the poll:** a late swing of about **450,000 voters** to *Studentska lista* within three days; or, if every one of the ~275,000 unexpected extra voters had voted *Studentska*, a further ~300,000 still switching; or a quarter of voters undecided and then voting 92% for one list — and even then the small-list excess remains unexplained.
-- The only other published poll (NSPM, fieldwork 25 September – 5 October) also missed in the same direction, but Ipsos's result is about 10<sup>24</sup> times less probable than NSPM's.
 
 ### The findings in four pictures
 
@@ -86,13 +85,12 @@ All figures, including the effective-sample-size derivation, the sensitivity ana
 
 ### What the findings do and do not mean
 
-Sampling error alone **cannot** account for the gap. The analysis does **not** establish *why* the gap exists. The remaining explanations — a very large late swing, a turnout or undecided-voter shift of unusual size, a methodological bias well beyond the other poll's, or the published numbers not reflecting what the survey measured — cannot be separated by statistics, nor can any of them be separated from misreporting. The reports make no claim about intent. Resolving the question requires Ipsos's raw data, weighting scheme, likely-voter model and treatment of undecided respondents.
+Sampling error alone **cannot** account for the gap. The analysis does **not** establish *why* the gap exists. The remaining explanations — a very large late swing, a turnout or undecided-voter shift of unusual size, a methodological bias far larger than final pre-election polls ordinarily carry, or the published numbers not reflecting what the survey measured — cannot be separated by statistics, nor can any of them be separated from misreporting. The reports make no claim about intent. Resolving the question requires Ipsos's raw data, weighting scheme, likely-voter model and treatment of undecided respondents.
 
 ### Data
 
 - Ipsos Strategic Marketing, press release of 22 October 2026 ([web](https://www.ipsos.com/sr-rs/rezultati-istrazivanja-pred-parlamentarne-izbore-oktobar-2026)).
 - Republička izborna komisija, [results portal](https://www.rik.parlament.gov.rs/542645/rezultati/), snapshot of 31 October 2026, 11:00 CET (8,339 of 8,392 polling stations; **preliminary**). Regional sub-totals for Kosovo i Metohija and abroad from the same portal.
-- NSPM, *Srbija, jesen 2026 (I)*, fieldwork 25 September – 5 October 2026.
 
 All inputs are hard-coded in Section 3 of the technical report, with provenance. When RIK publishes the final results, re-enter them there and re-knit; every number in both reports updates automatically.
 
@@ -178,7 +176,6 @@ Analiza uzima zvanični rezultat kao stvarni sastav biračkog tela i pita: **kol
 - Po Ipsosovom **sopstvenom** objavljenom rasponu greške, stvarni udeo *Studentske liste* bio je 10,9 poena iznad gornje granice njegovog intervala od 95%.
 - Zaključak ne zavisi od pretpostavljene veličine uzorka (od 1.500 do 3.624), od toga da li se isključe Kosovo i Metohija i dijaspora, niti od toga da li se nevažeći listići računaju u osnovu.
 - **Šta bi „spaslo“ anketu:** kasni preokret od oko **450.000 birača** ka *Studentskoj listi* u tri dana; ili, čak i da je svaki od ~275.000 neočekivanih dodatnih glasača glasao za *Studentsku listu*, još ~300.000 koji menjaju mišljenje; ili četvrtina neodlučnih birača koja potom glasa 92% za jednu listu — a ni tada višak kod malih lista ne može da se objasni.
-- Jedina druga objavljena anketa (NSPM, terenski rad 25. septembar – 5. oktobar) takođe je promašila u istom smeru, ali je Ipsosov rezultat oko 10<sup>24</sup> puta manje verovatan od NSPM-ovog.
 
 ### Nalazi u četiri slike
 
@@ -202,13 +199,12 @@ Svi grafici, uključujući izvođenje stvarne veličine uzorka, proveru osetljiv
 
 ### Šta nalazi znače, a šta ne
 
-Slučajna greška uzorka **ne može** objasniti razliku. Analiza **ne utvrđuje** *zašto* je razlika nastala. Preostala objašnjenja — veoma veliki kasni preokret, neuobičajeno veliki pomak u izlaznosti ili među neodlučnima, metodološka pristrasnost znatno veća od one u drugoj anketi, ili to da objavljene brojke ne odražavaju ono što je anketa izmerila — statistika ne može da razdvoji, niti bilo koje od njih od pogrešnog izveštavanja. Izveštaji ne iznose nikakvu tvrdnju o namerama. Razrešenje zahteva Ipsosove sirove podatke, shemu ponderisanja, model verovatnih glasača i postupanje sa neodlučnima.
+Slučajna greška uzorka **ne može** objasniti razliku. Analiza **ne utvrđuje** *zašto* je razlika nastala. Preostala objašnjenja — veoma veliki kasni preokret, neuobičajeno veliki pomak u izlaznosti ili među neodlučnima, metodološka pristrasnost daleko veća od one koju završne predizborne ankete obično nose, ili to da objavljene brojke ne odražavaju ono što je anketa izmerila — statistika ne može da razdvoji, niti bilo koje od njih od pogrešnog izveštavanja. Izveštaji ne iznose nikakvu tvrdnju o namerama. Razrešenje zahteva Ipsosove sirove podatke, shemu ponderisanja, model verovatnih glasača i postupanje sa neodlučnima.
 
 ### Podaci
 
 - Ipsos Strategic Marketing, saopštenje od 22. oktobra 2026 ([veb](https://www.ipsos.com/sr-rs/rezultati-istrazivanja-pred-parlamentarne-izbore-oktobar-2026)).
 - Republička izborna komisija, [portal rezultata](https://www.rik.parlament.gov.rs/542645/rezultati/), stanje 31. oktobar 2026, 11:00 (8.339 od 8.392 biračkih mesta; **preliminarno**). Regionalni zbirovi za Kosovo i Metohiju i inostranstvo sa istog portala.
-- NSPM, *Srbija, jesen 2026 (I)*, terenski rad 25. septembar – 5. oktobar 2026.
 
 Svi ulazni podaci uneti su u Odeljku 3 tehničkog izveštaja, sa izvorima. Kad RIK objavi konačne rezultate, dovoljno ih je tamo uneti i ponovo pokrenuti; svi brojevi u oba izveštaja ažuriraju se automatski.
 

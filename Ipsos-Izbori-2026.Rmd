@@ -97,8 +97,7 @@ col <- c(
   "Manjinske liste"   = "#1baf7a",   # aqua
   "Other"             = "#898781",   # muted
   "RIK (official)"    = "#2a78d6",
-  "Ipsos (poll)"      = "#eb6834",
-  "NSPM (poll)"       = "#1baf7a"
+  "Ipsos (poll)"      = "#eb6834"
 )
 
 # ---- a quiet ggplot theme ----------------------------------------------------
@@ -857,22 +856,21 @@ own |>
 
 ## The sampling cloud
 
-One picture summarises the whole section (Figure 6). Each grey dot is a random poll of `r fmt_n(n_primary)` decided voters from the real electorate; together they show everything that chance can produce. Ipsos's result is marked, and for comparison the only other published poll of this election, by NSPM (fieldwork 25 September – 5 October, published 20 October).
+One picture summarises the whole section (Figure 6). Each grey dot is a random poll of `r fmt_n(n_primary)` decided voters from the real electorate; together they show everything that chance can produce. Ipsos's result is marked, together with the box of its own published 95% intervals.
 
-```{r fig-cloud, fig.height=6.5, fig.cap="Figure 6. Where ideal random polls land (grey cloud, 20,000 simulations from the RIK electorate), Ipsos's published result (orange), Ipsos's own 95% box (orange dashed rectangle), the NSPM poll (aqua; fieldwork ended 5 October), and the official result (blue cross)."}
+```{r fig-cloud, fig.height=6.5, fig.cap="Figure 6. Where ideal random polls land (grey cloud, 20,000 simulations from the RIK electorate), Ipsos's published result (orange), Ipsos's own 95% box (orange dashed rectangle), and the official result (blue cross)."}
 cloud <- tibble::tibble(
   sl = 100 * sim_A[1, 1:20000] / n_primary,
   us = 100 * sim_A[2, 1:20000] / n_primary
 )
 points <- tibble::tibble(
-  who = c("RIK (official)", "Ipsos (poll)", "NSPM (poll)"),
-  sl  = c(100 * p_rik_A[1], 40.0, 44.5),
-  us  = c(100 * p_rik_A[2], 47.4, 42.7),
+  who = c("RIK (official)", "Ipsos (poll)"),
+  sl  = c(100 * p_rik_A[1], 40.0),
+  us  = c(100 * p_rik_A[2], 47.4),
   note = c("Official result\n(RIK, preliminary)",
-           sprintf("Ipsos, fieldwork 20–22 Oct\n%s interviews, effective n ≈ %s", fmt_n(ipsos_n), fmt_n(n_primary)),
-           "NSPM, fieldwork 25 Sep – 5 Oct\nn = 1,050"),
-  # label positions: RIK below-left of the cloud, Ipsos to the right of its box, NSPM above-left
-  hjust = c(1, 0, 1), lx = c(52.3, 42.6, 44.0), ly = c(36.2, 47.4, 43.6)
+           sprintf("Ipsos, fieldwork 20–22 Oct\n%s interviews, effective n ≈ %s", fmt_n(ipsos_n), fmt_n(n_primary))),
+  # label positions: RIK below-left of the cloud, Ipsos to the right of its box
+  hjust = c(1, 0), lx = c(52.3, 42.6), ly = c(36.2, 47.4)
 ) |>
   dplyr::mutate(lbl = sprintf("%s\n(%.1f%%, %.1f%%)", note, sl, us))
 
@@ -886,7 +884,7 @@ ggplot() +
   geom_text(data = points, aes(x = lx, y = ly, label = lbl, hjust = hjust),
             size = 3.4, colour = "#52514e", lineheight = 0.95) +
   scale_colour_manual(values = col) +
-  scale_shape_manual(values = c("RIK (official)" = 4, "Ipsos (poll)" = 16, "NSPM (poll)" = 16)) +
+  scale_shape_manual(values = c("RIK (official)" = 4, "Ipsos (poll)" = 16)) +
   scale_x_continuous(labels = function(x) paste0(x, "%")) +
   scale_y_continuous(labels = function(x) paste0(x, "%")) +
   labs(x = "Studentska lista share", y = "Ujedinjena Srbija share",
@@ -896,7 +894,7 @@ ggplot() +
 ```
 
 <div class="callout callout-result">
-**What the cloud shows.** The grey cloud, every result chance can plausibly produce, is a compact blob around the official result, about two points across. Ipsos's point is in a different part of the plane altogether, and its own 95% box does not come close to touching the cloud. The NSPM poll, with roughly half the effective sample and fieldwork that ended almost three weeks before the vote, also missed (it had the race nearly tied) but by a fraction of Ipsos's distance; we return to it as a benchmark in Section 9.
+**What the cloud shows.** The grey cloud, every result chance can plausibly produce, is a compact blob around the official result, about two points across. Ipsos's point is in a different part of the plane altogether, and its own 95% box does not come close to touching the cloud.
 </div>
 
 # Sensitivity: does the conclusion depend on our choices?
@@ -1017,7 +1015,7 @@ Across every combination of sample size, population definition and base, the pro
 
 ## Why ask
 
-A probability of `r fmt_pow(log10_p_exact)` is not a number anyone can feel. A more useful way to express the same finding is to ask: **how large would each innocent explanation have to be to make Ipsos's result ordinary?** This section quantifies the three explanations that concern the electorate rather than the pollster's instrument: a genuine late swing of opinion, differential turnout, and the behaviour of undecided voters. It then uses the only other published poll of this election as a benchmark for what an ordinary polling miss looks like.
+A probability of `r fmt_pow(log10_p_exact)` is not a number anyone can feel. A more useful way to express the same finding is to ask: **how large would each innocent explanation have to be to make Ipsos's result ordinary?** This section quantifies the three explanations that concern the electorate rather than the pollster's instrument: a genuine late swing of opinion, differential turnout, and the behaviour of undecided voters.
 
 ## Scenario 1: a late swing between 22 and 25 October
 
@@ -1129,33 +1127,6 @@ undec |>
 **Result.** If a fifth of the eventual voters were undecided when Ipsos polled, no split works at all: they would have had to vote *more than 100%* for *Studentska lista*. With a quarter undecided they would have had to vote **`r sprintf("%.0f%%", undec[["Studentska lista"]][2])` for *Studentska lista*** and `r sprintf("%.0f%%", undec[["Ujedinjena Srbija"]][2])` for *Ujedinjena Srbija*; with a third undecided, `r sprintf("%.0f%%", undec[["Studentska lista"]][3])` and `r sprintf("%.0f%%", undec[["Ujedinjena Srbija"]][3])`. And in every row up to about 40% undecided the small lists come out *negative*: because Ipsos put the small lists and invalid ballots too high as well, no split of the undecided voters can reconcile the whole vector; they would have had to take votes *away* from the small lists, which is impossible. Undecided voters do break unevenly in real elections, and a late-deciding bloc favouring a protest movement is entirely plausible; a bloc of this size voting almost unanimously is not what the literature describes. This scenario is also, like the previous two, the most generous reading possible: it assumes Ipsos's decided respondents were a perfect sample, with zero sampling error of their own.
 </div>
 
-## Benchmark: what an ordinary polling miss looks like
-
-The only other published poll of this election is by NSPM: fieldwork **25 September – 5 October 2026**, n = 1,050, published 20 October, with *Ujedinjena Srbija* at 42.7% and *Studentska lista* at 44.5% among respondents who named a list, i.e. an almost tied race. It also missed, in the same direction, and it is useful to see by how much, with two caveats that make the comparison coarse. NSPM's fieldwork ended twenty days before the vote and two and a half weeks before Ipsos's, so a genuine shift of opinion in October could legitimately account for part of its miss in a way it cannot for Ipsos's. And NSPM's percentages exclude undecided respondents without any assumption about invalid ballots, so its "everything else" is not quite on the same base as RIK's (this, if anything, penalises NSPM in the comparison). For a like-for-like test we use three categories (the two large lists and everything else) for both polls, since NSPM did not publish a minority-list breakdown; Ipsos enters with the effective sample size derived in Section 6 and NSPM with its reported 1,050 interviews, because NSPM published no intervals from which to derive an effective size. Using the raw 1,050 treats NSPM as *more* precise than it probably was, which again works against NSPM, not for it.
-
-```{r nspm}
-p3 <- c(p_rik_A[1], p_rik_A[2], 1 - p_rik_A[1] - p_rik_A[2]); names(p3)[3] <- "Other"
-bench <- tibble::tibble(
-  Poll = c("Ipsos, fieldwork 20–22 Oct", "NSPM, fieldwork 25 Sep – 5 Oct"),
-  n = c(n_primary, 1050),
-  sl = c(40.0, 44.5), us = c(47.4, 42.7)
-) |>
-  dplyr::mutate(other = 100 - sl - us,
-                k = purrr::pmap(list(sl, us, other, n), ~ pct_to_counts(c(..1, ..2, ..3), ..4, 3)),
-                log10_p = purrr::map_dbl(k, ~ g_test(.x, p3)["log10_p_G"]),
-                z_sl = (sl - 100 * p3[1]) / (100 * sqrt(p3[1] * (1 - p3[1]) / n)))
-bench |>
-  dplyr::transmute(Poll, `n used` = fmt_n(n), `Studentska %` = fmt_pct(sl, 1), `Ujedinjena %` = fmt_pct(us, 1),
-                   `Studentska miss (pts)` = gsub("-", "−", sprintf("%+.1f", sl - 100 * p3[1])),
-                   `Studentska miss in standard errors` = sprintf("%.1f", abs(z_sl)),
-                   `Probability under random sampling (G test)` = purrr::map_chr(log10_p, fmt_log10p)) |>
-  kable_report(caption = "Table 17. Ipsos's final poll against NSPM's, measured the same way (three categories).")
-```
-
-<div class="callout callout-result">
-**Result.** NSPM's miss was also far outside sampling error (probability `r fmt_log10p(bench$log10_p[2])`), which is a reminder that *all* polls carry non-sampling error, from who answers the phone to how undecided voters are handled, and that both published polls of this race were too favourable to *Ujedinjena Srbija*. But the scale is different: NSPM was off by `r sprintf("%.1f", abs(bench$sl[2] - 100*p3[1]))` points on *Studentska lista*, Ipsos by `r sprintf("%.1f", abs(bench$sl[1] - 100*p3[1]))`, about `r sprintf("%.1f", abs(bench$sl[1] - 100*p3[1]) / abs(bench$sl[2] - 100*p3[1]))` times as much, with an effective sample about twice as large and fieldwork that ended three days, not three weeks, before the vote. On the logarithmic scale of probability Ipsos's result is about `r fmt_pow(bench$log10_p[2] - bench$log10_p[1])` times less likely than NSPM's. A benchmark of one poll is a thin benchmark, but on this evidence an ordinary bad poll and Ipsos's poll are not in the same category.
-</div>
-
 # Summary and conclusions
 
 ## What we did
@@ -1165,7 +1136,7 @@ bench |>
 3. **Established the effective sample size** from Ipsos's own confidence intervals: about `r fmt_n(n_primary)` decided respondents, the most generous figure the published precision supports.
 4. **Computed the probability** of Ipsos's result under the hypothesis that it was a random sample of the actual electorate, in five different ways, including an exact computation that enumerates every possible outcome of the poll, two simulation estimates, and the textbook chi-square approximation.
 5. **Stress-tested** the result against every alternative sample size, population definition and base (all ballots versus valid votes).
-6. **Quantified** what a late swing, a turnout surprise or a lopsided break of undecided voters would have had to look like to explain the gap, and benchmarked against the only other published poll of this election.
+6. **Quantified** what a late swing, a turnout surprise or a lopsided break of undecided voters would have had to look like to explain the gap.
 
 ## What we found
 
@@ -1179,7 +1150,6 @@ bench |>
 - The conclusion is unchanged for any sample size from 1,500 to 3,624, whether or not Kosovo i Metohija and the diaspora are removed from the population to match Ipsos's sampling frame, and whether the comparison is made on all ballots or on valid votes only: the probability never rises above about `r fmt_pow(max(c(sens_n[["G test (Scheme A)"]], g_valid["log10_p_G"], gB_valid["log10_p_G"])))`.
 - By Ipsos's **own** published margins of error, the true *Studentska lista* share lay `r sprintf("%.1f", own$outside_by[1])` points outside the top of its 95% interval, `r sprintf("%.0f", abs(own$z_own[1]))` of its own standard errors from its estimate.
 - To make Ipsos's result an ordinary 1-in-20 unlucky draw, about **`r fmt_n(round(voters_05, -3))` voters** would have had to move to *Studentska lista* in the three days between fieldwork and election day; even if every one of the `r fmt_n(round(extra_voters, -3))` unexpected extra voters had voted *Studentska*, a further `r fmt_n(round(voters_05_comb, -3))` would still have had to move. If a quarter of voters were undecided at the time of the poll, they would have had to vote `r sprintf("%.0f%%", undec[["Studentska lista"]][2])` for *Studentska lista*, and even then the small-list excess remains unexplained.
-- The only other published poll (NSPM, fieldwork ending 5 October) also missed, in the same direction, but Ipsos's result is about `r fmt_pow(bench$log10_p[2] - bench$log10_p[1])` times less probable than NSPM's.
 </div>
 
 ```{r words}
@@ -1216,10 +1186,10 @@ pow_words <- function(l10) {
 - *A genuine late swing.* Possible in principle, and flagged by Ipsos itself as a caveat; but it would have had to involve some `r fmt_n(round(voters_05, -3))` voters moving to the student list within 72 hours, among them roughly one in `r sprintf("%.0f", 1 / (from_us(t_05) / (p_rik_A[2] * rik_meta$ballots + from_us(t_05))))` of all *Ujedinjena Srbija* supporters, a movement several times larger than the late swings documented in comparable elections, and one that no other evidence from those three days suggests.
 - *Differential turnout.* Ruled out as a sufficient explanation *in its net form*: even the most extreme assumption about the unexpected extra voters leaves the gap essentially intact. Gross flows (intending voters staying home while others turned out) cannot be assessed from outside; they belong under non-sampling error below.
 - *Undecided voters.* A quarter of the electorate undecided and then voting `r sprintf("%.0f%%", undec[["Studentska lista"]][2])` for one list would reconcile the two big numbers; nothing reconciles the small-list excess. A real but modest contribution is plausible; a full explanation is not.
-- *Non-sampling error* (telephone coverage, non-response, concealment of intention, mode and house effects, likely-voter modelling, weighting; see [total survey error](https://en.wikipedia.org/wiki/Total_survey_error)). This is the explanation that the test cannot address directly, and it is real: the one other published poll of this election also leaned the same way. On the evidence available, a non-sampling bias large enough to explain Ipsos's numbers would have to be about `r sprintf("%.1f", abs(bench$sl[1] - 100*p3[1]) / abs(bench$sl[2] - 100*p3[1]))` times the size of NSPM's, with fieldwork much closer to the vote. Ipsos's election-night projection with CeSID was accurate to within a few tenths of a point, but that projection rested on counted ballots at sampled polling stations, not on interviews, so it does not share the pre-election survey's sources of error and does not by itself tell us how large those could have been.
+- *Non-sampling error* (telephone coverage, non-response, concealment of intention, mode and house effects, likely-voter modelling, weighting; see [total survey error](https://en.wikipedia.org/wiki/Total_survey_error)). This is the explanation that the test cannot address directly, and every poll carries some of it. What the test does establish is its required size: a non-sampling bias large enough to explain Ipsos's numbers would have to move the two large lists by 13 and 8 points, far beyond what the polling literature documents for final pre-election polls with fieldwork three days before the vote. Ipsos's election-night projection with CeSID was accurate to within a few tenths of a point, but that projection rested on counted ballots at sampled polling stations, not on interviews, so it does not share the pre-election survey's sources of error and does not by itself tell us how large those could have been.
 - *Misrepresentation of the published numbers.* The data are consistent with it, exactly as they are consistent with a sufficiently large version of each explanation above; the test cannot separate them. The fact that the poll was commissioned by one of the contestants is a reason to ask for transparency, not evidence of intent, and this document makes no claim about intent.
 
-The defensible public statement is therefore: **Ipsos's final pre-election numbers cannot have arisen from random sampling error. What remains is some combination of a late swing far larger than any for which there is independent evidence, a turnout or undecided-voter shift of a size the literature does not describe, a methodological bias well beyond what the other poll of the same election exhibited, and the published numbers not reflecting what the survey measured.** This document cannot distinguish among these, nor between any of them and misreporting. Doing so requires what a probability calculation cannot supply: Ipsos's raw data, its weighting scheme, its likely-voter model, and its treatment of undecided respondents.
+The defensible public statement is therefore: **Ipsos's final pre-election numbers cannot have arisen from random sampling error. What remains is some combination of a late swing far larger than any for which there is independent evidence, a turnout or undecided-voter shift of a size the literature does not describe, a methodological bias far larger than final pre-election polls ordinarily carry, and the published numbers not reflecting what the survey measured.** This document cannot distinguish among these, nor between any of them and misreporting. Doing so requires what a probability calculation cannot supply: Ipsos's raw data, its weighting scheme, its likely-voter model, and its treatment of undecided respondents.
 
 ## Caveats
 
@@ -1236,7 +1206,6 @@ The defensible public statement is therefore: **Ipsos's final pre-election numbe
 
 - Ipsos Strategic Marketing, *Rezultati istraživanja pred parlamentarne izbore – oktobar 2026*, press release of 22 October 2026. [PDF](https://www.ipsos.com/sites/default/files/ct/news/documents/2026-10/Saopstenje_-_Ipsos_Strategic_Marketing_-_Parlamentarni%20Izbori_2026_-_finalna_procena.pdf) · [web page](https://www.ipsos.com/sr-rs/rezultati-istrazivanja-pred-parlamentarne-izbore-oktobar-2026)
 - Republička izborna komisija, [*Rezultati izbora* portal](https://www.rik.parlament.gov.rs/542645/rezultati/), Парламентарни 2026, read 31 October 2026, 11:00 CET; regional sub-totals for Косово и Метохија and Иностранство from the same portal; diaspora valid/invalid split from the [RIK 73rd session](https://www.rik.parlament.gov.rs/vest/818648/73-sednica-republicke-izborne-komisije.php), 29 October 2026.
-- NSPM, [*Србија, јесен 2026 (I)*](https://www.nspm.rs/istrazivanja-javnog-mnjenja/srbija-jesen-2026.-i.html), telephone survey, fieldwork 25 September – 5 October 2026, n = 1,050, published 20 October 2026; also tabulated on [Wikipedia](https://en.wikipedia.org/wiki/Opinion_polling_for_the_2026_Serbian_parliamentary_election).
 - CeSID–Ipsos election-night projection (*Studentska lista* 52.9%, *Ujedinjena Srbija* 38.8%), as reported by [Balkan Insight](https://balkaninsight.com/2026/10/26/student-list-wins-outright-majority-in-serbian-parliamentary-polls/bi/), 26 October 2026.
 - Davis, A. (2019). *pmultinom: One-Sided Multinomial Probabilities.* R package.
 
