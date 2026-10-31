@@ -1,0 +1,17 @@
+# R / RStudio
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj
+
+# knitr / rmarkdown intermediates (the HTML outputs themselves are committed)
+*_cache/
+*_files/
+*.knit.md
+*.utf8.md
+rsconnect/
+
+# OS
+.DS_Store
+Thumbs.db

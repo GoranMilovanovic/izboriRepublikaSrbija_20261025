@@ -1,0 +1,1241 @@
+---
+title: "Could Ipsos Have Obtained Its Numbers by Chance?"
+subtitle: "A multinomial probability analysis of the final Ipsos pre-election poll against the official results of the 2026 Serbian parliamentary elections"
+author: "Goran S. Milovanović, PhD"
+date: "`r format(Sys.Date(), '%d %B %Y')`"
+output:
+  html_document:
+    theme: flatly
+    highlight: tango
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: true
+    toc_depth: 3
+    number_sections: true
+    code_folding: hide
+    df_print: paged
+    fig_width: 9
+    fig_height: 5.5
+    fig_caption: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, message = FALSE, warning = FALSE,
+  fig.align = "center", dpi = 110
+)
+options(scipen = 999, digits = 4, knitr.kable.NA = "")
+```
+
+<style>
+body { font-size: 16px; line-height: 1.6; }
+h1, h2, h3 { font-weight: 600; }
+.callout { border-left: 4px solid #2a78d6; background: #f4f8fd; padding: 0.8em 1.2em; margin: 1.2em 0; border-radius: 4px; }
+.callout-warn { border-left-color: #eb6834; background: #fdf6f2; }
+.callout-result { border-left-color: #1baf7a; background: #f2fbf7; }
+.concept { border: 1px solid #e1e0d9; background: #fcfcfb; padding: 0.8em 1.2em; margin: 1.2em 0; border-radius: 4px; }
+.concept h4 { margin-top: 0; color: #52514e; font-size: 0.95em; text-transform: uppercase; letter-spacing: 0.05em; }
+.hero { font-size: 2.2em; font-weight: 600; color: #0b0b0b; margin: 0.2em 0; }
+.hero-sub { color: #52514e; margin-bottom: 1em; }
+table.table { font-variant-numeric: tabular-nums; }
+caption, table.table caption { color: #52514e; font-weight: 600; caption-side: top; }
+p.caption { color: #52514e; }
+</style>
+
+# Introduction
+
+## Background
+
+On **25 October 2026** Serbia held snap parliamentary elections. Three days before the vote, on 22 October, the polling agency **Ipsos Strategic Marketing** published its final pre-election estimate: the list *Aleksandar Vučić – Ujedinjena Srbija* at **47.4%** and the *Studentska lista – Studenti pobeđuju* at **40.0%**, with a stated 95% margin of about ±2.1 points for each.
+
+The official count by the Republic Electoral Commission (**RIK**) turned that picture upside down: *Studentska lista* **53.0%**, *Ujedinjena Srbija* **39.0%**. Apart from the two large lists, only four national-minority lists (*manjinske liste*) entered Parliament.
+
+A miss of this size, published by a long-established agency days before the vote and commissioned by one of the contestants, has raised a public question: **could a properly conducted random sample have produced Ipsos's numbers, if the electorate looked the way the official results say it did?**
+
+## What this document does
+
+We treat the official RIK result as the *true* composition of the voting population and ask how probable Ipsos's published numbers are as the outcome of a random sample of the size Ipsos reports. The natural mathematical tool for this is the **multinomial distribution**, which describes how a random sample splits across several categories (here: electoral lists).
+
+The document is written for a reader without a statistics background. Every concept is introduced in plain language before it is used; every step is motivated before it is carried out and interpreted after. All code is included but hidden behind "Code" buttons, so the narrative can be read on its own. A compact, non-technical summary in Serbian is available as a companion document: [*Da li je Ipsos svoje brojke mogao dobiti slučajno?*](Ipsos-Izbori-2026-SR.html). Both documents and their source code are on [GitHub](https://github.com/GoranMilovanovic/izboriRepublikaSrbija_20261025).
+
+## What this analysis can and cannot tell you
+
+<div class="callout callout-warn">
+**Read this before reading any number below.**
+
+A probability calculation like this one tests a specific hypothesis: *"Ipsos's numbers are what you get when you randomly sample people who actually voted, and the only reason the sample differs from the population is chance."* If that probability turns out to be microscopic, the hypothesis is rejected: chance alone does not explain the gap. Throughout, the official RIK count is **taken as the truth**; the analysis says nothing about the count itself.
+
+What the calculation **cannot** do is tell you *why* the gap exists. There are several candidate explanations, and a probability alone does not distinguish between them, nor between any of them and a combination:
+
+1. **A genuine late shift** of opinion between fieldwork (20–22 October) and election day (25 October), which Ipsos itself flagged as possible;
+2. **Differential turnout**: Ipsos predicted a turnout of 64.7%; the actual turnout was 69.0%. If the "extra" voters leaned heavily one way, or if some people who told Ipsos they would vote stayed at home while others who said they would not turned up, the population Ipsos tried to measure differs from the one that voted;
+3. **Undecided voters**: Ipsos's percentages are shares of respondents who named a list. If the respondents who had not yet decided (typically a fifth to a third of a sample) broke very unevenly, the decided respondents were never a picture of the final electorate;
+4. **Non-sampling error**: a sample that was random on paper but systematically missed or misread certain voters (telephone surveys reach some groups more easily than others; some respondents refuse or conceal their intention, especially in a polarised contest; the mix of telephone and online interviews, the question wording and the weighting targets all push results one way or another);
+5. **Misrepresentation** of the published numbers, i.e. the figures not reflecting what the survey measured.
+
+The honest shape of a conclusion from this document is therefore: *"Ipsos's result is inconsistent with random sampling error by such-and-such a factor; to rescue it, one would need a late swing of so many voters, or a turnout shift of such a size, or an undecided split so lopsided."* Section 9 puts numbers on those. Whether any of the explanations, or which combination of them, is plausible is a matter of judgement, of evidence from other sources, and ultimately of Ipsos's own transparency about its methodology. This document makes no claim about that.
+</div>
+
+# Setup
+
+We use base R for the probability functions (`dmultinom`, `rmultinom`, `pbinom`, `pchisq`), the `pmultinom` package for the multinomial cumulative distribution function that base R lacks, and `ggplot2` for visualisation. The chunk below installs anything that is missing.
+
+```{r packages}
+needed <- c("pmultinom", "ggplot2", "dplyr", "tidyr", "tibble", "purrr",
+            "kableExtra", "scales")
+to_install <- needed[!vapply(needed, requireNamespace, logical(1), quietly = TRUE)]
+if (length(to_install)) install.packages(to_install, repos = "https://cloud.r-project.org")
+invisible(lapply(needed, library, character.only = TRUE))
+```
+
+```{r helpers}
+# ---- colour roles (fixed per entity, never cycled) ---------------------------
+col <- c(
+  "Studentska lista"  = "#2a78d6",   # blue
+  "Ujedinjena Srbija" = "#eb6834",   # orange
+  "Manjinske liste"   = "#1baf7a",   # aqua
+  "Other"             = "#898781",   # muted
+  "RIK (official)"    = "#2a78d6",
+  "Ipsos (poll)"      = "#eb6834",
+  "NSPM (poll)"       = "#1baf7a"
+)
+
+# ---- a quiet ggplot theme ----------------------------------------------------
+theme_report <- function(base_size = 13) {
+  theme_minimal(base_size = base_size) +
+    theme(
+      plot.background  = element_rect(fill = "#fcfcfb", colour = NA),
+      panel.grid.minor = element_blank(),
+      panel.grid.major = element_line(colour = "#e1e0d9", linewidth = 0.4),
+      axis.line.x      = element_line(colour = "#c3c2b7", linewidth = 0.4),
+      axis.ticks       = element_blank(),
+      text             = element_text(colour = "#52514e"),
+      plot.title       = element_text(colour = "#0b0b0b", face = "bold", size = base_size + 2),
+      plot.subtitle    = element_text(colour = "#52514e", size = base_size - 1),
+      plot.caption     = element_text(colour = "#898781", size = base_size - 3, hjust = 0),
+      legend.position  = "top",
+      legend.title     = element_blank(),
+      strip.text       = element_text(colour = "#0b0b0b", face = "bold")
+    )
+}
+
+# ---- formatting helpers -------------------------------------------------------
+fmt_n   <- function(x) format(round(x), big.mark = ",")
+fmt_pct <- function(x, d = 2) sprintf(paste0("%.", d, "f%%"), x)
+# turn a log10 probability into readable text, e.g. "3 × 10⁻³⁶ (about 1 in a 3 followed by 35 zeros)"
+# (the two halves always describe the same number: lead × 10^-(e+1) = 1 / (lead × 10^e))
+fmt_log10p <- function(l10) {
+  if (is.na(l10)) return("not computable")
+  if (!is.finite(l10)) return("below 10<sup>−300</sup> (underflow)")
+  if (l10 > -3) return(sprintf("%.4f", 10^l10))
+  e    <- floor(-l10)                      # 1 in  lead × 10^e
+  lead <- round(10^(-l10 - e))
+  if (lead == 10) { lead <- 1; e <- e + 1 }
+  sprintf("%d × 10<sup>−%d</sup> (about 1 in a %d followed by %d zeros)", lead, e + 1, lead, e)
+}
+# a power of ten for prose, e.g. fmt_pow(-35.49) -> "10<sup>−35</sup>"
+fmt_pow <- function(l10, d = 0) {
+  s <- formatC(round(l10, d), format = "f", digits = d)
+  sprintf("10<sup>%s</sup>", gsub("-", "−", s))
+}
+# integer counts for a poll of size n from published percentages (sum to n)
+pct_to_counts <- function(pct, n, remainder_to = length(pct)) {
+  k <- round(pct / 100 * n)
+  k[remainder_to] <- k[remainder_to] + (n - sum(k))
+  k
+}
+# log10 of a multinomial density, vectorised over the columns of a matrix
+log10_dmultinom_mat <- function(X, p) {
+  n <- colSums(X)
+  (lgamma(n + 1) - colSums(lgamma(X + 1)) + colSums(X * log(p))) / log(10)
+}
+kable_report <- function(df, ..., align = NULL) {
+  # text columns left-aligned, numeric-looking columns right-aligned; HTML (superscripts) passed through
+  if (is.null(align)) {
+    looks_num <- vapply(df, function(x) is.numeric(x) ||
+                          all(grepl("^[-−+]?[0-9.,%× ]*$|<sup>|^$", as.character(x)) & !all(is.na(x)) & any(grepl("[0-9]", x))),
+                        logical(1))
+    align <- ifelse(looks_num, "r", "l")
+  }
+  kableExtra::kbl(df, ..., align = align, escape = FALSE) |>
+    kableExtra::kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                              full_width = FALSE, position = "center")
+}
+```
+
+# The data
+
+## Why we need both sources on the record
+
+The whole analysis rests on two inputs: what Ipsos published, and what the voters did. Both are reproduced here in full, with their provenance, so that anyone can check them and so that the document can be re-knitted when RIK publishes the final results.
+
+## The Ipsos poll (published 22 October 2026)
+
+Source: Ipsos Strategic Marketing, [*Rezultati istraživanja pred parlamentarne izbore – oktobar 2026*](https://www.ipsos.com/sites/default/files/ct/news/documents/2026-10/Saopstenje_-_Ipsos_Strategic_Marketing_-_Parlamentarni%20Izbori_2026_-_finalna_procena.pdf) (PDF). The key methodological statements, translated:
+
+- Fieldwork **20–22 October 2026**, sample of **3,624 respondents**; 90% telephone (fixed and mobile, random sampling), 10% Ipsos online panel.
+- Representative of the adult population of Serbia **excluding Kosovo i Metohija and citizens living abroad**.
+- The turnout percentage was computed on the whole sample. The **list percentages were computed among the "decided", i.e. respondents who said whom they would vote for**. The estimate **includes an assumed 2.5% of invalid ballots**, based on previous elections. (Consequently the 18 list shares sum to 97.5%.)
+- Commissioned by the list *Aleksandar Vučić – Ujedinjena Srbija*.
+- Expected turnout **64.7%** (62.9–66.5%).
+- Ipsos adds: post-election surveys show that part of the electorate decides in the final days, so last-minute shifts between similar blocs are possible.
+
+```{r ipsos-data}
+ipsos <- tibble::tribble(
+  ~no, ~list,                                   ~short,                    ~group,              ~ipsos_pct, ~ci_lo, ~ci_hi,
+   1, "Aleksandar Vučić – Ujedinjena Srbija",   "Ujedinjena Srbija",       "Ujedinjena Srbija",  47.4, 45.3, 49.5,
+   2, "Ivica Dačić – Faktor stabilnosti!",      "Faktor stabilnosti (SPS)", "Other",             3.2,  2.5,  3.9,
+   3, "Studentska lista – Studenti pobeđuju",   "Studentska lista",        "Studentska lista",   40.0, 37.9, 42.1,
+   4, "Rasim Ljajić – Ljudski (SDP – CDP)",     "Ljajić – Ljudski",        "Manjinske liste",    0.5,  0.2,  0.8,
+   5, "Savez vojvođanskih Mađara – dr Balint Pastor", "SVM",               "Manjinske liste",    1.2,  0.7,  1.7,
+   6, "Usame Zukorlić (SPP) Pokret za ujedinjenje", "Zukorlić (SPP)",      "Other",              0.3,  0.1,  0.5,
+   7, "Ruska stranka – Srbija u BRIKSU",        "Ruska stranka",           "Other",              0.2,  0.0,  0.4,
+   8, "Autentična desnica – dr Miloš Jovanović","Autentična desnica",      "Other",              1.7,  1.1,  2.3,
+   9, "Evropska Srbija – Marinika Tepić – Zdravko Ponoš", "Evropska Srbija", "Other",            0.8,  0.4,  1.2,
+  10, "SDA Sandžaka – Čuvari Sandžaka",         "SDA Sandžaka",            "Manjinske liste",    0.3,  0.1,  0.5,
+  11, "Bogoljub Karić – Pokret Snaga Srbije – BK", "Karić – PSS",          "Other",              0.6,  0.3,  0.9,
+  12, "Liberalno zelena stranka",               "Liberalno zelena",        "Other",              0.1,  0.0,  0.2,
+  13, "Biram pravdu – Biram budućnost – Koalicija Snaga", "Biram pravdu",  "Other",              0.1,  0.0,  0.2,
+  14, "Stranka rusko-srpskog jedinstva",        "Rusko-srpsko jedinstvo",  "Other",              0.2,  0.0,  0.4,
+  15, "Ćale ovo je za tebe – Petar Đurić",      "Ćale ovo je za tebe",     "Other",              0.2,  0.0,  0.4,
+  16, "Vladimir Gajić – Alternativa za Srbiju", "Gajić – Alternativa",     "Other",              0.3,  0.1,  0.5,
+  17, "Albanska koalicija – Koalicioni Shqiptar","Albanska koalicija",     "Manjinske liste",    0.3,  0.1,  0.5,
+  18, "Majka Srbija – Gruda",                   "Majka Srbija",            "Other",              0.1,  0.0,  0.2,
+  NA, "(assumed invalid ballots)",              "Invalid ballots",         "Other",              2.5,  NA,   NA
+)
+ipsos_n       <- 3624
+ipsos_turnout <- c(est = 64.7, lo = 62.9, hi = 66.5)
+stopifnot(abs(sum(ipsos$ipsos_pct) - 100) < 1e-9)
+
+ipsos |>
+  dplyr::select(No. = no, `Electoral list` = list, Group = group,
+                `Ipsos %` = ipsos_pct, `95% interval, low` = ci_lo, `95% interval, high` = ci_hi) |>
+  kable_report(caption = "Table 1. Ipsos final pre-election estimate (base: all ballots cast, incl. an assumed 2.5% invalid). The 95% intervals are Ipsos's own; what they mean is explained in Section 6. Some list names are abbreviated.")
+```
+
+## The official results (RIK, snapshot of 31 October 2026, 11:00)
+
+Source: RIK's [results portal](https://www.rik.parlament.gov.rs/542645/rezultati/) (Парламентарни → Парламентарни 2026), read on **31 October 2026 at 11:00**, when **8,339 of 8,392 polling stations** had been processed. These are therefore **preliminary** results; 53 polling stations (0.6%) were still outstanding. We also recorded the regional sub-totals for *Kosovo i Metohija* and *Inostranstvo* (polling stations abroad), because Ipsos excluded both populations from its sample and we will want to exclude them from the comparison too (Section 8).
+
+<div class="callout">
+**How RIK computes percentages.** RIK reports each list's share of **all ballots found in the ballot boxes** (valid + invalid), not of valid ballots only. This happens to be exactly the base Ipsos used (list shares plus an assumed 2.5% invalid). The two sources are therefore directly comparable without any rescaling (see Issue 1 in Section 4), with one subtlety we return to there: Ipsos's 2.5% is an *assumption*, not something its sample measured.
+
+**Who gets seats.** A list needs 3% of the votes cast to enter Parliament; lists representing national minorities are exempt from that threshold (they compete under a "natural" threshold, with a bonus applied to their quotient when they are below 2%). That is why *Faktor stabilnosti* at 2.1% won no seat while four minority lists at 0.3–0.8% did. The seat figures below are the preliminary allocation at the same snapshot; they reproduce exactly from the vote counts with the d'Hondt method and those rules.
+</div>
+
+```{r rik-data}
+rik_meta <- list(
+  snapshot      = "31 October 2026, 11:00 CET",
+  stations_total = 8392, stations_done = 8339,
+  registered    = 6451292,   # all 8,392 polling stations
+  turned_out    = 4433332,   # voters who were handed a ballot, at the 8,339 processed stations
+  turnout_pct   = 68.98,     # RIK's own turnout figure (relative to the registered voters at processed stations)
+  ballots       = 4430659,   # ballots found in boxes (valid + invalid)
+  valid         = 4374187,
+  invalid       = 56472
+)
+
+# national votes, in ballot order (no. 1..18)
+rik_votes <- c(1726554, 94571, 2349777, 20415, 35004, 12132, 6492, 39485, 12562,
+               12381, 20031, 2683, 1186, 4284, 2018, 3704, 27681, 3227)
+stopifnot(sum(rik_votes) == rik_meta$valid,
+          rik_meta$valid + rik_meta$invalid == rik_meta$ballots)
+
+# regional sub-totals Ipsos did NOT sample: Kosovo i Metohija and abroad
+kim_votes    <- c(25660, 1170, 7353, 13, 2, 10, 34, 360, 14, 12, 101, 6, 5, 23, 8, 10, 3, 7)
+kim_invalid  <- 863          # 35,654 ballots at 2.42% invalid
+abroad_votes <- c(19763, 386, 57756, 35, 17, 387, 29, 419, 278, 29, 78, 14, 3, 24, 11, 33, 8, 13)
+abroad_invalid <- 304        # RIK 73rd session, 29 Oct 2026: valid 79,283, invalid 304
+stopifnot(sum(kim_votes) == 34791, sum(abroad_votes) == 79283)
+
+rik <- ipsos |>
+  dplyr::filter(!is.na(no)) |>
+  dplyr::select(no, list, short, group) |>
+  dplyr::mutate(votes = rik_votes, kim = kim_votes, abroad = abroad_votes) |>
+  dplyr::bind_rows(tibble::tibble(no = NA, list = "(invalid ballots)", short = "Invalid ballots",
+                                  group = "Other", votes = rik_meta$invalid,
+                                  kim = kim_invalid, abroad = abroad_invalid)) |>
+  dplyr::mutate(rik_pct = 100 * votes / rik_meta$ballots)
+
+seats <- c("Studentska lista" = 141, "Ujedinjena Srbija" = 103, "SVM" = 2,
+           "Albanska koalicija" = 2, "Ljajić – Ljudski" = 1, "SDA Sandžaka" = 1)
+
+rik |>
+  dplyr::mutate(Seats = dplyr::coalesce(seats[short], 0)) |>
+  dplyr::select(No. = no, `Electoral list` = list, Group = group, Votes = votes,
+                `% of ballots` = rik_pct, Seats) |>
+  dplyr::mutate(Votes = fmt_n(Votes), `% of ballots` = fmt_pct(`% of ballots`)) |>
+  kable_report(caption = sprintf("Table 2. RIK preliminary results, %s (%s of %s polling stations). Seats are the preliminary allocation.",
+                                 rik_meta$snapshot, fmt_n(rik_meta$stations_done), fmt_n(rik_meta$stations_total)))
+```
+
+```{r rik-summary}
+tibble::tibble(
+  Quantity = c("Registered voters", "Voters who turned out", "Turnout",
+               "Ballots in boxes (valid + invalid)", "Valid ballots", "Invalid ballots",
+               "Polling stations processed"),
+  Value = c(fmt_n(rik_meta$registered), fmt_n(rik_meta$turned_out),
+            sprintf("%s (RIK figure, relative to registered voters at processed stations)", fmt_pct(rik_meta$turnout_pct)),
+            sprintf("%s (the %s voters who were handed a ballot but did not deposit one are the difference from the row above)",
+                    fmt_n(rik_meta$ballots), fmt_n(rik_meta$turned_out - rik_meta$ballots)),
+            fmt_n(rik_meta$valid),
+            sprintf("%s (%s)", fmt_n(rik_meta$invalid), fmt_pct(100 * rik_meta$invalid / rik_meta$ballots)),
+            sprintf("%s of %s", fmt_n(rik_meta$stations_done), fmt_n(rik_meta$stations_total)))
+) |> kable_report(caption = "Table 3. Turnout and ballot totals (RIK, same snapshot).")
+```
+
+## Poll versus reality, list by list
+
+Before any probability theory, the raw comparison. Each row shows where Ipsos put a list and where RIK found it. The two big lists are drawn on their own panel because they dwarf everything else.
+
+```{r fig-dumbbell, fig.height=7, fig.cap="Figure 1. Ipsos estimate (orange) versus official result (blue) for every electoral list and for invalid ballots. The panels use different horizontal scales."}
+cmp <- ipsos |>
+  dplyr::select(short, group, ipsos_pct) |>
+  dplyr::left_join(rik |> dplyr::select(short, rik_pct), by = "short") |>
+  dplyr::mutate(panel = ifelse(short %in% c("Studentska lista", "Ujedinjena Srbija"),
+                               "Two large\nlists", "All other lists\nand invalid\nballots"),
+                panel = factor(panel, levels = c("Two large\nlists", "All other lists\nand invalid\nballots")),
+                short = reorder(short, rik_pct))
+
+cmp_long <- cmp |>
+  tidyr::pivot_longer(c(ipsos_pct, rik_pct), names_to = "source", values_to = "pct") |>
+  dplyr::mutate(source = dplyr::recode(source, ipsos_pct = "Ipsos (poll)", rik_pct = "RIK (official)"),
+                source = factor(source, levels = c("RIK (official)", "Ipsos (poll)")))
+
+ggplot() +
+  geom_segment(data = cmp, aes(x = ipsos_pct, xend = rik_pct, y = short, yend = short),
+               colour = "#c3c2b7", linewidth = 1.2) +
+  geom_point(data = cmp_long, aes(x = pct, y = short, colour = source), size = 3.2) +
+  facet_grid(panel ~ ., scales = "free", space = "free") +
+  scale_colour_manual(values = col) +
+  scale_x_continuous(labels = function(x) paste0(x, "%")) +
+  labs(x = NULL, y = NULL,
+       title = "Where the poll put each list, and where the voters did",
+       subtitle = "Share of all ballots cast. Ipsos, 20–22 Oct 2026 (n = 3,624) vs RIK preliminary count, 31 Oct 2026") +
+  theme_report() +
+  theme(strip.text.y = element_text(angle = 0, hjust = 0))
+```
+
+<div class="callout callout-result">
+**What Figure 1 shows.** For each of the sixteen small lists and for invalid ballots, Ipsos was within about a point and a quarter of the result, and its estimates for the four minority lists that won seats (SVM, Albanska koalicija, Ljajić, SDA Sandžaka) were close. But the small misses all point the same way: Ipsos put nearly every small list, and invalid ballots, somewhat *above* their eventual share, so that collectively the small lists and invalid ballots were overestimated by about `r sprintf("%.1f", sum(cmp$ipsos_pct[!cmp$short %in% c("Studentska lista","Ujedinjena Srbija")]) - sum(cmp$rik_pct[!cmp$short %in% c("Studentska lista","Ujedinjena Srbija")]))` points. The bulk of the miss, though, is in the two large lists: Ipsos had *Ujedinjena Srbija* **`r sprintf("%.1f", 47.4 - cmp$rik_pct[cmp$short == "Ujedinjena Srbija"])` points too high** and *Studentska lista* **`r sprintf("%.1f", cmp$rik_pct[cmp$short == "Studentska lista"] - 40)` points too low**. One list deflated by thirteen points, with the difference spread over its rival and the small lists, is the signature we will be testing.
+</div>
+
+# Making the two sources comparable
+
+## Why this step matters
+
+A probability calculation is only as good as the correspondence between the poll's categories and the population's categories. Two issues have to be settled before we can proceed.
+
+**Issue 1: the denominator.** Ipsos's percentages include an assumed 2.5% invalid ballots and therefore refer to *all ballots cast*. RIK's percentages are also shares of all ballots in the boxes. The bases match. (Had they not, we would have had to rescale one of them, which would have been a small but necessary correction: e.g. 47.4 / 0.975 = 48.6% of *valid* votes.)
+
+There is a subtlety here that matters for honesty about the model. The 2.5% is a number Ipsos *assumed* from past elections, not a share its respondents produced; nobody tells a pollster "I will spoil my ballot". Under the chance hypothesis it therefore has no sampling variability at all, and treating it as if it were a sampled count (as the all-ballots base does, because it sits inside the "Other" category) slightly overstates how surprising Ipsos's result is. The actual invalid share was `r fmt_pct(100 * rik_meta$invalid / rik_meta$ballots)`, so the assumption was `r sprintf("%.1f", 2.5 - 100 * rik_meta$invalid / rik_meta$ballots)` points too high. We keep the all-ballots base as the main analysis because it is the base both sources publish, and in Section 8 we redo the key test on *valid votes only*, with the invalid share removed from both sides, to show how much that choice matters.
+
+**Issue 2: how many categories to use.** A probability model with nineteen categories, most of them below 1%, is dominated by noise in the tiny lists and hard to read. The question of public interest is about the two large lists and, to a lesser extent, the minority lists that entered Parliament. We therefore define a compact **four-category scheme** as our main lens, and keep the full 19-category scheme as a secondary check.
+
+## Scheme A: four categories
+
+```{r scheme-a}
+grp_levels <- c("Studentska lista", "Ujedinjena Srbija", "Manjinske liste", "Other")
+
+scheme_a <- dplyr::full_join(
+  ipsos |> dplyr::group_by(group) |> dplyr::summarise(ipsos_pct = sum(ipsos_pct), .groups = "drop"),
+  rik   |> dplyr::group_by(group) |>
+    dplyr::summarise(votes = sum(votes), kim = sum(kim), abroad = sum(abroad), .groups = "drop"),
+  by = "group") |>
+  dplyr::mutate(group = factor(group, levels = grp_levels),
+                rik_pct = 100 * votes / rik_meta$ballots,
+                rik_p   = votes / rik_meta$ballots) |>
+  dplyr::arrange(group)
+
+p_rik_A   <- setNames(scheme_a$rik_p, scheme_a$group)
+pct_ips_A <- setNames(scheme_a$ipsos_pct, scheme_a$group)
+
+scheme_a |>
+  dplyr::transmute(Category = group,
+                   `Lists included` = c("Studentska lista – Studenti pobeđuju",
+                                        "Aleksandar Vučić – Ujedinjena Srbija",
+                                        "SVM, Albanska koalicija, Ljajić – Ljudski, SDA Sandžaka (the four lists that won seats)",
+                                        "The remaining 12 lists plus invalid ballots"),
+                   `RIK votes` = fmt_n(votes), `RIK %` = fmt_pct(rik_pct),
+                   `Ipsos %` = fmt_pct(ipsos_pct, 1),
+                   `Gap (Ipsos − RIK)` = gsub("-", "−", sprintf("%+.1f", ipsos_pct - rik_pct))) |>
+  kable_report(caption = "Table 4. Scheme A: the four-category comparison that drives the main analysis.")
+```
+
+```{r fig-scheme-a, fig.height=4.5, fig.cap="Figure 2. The four-category comparison. Ipsos (orange) against RIK (blue)."}
+scheme_a |>
+  tidyr::pivot_longer(c(ipsos_pct, rik_pct), names_to = "source", values_to = "pct") |>
+  dplyr::mutate(source = dplyr::recode(source, ipsos_pct = "Ipsos (poll)", rik_pct = "RIK (official)"),
+                source = factor(source, levels = c("RIK (official)", "Ipsos (poll)"))) |>
+  ggplot(aes(x = group, y = pct, fill = source)) +
+  geom_col(position = position_dodge(width = 0.7), width = 0.62) +
+  geom_text(aes(label = sprintf("%.1f", pct)), position = position_dodge(width = 0.7),
+            vjust = -0.4, size = 3.6, colour = "#52514e") +
+  scale_fill_manual(values = col) +
+  scale_y_continuous(labels = function(x) paste0(x, "%"), expand = expansion(mult = c(0, 0.1))) +
+  labs(x = NULL, y = NULL, title = "Scheme A: four categories",
+       subtitle = "Share of all ballots cast") +
+  theme_report()
+```
+
+## Scheme B: all nineteen categories
+
+For completeness we also keep every list (and invalid ballots) as its own category. This scheme is used in Section 7 as a robustness check.
+
+```{r scheme-b}
+scheme_b <- rik |>
+  dplyr::select(short, group, votes) |>
+  dplyr::left_join(ipsos |> dplyr::select(short, ipsos_pct), by = "short") |>
+  dplyr::mutate(rik_p = votes / rik_meta$ballots)
+p_rik_B   <- setNames(scheme_b$rik_p, scheme_b$short)
+pct_ips_B <- setNames(scheme_b$ipsos_pct, scheme_b$short)
+stopifnot(abs(sum(p_rik_B) - 1) < 1e-12, abs(sum(pct_ips_B) - 100) < 1e-9)
+```
+
+<div class="callout callout-result">
+**Result of this step.** In Scheme A, Ipsos had *Studentska lista* at 40.0% against a true `r fmt_pct(scheme_a$rik_pct[1])`, and *Ujedinjena Srbija* at 47.4% against a true `r fmt_pct(scheme_a$rik_pct[2])`. The minority bloc (`r sprintf("%.1f%%", scheme_a$ipsos_pct[3])` vs `r fmt_pct(scheme_a$rik_pct[3])`) is essentially right. The residual category (`r sprintf("%.1f%%", scheme_a$ipsos_pct[4])` vs `r fmt_pct(scheme_a$rik_pct[4])`) is overstated by `r sprintf("%.1f", scheme_a$ipsos_pct[4] - scheme_a$rik_pct[4])` points; smaller than the two headline errors, but, as we will see, far from negligible in its own right. From here on, "the Ipsos result" means the four-number vector (`r paste(sprintf("%.1f", scheme_a$ipsos_pct), collapse = ", ")`) and "the population" means the vector (`r paste(sprintf("%.2f", scheme_a$rik_pct), collapse = ", ")`).
+</div>
+
+# The multinomial distribution
+
+## Why we need a probability model
+
+Polls are never exactly right, even when they are perfectly executed. If you ask 2,000 randomly chosen voters, you will not get exactly 53.0% for a list whose true support is 53.0%; you might get 51.8% or 54.3%. The question is never "did the poll miss?" but "**did it miss by more than chance can explain?**" To answer that, we need to know how much variation chance *does* produce in a sample of a given size. That is what a probability model provides.
+
+<div class="concept">
+#### Concept: the multinomial distribution {-}
+
+Imagine an urn containing millions of balls in four colours, in exactly the proportions of the RIK result: 53.0% blue (*Studentska lista*), 39.0% orange (*Ujedinjena Srbija*), 2.2% aqua (*manjinske liste*), 5.8% grey (everything else). You draw *n* balls at random and count how many of each colour you got.
+
+The **multinomial distribution** gives the probability of every possible count vector (so many blue, so many orange, …) for given *n* and given proportions. It is the direct generalisation of the coin-flip (binomial) distribution to more than two outcomes. A random-sample poll of *n* decided voters is, mathematically, exactly this urn experiment, with "true vote share" playing the role of the colour proportions.
+
+Two facts about it matter here:
+
+- The **expected** count for each category is simply *n* × (its proportion).
+- The **typical spread** (standard deviation) of a category's count is √(*n* · *p* · (1 − *p*)). For a share near 50% and *n* = 2,000, that is about 22 counts, i.e. about **1.1 percentage points**. Random polls of that size therefore land within roughly ±2 points of the truth about 95% of the time, which is where the familiar "margin of error" comes from.
+
+*Further reading:* Wikipedia on the [multinomial](https://en.wikipedia.org/wiki/Multinomial_distribution) and [binomial](https://en.wikipedia.org/wiki/Binomial_distribution) distributions · the interactive [Seeing Theory, ch. 3 "Probability Distributions"](https://seeing-theory.brown.edu/probability-distributions/index.html) · Blitzstein & Hwang, [*Introduction to Probability*](http://probabilitybook.net) (free textbook; the multinomial is in ch. 7) · [Wolfram MathWorld](https://mathworld.wolfram.com/MultinomialDistribution.html) for the formulas, including the covariance between categories. See also [References](#references).
+</div>
+
+## Seeing it: what random polls from the real electorate look like
+
+The most intuitive way to understand the model is to simulate it. Below we draw 100,000 imaginary polls, each a random sample of 2,000 decided voters from the actual RIK electorate (we will justify the precise sample size in the next section), and look at the distribution of the *Studentska lista* and *Ujedinjena Srbija* shares they produce.
+
+```{r fig-sim-intro, fig.height=5, fig.cap="Figure 3. Shares obtained by 100,000 simulated random polls of 2,000 decided voters from the actual electorate (RIK proportions). Histograms in each list's colour; the dashed line marks the true value, the solid black line what Ipsos published."}
+set.seed(2026)
+n_demo <- 2000
+sim_demo <- rmultinom(1e5, n_demo, p_rik_A)
+sim_df <- tibble::tibble(
+  `Studentska lista`  = 100 * sim_demo["Studentska lista", ] / n_demo,
+  `Ujedinjena Srbija` = 100 * sim_demo["Ujedinjena Srbija", ] / n_demo
+) |> tidyr::pivot_longer(everything(), names_to = "group", values_to = "pct")
+
+ref_lines <- tibble::tibble(
+  group = rep(c("Studentska lista", "Ujedinjena Srbija"), 2),
+  what  = rep(c("RIK (official)", "Ipsos (poll)"), each = 2),
+  x     = c(100 * p_rik_A[1:2], pct_ips_A[1:2])
+)
+
+ggplot(sim_df, aes(x = pct)) +
+  geom_histogram(aes(fill = group), binwidth = 0.25, colour = "#fcfcfb", linewidth = 0.2) +
+  geom_vline(data = ref_lines, aes(xintercept = x, linetype = what, colour = what), linewidth = 0.9) +
+  facet_wrap(~group, scales = "free_x") +
+  scale_fill_manual(values = col, guide = "none") +
+  # the histograms carry the list colours, so the reference lines are kept neutral
+  scale_colour_manual(values = c("RIK (official)" = "#52514e", "Ipsos (poll)" = "#0b0b0b")) +
+  scale_linetype_manual(values = c("RIK (official)" = "dashed", "Ipsos (poll)" = "solid")) +
+  scale_x_continuous(labels = function(x) paste0(x, "%"), expand = expansion(add = 1)) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(x = "Share found by a simulated random poll", y = "Number of simulated polls",
+       title = "What chance alone produces",
+       subtitle = "100,000 random polls of 2,000 decided voters, drawn from the actual RIK electorate") +
+  theme_report()
+```
+
+```{r sim-intro-range}
+rng <- sim_df |> dplyr::group_by(group) |>
+  dplyr::summarise(lo = min(pct), hi = max(pct), sd = sd(pct), .groups = "drop")
+```
+
+<div class="callout callout-result">
+**What Figure 3 shows.** Across 100,000 random polls, the *Studentska lista* share never fell below **`r sprintf("%.2f%%", rng$lo[rng$group == "Studentska lista"])`** and the *Ujedinjena Srbija* share never rose above **`r sprintf("%.2f%%", rng$hi[rng$group == "Ujedinjena Srbija"])`**. Ipsos's 40.0% and 47.4% are not in the tails of these distributions; they lie far outside everything that chance produced in a hundred thousand tries. The standard deviation of a simulated poll's share is about `r sprintf("%.1f", rng$sd[1])` points, so Ipsos's figures sit roughly `r sprintf("%.0f", (100*p_rik_A[1] - 40) / rng$sd[rng$group == "Studentska lista"])` and `r sprintf("%.0f", (47.4 - 100*p_rik_A[2]) / rng$sd[rng$group == "Ujedinjena Srbija"])` standard deviations away from the truth. Everything that follows puts exact numbers on this picture.
+</div>
+
+# How big was Ipsos's sample, really?
+
+## Why this is the crux
+
+The probability of Ipsos's result depends enormously on the sample size *n*: the larger the sample, the smaller the chance of a given miss. Ipsos reports **3,624 respondents**, but its list percentages were computed only among the **decided** respondents (those who named a list), and the number of decided respondents is **not published**. Using 3,624 would overstate the precision of the poll and make our conclusion unfairly harsh.
+
+Fortunately, Ipsos published 95% confidence intervals for every list, and a confidence interval is a function of the sample size. We can therefore **reverse-engineer the sample size that Ipsos itself was using** when it computed those intervals.
+
+<div class="concept">
+#### Concept: confidence intervals, standard error and effective sample size {-}
+
+For a share *p* estimated from *n* random respondents, the **standard error** is SE = √(*p*(1 − *p*)/*n*), and a 95% confidence interval is roughly *p* ± 1.96 × SE. Turned around: if a pollster reports an interval of half-width *h* for a share *p*, the sample size implied by that interval is
+
+  *n*<sub>eff</sub> = *p*(1 − *p*) / (*h* / 1.96)².
+
+We call this the **effective sample size**. It can be smaller than the number of interviews for two legitimate reasons: (1) only part of the sample is in the base (here, the decided), and (2) weighting a sample to match population demographics inflates its variance; the inflation factor is called the **design effect**. A professional pollster's published intervals already incorporate both, so *n*<sub>eff</sub> is the right *n* to use in our multinomial model. Using it is also the **charitable** choice: a smaller *n* means more room for chance, and so a higher probability for Ipsos's result.
+
+*Further reading:* Wikipedia on the [confidence interval for a proportion](https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval), the [margin of error](https://en.wikipedia.org/wiki/Margin_of_error) and the [design effect](https://en.wikipedia.org/wiki/Design_effect) · the interactive [Seeing Theory, ch. 4 "Frequentist Inference"](https://seeing-theory.brown.edu/frequentist-inference/index.html) for what a confidence interval really promises · Pew Research Center, [*Understanding the margin of error in election polls*](https://www.pewresearch.org/short-reads/2016/09/08/understanding-the-margin-of-error-in-election-polls/) · Zipf & Valliant, [*Design Effects and Effective Sample Size*](https://cran.r-project.org/web/packages/PracTools/vignettes/Design-effects.html) (the clearest free treatment of *n*<sub>eff</sub> = *n* / deff and of Kish's weighting formula).
+</div>
+
+## Backing out the effective sample size from Ipsos's own intervals
+
+```{r neff}
+neff_tbl <- ipsos |>
+  dplyr::filter(!is.na(ci_lo), ipsos_pct >= 0.5) |>          # tiny shares are rounded too coarsely to be informative
+  dplyr::mutate(p = ipsos_pct / 100,
+                half_width = (ci_hi - ci_lo) / 2 / 100,
+                n_eff = p * (1 - p) / (half_width / 1.96)^2) |>
+  dplyr::arrange(dplyr::desc(ipsos_pct))
+
+n_turnout_eff <- with(as.list(ipsos_turnout / 100),
+                      est * (1 - est) / (((hi - lo) / 2) / 1.96)^2)
+deff_full <- ipsos_n / n_turnout_eff
+
+n_primary <- round(median(neff_tbl$n_eff), -1)
+
+neff_tbl |>
+  dplyr::transmute(`Electoral list` = short, `Ipsos %` = fmt_pct(ipsos_pct, 1),
+                   `95% interval` = sprintf("%.1f – %.1f", ci_lo, ci_hi),
+                   `Half-width (pts)` = sprintf("%.1f", half_width * 100),
+                   `Implied n<sub>eff</sub>` = fmt_n(n_eff)) |>
+  kable_report(caption = "Table 5. Effective sample size implied by each of Ipsos's published confidence intervals (lists at 0.5% or more).")
+```
+
+```{r fig-neff, fig.height=4.5, fig.cap="Figure 4. Effective sample size implied by each published interval. The solid line is the median, which we adopt as the primary n; the dashed line is the number of interviews Ipsos reports."}
+ggplot(neff_tbl, aes(x = reorder(short, n_eff), y = n_eff)) +
+  geom_segment(aes(xend = short, y = 0, yend = n_eff), colour = "#c3c2b7", linewidth = 1) +
+  geom_point(size = 3.4, colour = "#2a78d6") +
+  geom_hline(yintercept = n_primary, colour = "#0b0b0b", linewidth = 0.6) +
+  geom_hline(yintercept = ipsos_n, colour = "#898781", linetype = "dashed", linewidth = 0.6) +
+  annotate("text", x = nrow(neff_tbl) + 0.45, y = n_primary, label = paste0("adopted n = ", fmt_n(n_primary)),
+           hjust = -0.05, vjust = 1, size = 3.6, colour = "#0b0b0b") +
+  annotate("text", x = 0.55, y = ipsos_n, label = paste0("interviews reported = ", fmt_n(ipsos_n)),
+           hjust = 1.05, vjust = 0, size = 3.6, colour = "#52514e") +
+  coord_flip(clip = "off") +
+  scale_y_continuous(labels = scales::comma, limits = c(0, ipsos_n * 1.05)) +
+  labs(x = NULL, y = "Implied effective sample size",
+       title = "How many respondents do Ipsos's confidence intervals imply?") +
+  theme_report()
+```
+
+<div class="callout callout-result">
+**Result.** Ipsos's intervals imply an effective sample size of about **`r fmt_n(min(neff_tbl$n_eff))` to `r fmt_n(max(neff_tbl$n_eff))`**, with a median of **`r fmt_n(n_primary)`**. The two large lists, whose intervals are least affected by rounding, give `r fmt_n(neff_tbl$n_eff[neff_tbl$short == "Ujedinjena Srbija"])` and `r fmt_n(neff_tbl$n_eff[neff_tbl$short == "Studentska lista"])`; the smaller lists scatter more widely only because their interval bounds are published to one decimal place, which is coarse relative to their width. This is far below the 3,624 interviews, and it is internally consistent: the turnout interval, which Ipsos says was computed on the *whole* sample, implies *n*<sub>eff</sub> ≈ `r fmt_n(n_turnout_eff)`, i.e. a design effect of about `r sprintf("%.2f", deff_full)` on the full sample. Applying that design effect to a decided base of 60–80% of respondents gives `r fmt_n(0.6 * ipsos_n / deff_full)`–`r fmt_n(0.8 * ipsos_n / deff_full)`; the adopted `r fmt_n(n_primary)` corresponds to a decided base of about `r sprintf("%.0f%%", 100 * n_primary * deff_full / ipsos_n)`, a plausible figure three days before an election.
+
+We therefore adopt **n = `r fmt_n(n_primary)`** as the primary sample size. It is the figure Ipsos's own published precision supports, and it is the most generous choice for Ipsos. In Section 8 we repeat everything for a range of sample sizes, from a deliberately low 1,500 up to the full 3,624, to show that the conclusion does not depend on this choice.
+</div>
+
+# The probability of Ipsos's result
+
+## Setting up the hypothesis
+
+We now have everything needed to state the test precisely.
+
+- **Population:** the RIK four-category proportions, **p** = (`r paste(sprintf("%.4f", p_rik_A), collapse = ", ")`).
+- **Sample size:** *n* = `r fmt_n(n_primary)`.
+- **Observed result:** Ipsos's percentages (`r paste(sprintf("%.1f", pct_ips_A), collapse = ", ")`), converted to integer counts out of *n*. These counts are a *construction*: Ipsos did not interview exactly `r fmt_n(n_primary)` decided people. The multinomial with *n*<sub>eff</sub> is the standard way of representing a weighted sample whose precision is that of `r fmt_n(n_primary)` simple random respondents; it matches the spread of Ipsos's own intervals, which is what matters for the test.
+- **Hypothesis H₀:** the observed counts are a random draw from Multinomial(*n*, **p**).
+
+```{r ipsos-counts}
+k_ips_A <- pct_to_counts(pct_ips_A, n_primary, remainder_to = 4)   # any rounding remainder goes to "Other"
+names(k_ips_A) <- names(pct_ips_A)
+expected_A <- n_primary * p_rik_A
+
+tibble::tibble(Category = names(k_ips_A),
+               `Ipsos count (out of n)` = fmt_n(k_ips_A),
+               `Expected under H₀` = format(round(expected_A, 1), big.mark = ",", nsmall = 1),
+               `Difference` = sprintf("%+.0f", k_ips_A - expected_A),
+               `In standard deviations` = sprintf("%+.1f", (k_ips_A - expected_A) / sqrt(n_primary * p_rik_A * (1 - p_rik_A)))) |>
+  kable_report(caption = sprintf("Table 6. Ipsos's result as counts out of n = %s, against what the RIK electorate would produce on average.", fmt_n(n_primary)))
+```
+
+Already in this table the key quantity appears: the *Studentska lista* count is about **`r sprintf("%.0f", abs(k_ips_A[1] - expected_A[1]) / sqrt(n_primary * p_rik_A[1] * (1 - p_rik_A[1])))` standard deviations** below expectation and the *Ujedinjena Srbija* count about **`r sprintf("%.0f", (k_ips_A[2] - expected_A[2]) / sqrt(n_primary * p_rik_A[2] * (1 - p_rik_A[2])))` standard deviations** above it; even the residual "Other" category is about `r sprintf("%.0f", (k_ips_A[4] - expected_A[4]) / sqrt(n_primary * p_rik_A[4] * (1 - p_rik_A[4])))` standard deviations too high. ("Sigma" is shorthand for one standard deviation.) For comparison, a one-sided "2-sigma" event happens about 1 time in 40, a "5-sigma" event (the particle-physics discovery standard) about 1 time in 3.5 million.
+
+## Why "the probability of exactly this result" is the wrong question
+
+<div class="concept">
+#### Concept: point probability versus tail probability {-}
+
+With four categories and 2,000-odd respondents there are over a billion possible count vectors, so the probability of **any one exact vector** is tiny, even for the single most likely one. A poll that hit the truth to the decimal would still have a point probability of only a few in a hundred thousand. The point probability therefore cannot distinguish a well-executed poll from a badly flawed one.
+
+The meaningful question is: **how probable is a result *at least as far from the truth* as the one observed?** This is a **tail probability**, usually called a *p-value*. There is more than one reasonable way to define "at least as far", and a careful analysis uses several and checks that they agree. We will use five.
+
+One technical point: the probabilities we are about to compute are so small that ordinary computer arithmetic cannot represent them (anything below about 10⁻³⁰⁸ becomes exactly zero). We therefore work with **logarithms** of probabilities throughout and report results as powers of ten: "10⁻³⁰" means "one chance in a million million million million million".
+
+*Further reading:* Wikipedia on the [p-value](https://en.wikipedia.org/wiki/P-value) · Wasserstein & Lazar, [*The ASA Statement on p-Values: Context, Process, and Purpose*](https://doi.org/10.1080/00031305.2016.1154108) (*The American Statistician*, 2016; free access), the professional consensus on what a p-value does and does not mean · Wikipedia on [arithmetic underflow](https://en.wikipedia.org/wiki/Arithmetic_underflow), the reason for working in logarithms.
+</div>
+
+## Method 1: the point probability, for reference only
+
+```{r m1-point}
+log10_point_ips <- dmultinom(k_ips_A, prob = p_rik_A, log = TRUE) / log(10)
+# (approximately) the most likely single outcome: the rounded expected counts
+k_mode <- pct_to_counts(100 * p_rik_A, n_primary, remainder_to = 4)
+log10_point_mode <- dmultinom(k_mode, prob = p_rik_A, log = TRUE) / log(10)
+```
+
+The probability of Ipsos's exact count vector under H₀ is **`r fmt_pow(log10_point_ips)`**. The most likely count vector (the rounded expected values, to within a count or two) has probability about `r fmt_pow(log10_point_mode, 1)`, i.e. roughly one in `r fmt_n(round(10^(-log10_point_mode), -3))`. Ipsos's result is therefore about **`r fmt_pow(log10_point_mode - log10_point_ips)` times less likely than the most likely result**. That ratio is informative; the raw point probability on its own is not, for the reason explained above.
+
+## Method 2: one list at a time (binomial tails)
+
+<div class="concept">
+#### Concept: the binomial tail and the z-score {-}
+
+If we look at a single category, say *Studentska lista*, each respondent either names it or does not, so the count follows the simpler **binomial** distribution with *n* trials and success probability *p* = `r sprintf("%.4f", p_rik_A[1])`. The tail probability "a count this low or lower" is computed exactly with `pbinom`. The **z-score** is the same information in standard-deviation units: (observed − expected) / standard deviation. For large *n* the binomial is well approximated by the bell curve, and a z-score of 3 corresponds to a one-sided tail of about 1 in 740, of 5 to about 1 in 3.5 million, of 10 to about 1 in 10²³.
+
+*Further reading:* Wikipedia on the [binomial distribution](https://en.wikipedia.org/wiki/Binomial_distribution) (section "Normal approximation"), the [z-score](https://en.wikipedia.org/wiki/Standard_score) and the [68–95–99.7 rule](https://en.wikipedia.org/wiki/68%E2%80%9395%E2%80%9399.7_rule) that gives "sigma" levels their everyday meaning.
+</div>
+
+```{r m2-binomial}
+binom_tail <- function(k, n, p, direction = c("low", "high")) {
+  direction <- match.arg(direction)
+  if (direction == "low") pbinom(k, n, p, log.p = TRUE) / log(10)
+  else pbinom(k - 1, n, p, lower.tail = FALSE, log.p = TRUE) / log(10)
+}
+m2 <- tibble::tibble(
+  Category  = c("Studentska lista", "Ujedinjena Srbija"),
+  direction = c("low", "high"),
+  k = k_ips_A[1:2], p = p_rik_A[1:2]
+) |>
+  dplyr::mutate(
+    expected = n_primary * p,
+    sd       = sqrt(n_primary * p * (1 - p)),
+    z        = (k - expected) / sd,
+    log10_p  = purrr::pmap_dbl(list(k, p, direction), ~ binom_tail(..1, n_primary, ..2, ..3)),
+    question = ifelse(direction == "low", "Share this low or lower?", "Share this high or higher?")
+  )
+m2 |>
+  dplyr::transmute(Category, `Ipsos count` = fmt_n(k), Expected = format(round(expected, 1), big.mark = ",", nsmall = 1),
+                   `z-score` = gsub("-", "−", sprintf("%+.1f", z)),
+                   Question = question, `Probability` = purrr::map_chr(log10_p, fmt_log10p)) |>
+  kable_report(caption = "Table 7. Binomial tail probabilities for the two large lists, taken one at a time.")
+```
+
+<div class="callout callout-result">
+**Result.** Taken alone, the *Studentska lista* figure has a probability of **`r fmt_log10p(m2$log10_p[1])`** under random sampling, and the *Ujedinjena Srbija* figure **`r fmt_log10p(m2$log10_p[2])`**. Either one, on its own, is far beyond anything that sampling error produces.
+</div>
+
+## Method 3: both lists at once (the multinomial cumulative distribution)
+
+The two lists are not independent: a respondent who names one cannot name the other, so a low *Studentska* count and a high *Ujedinjena Srbija* count go together more often than if they were unrelated. The proper joint question is: *what is the probability that a random poll shows Studentska lista at or below 40.0% **and** Ujedinjena Srbija at or above 47.4%, whatever the other two categories do?* This is a rectangular region of the multinomial distribution, exactly what the `pmultinom` package computes. (Technical aside: it uses a classical trick due to [Levin (1981)](https://doi.org/10.1214/aos/1176345593), which turns an intractable sum into a fast exact calculation.)
+
+```{r m3-pmultinom}
+# pmultinom: P(lower < N <= upper); lower is exclusive, upper inclusive
+p_norm <- p_rik_A / sum(p_rik_A)
+joint_exact <- pmultinom::pmultinom(
+  lower = c(-Inf, k_ips_A[2] - 1, -Inf, -Inf),
+  upper = c(k_ips_A[1], Inf, Inf, Inf),
+  size = n_primary, probs = p_norm, method = "exact")
+
+# an independent check by brute-force simulation
+set.seed(2026)
+n_sim <- 2e6
+sim_A <- rmultinom(n_sim, n_primary, p_rik_A)
+joint_mc <- mean(sim_A[1, ] <= k_ips_A[1] & sim_A[2, ] >= k_ips_A[2])
+# correlation of the two counts under the multinomial
+rho <- -sqrt(p_rik_A[1] * p_rik_A[2] / ((1 - p_rik_A[1]) * (1 - p_rik_A[2])))
+# given Studentska's count, where would Ujedinjena's count be expected to land?
+us_cond_p   <- p_rik_A[2] / (1 - p_rik_A[1])
+us_cond_exp <- (n_primary - k_ips_A[1]) * us_cond_p
+us_cond_sd  <- sqrt((n_primary - k_ips_A[1]) * us_cond_p * (1 - us_cond_p))
+```
+
+```{r m3-table}
+tibble::tibble(
+  Approach = c("pmultinom (exact algorithm)", sprintf("Monte Carlo, %s simulated polls", fmt_n(n_sim))),
+  `P(Studentska ≤ 40.0% and Ujedinjena ≥ 47.4%)` =
+    c(fmt_log10p(log10(joint_exact)),
+      ifelse(joint_mc == 0, sprintf("0 of %s (so below %s)", fmt_n(n_sim), fmt_log10p(log10(1 / n_sim))),
+             formatC(joint_mc, format = "e", digits = 2)))
+) |> kable_report(caption = "Table 8. The joint tail probability computed two ways.")
+```
+
+<div class="callout callout-result">
+**Result.** The exact algorithm puts the joint probability at **`r fmt_log10p(log10(joint_exact))`**, and the brute-force check agrees in the only way it can: not one of `r fmt_n(n_sim)` simulated random polls from the real electorate came anywhere near Ipsos's combination. The joint probability is necessarily no larger than the rarer of its two parts (`r fmt_log10p(min(m2$log10_p))` from Method 2), and it is close to it: because the two counts are strongly negatively correlated (ρ = `r gsub("-", "−", sprintf("%.2f", rho))`; a correlation of −1 would mean one count always rises exactly when the other falls, 0 that they are unrelated), once a poll has *Studentska lista* that low, *Ujedinjena Srbija* being that high is no longer very surprising. In fact, given a *Studentska* count of `r fmt_n(k_ips_A[1])`, a random poll would put *Ujedinjena Srbija* at about `r fmt_n(us_cond_exp)` ± `r sprintf("%.0f", us_cond_sd)`; Ipsos's `r fmt_n(k_ips_A[2])` is `r sprintf("%.1f", (us_cond_exp - k_ips_A[2]) / us_cond_sd)` standard deviations *below* that. In other words, the votes Ipsos took away from *Studentska lista* did not all go to its rival; a sizeable part went to the small lists and invalid ballots. The correlation explains why the two headline errors travel together; it does nothing to make either of them plausible.
+</div>
+
+## Method 4: the exact multinomial test (Monte Carlo)
+
+<div class="concept">
+#### Concept: "at least as unusual" measured by likelihood {-}
+
+The most general definition of "at least as far from the truth" does not single out particular lists: it calls a result *at least as extreme* as Ipsos's if its **probability under H₀ is no larger** than that of Ipsos's result. The p-value is then the total probability of all such results. This is the *exact multinomial goodness-of-fit test* ("goodness of fit": how well observed counts match what a hypothesised population would produce). For four categories and *n* ≈ 2,000 there are too many count vectors to enumerate, so we estimate it by simulation, a **Monte Carlo** method: draw millions of polls from H₀ and count how many are at least as improbable as Ipsos's.
+
+Plain simulation has a floor: with two million draws it cannot see probabilities below one in two million. A standard refinement, **importance sampling**, removes the floor. Instead of drawing polls from the true electorate (where results like Ipsos's essentially never occur), we draw them from a *made-up* electorate centred on Ipsos's numbers, where they occur all the time, and then correct each draw by the ratio "how likely was this poll under the real electorate / how likely was it under the made-up one". The corrected average is an unbiased estimate of the true tail probability, however small, and comes with its own standard error.
+
+*Further reading:* Wikipedia on [goodness of fit](https://en.wikipedia.org/wiki/Goodness_of_fit), [exact tests](https://en.wikipedia.org/wiki/Exact_test), the [Monte Carlo method](https://en.wikipedia.org/wiki/Monte_Carlo_method) and [importance sampling](https://en.wikipedia.org/wiki/Importance_sampling) · Allen Downey, [*There is only one test!*](http://allendowney.blogspot.com/2011/05/there-is-only-one-test.html), a short, plain-language case that every hypothesis test is "simulate the null, count how often you beat the observation" · Jake VanderPlas, [*Statistics for Hackers*](https://speakerdeck.com/jakevdp/statistics-for-hackers) (PyCon 2016 talk; [video](https://www.youtube.com/watch?v=Iq9DzN6mvYA)), the same idea with worked examples.
+</div>
+
+```{r m4-exact-mc}
+log10_sim <- log10_dmultinom_mat(sim_A, p_rik_A)
+n_as_extreme <- sum(log10_sim <= log10_point_ips)
+
+# importance sampling: draw from an electorate centred on Ipsos's counts, re-weight to H0.
+# The weights are heavy-tailed, so instead of trusting a single standard error we run
+# several independent replicates and report the spread of their exponents.
+set.seed(2026)
+n_rep  <- 10; n_per <- 1e6; n_is <- n_rep * n_per
+q_prop <- k_ips_A / n_primary
+p_is_rep <- vapply(seq_len(n_rep), function(i) {
+  sim_is <- rmultinom(n_per, n_primary, q_prop)
+  l10_h0 <- log10_dmultinom_mat(sim_is, p_rik_A)    # log10 P(poll | real electorate)
+  l10_q  <- log10_dmultinom_mat(sim_is, q_prop)     # log10 P(poll | made-up electorate)
+  mean(10^(l10_h0 - l10_q) * (l10_h0 <= log10_point_ips))
+}, numeric(1))
+p_is       <- mean(p_is_rep)
+log10_p_is <- log10(p_is)
+is_spread  <- range(log10(p_is_rep))                 # exponents of the individual replicates
+```
+
+Of **`r fmt_n(n_sim)`** simulated random polls, **`r n_as_extreme`** were at least as improbable as Ipsos's result. The plain Monte Carlo p-value is therefore **`r ifelse(n_as_extreme == 0, sprintf("below 1 / %s = %s", fmt_n(n_sim), fmt_log10p(log10(1 / n_sim))), formatC(n_as_extreme / n_sim, format = "e", digits = 2))`**, the resolution limit of this simulation. The histogram below shows where Ipsos's result sits relative to the two million simulated ones.
+
+Importance sampling gets past the floor. Re-weighting `r fmt_n(n_is)` polls drawn from an electorate shaped like Ipsos's numbers gives an exact-test p-value of **`r fmt_log10p(log10_p_is)`**. The `r n_rep` independent runs of `r fmt_n(n_per)` draws each gave exponents between `r sprintf("%.1f", is_spread[1])` and `r sprintf("%.1f", is_spread[2])`, so the estimate is good to a few tenths of a power of ten. This is the most direct estimate of the tail probability in this document: it uses no approximation beyond the simulation itself.
+
+```{r fig-m4, fig.height=4.5, fig.cap="Figure 5. Log-probability (base 10) of two million simulated random polls under H₀. Ipsos's result lies far to the left of every one of them."}
+tibble::tibble(l10 = log10_sim) |>
+  ggplot(aes(x = l10)) +
+  geom_histogram(binwidth = 0.25, fill = "#2a78d6", colour = "#fcfcfb", linewidth = 0.2) +
+  geom_vline(xintercept = log10_point_ips, colour = "#eb6834", linewidth = 1) +
+  annotate("label", x = log10_point_ips, y = Inf, vjust = 1.4, hjust = -0.05,
+           label = sprintf("Ipsos*minute*s~result:~10^%.0f", log10_point_ips), parse = TRUE,
+           colour = "#eb6834", fill = "#fcfcfb", label.size = 0, size = 3.8) +
+  annotate("text", x = mean(c(log10_point_ips, min(log10_sim))), y = Inf, vjust = 4,
+           label = sprintf("about~10^%.0f~times~less~likely~than", min(log10_sim) - log10_point_ips),
+           parse = TRUE, colour = "#52514e", size = 3.4) +
+  annotate("text", x = mean(c(log10_point_ips, min(log10_sim))), y = Inf, vjust = 6.2,
+           label = "the least likely of two million simulated polls", colour = "#52514e", size = 3.4) +
+  scale_x_continuous(labels = function(x) parse(text = paste0("10^", x))) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(x = "Probability of the simulated poll's result (log scale)", y = "Number of simulated polls",
+       title = "How unusual is Ipsos's result, measured by its own probability?",
+       subtitle = "Two million random polls from the RIK electorate (Scheme A, n as adopted)") +
+  theme_report()
+```
+
+## Method 5: the likelihood-ratio (G) test, which can reach the extreme tail
+
+<div class="concept">
+#### Concept: the G statistic and the chi-square distribution {-}
+
+The classical textbook route to the far tail is an approximation. The **G statistic** (likelihood-ratio statistic) summarises the discrepancy between observed and expected counts in one number, G = 2 Σ Oᵢ ln(Oᵢ / Eᵢ). Under H₀, and for samples this large, G approximately follows a known distribution, the **chi-square distribution** with (categories − 1) **degrees of freedom** (roughly: the number of independent ways the counts can deviate from expectation; with four categories that must sum to *n*, three), whose tail we can compute analytically to any depth. Its close cousin is Pearson's chi-square, Σ (O − E)² / E; we report both.
+
+Two honest caveats. First, the chi-square distribution is an **asymptotic approximation**: excellent near the centre, rougher the deeper into the tail one goes, which is why the G and Pearson versions below disagree by a few powers of ten even though they measure the same thing. Second, when they disagree in the far tail, G is the one to trust: its tail behaviour is governed exactly by the information-theoretic distance between the two vectors, whereas Pearson's statistic is known to overstate extremeness far out. We therefore treat Method 5 as a cross-check on the importance-sampling estimate of Method 4, not as the headline, and read all of these figures as orders of magnitude.
+
+*Further reading:* McDonald, *Handbook of Biological Statistics*: [G-test of goodness-of-fit](https://www.biostathandbook.com/gtestgof.html), [chi-square test of goodness-of-fit](https://www.biostathandbook.com/chigof.html) and [small numbers in chi-square and G-tests](https://www.biostathandbook.com/small.html) (the "expected count below 5" rule used for Scheme B), all written for non-statisticians · Wikipedia on the [G-test](https://en.wikipedia.org/wiki/G-test), the [likelihood-ratio test](https://en.wikipedia.org/wiki/Likelihood-ratio_test), [Pearson's chi-squared test](https://en.wikipedia.org/wiki/Pearson%27s_chi-squared_test) and the [chi-squared distribution](https://en.wikipedia.org/wiki/Chi-squared_distribution).
+</div>
+
+```{r m5-gtest}
+g_test <- function(obs, p) {
+  n <- sum(obs); E <- n * p
+  G  <- 2 * sum(ifelse(obs > 0, obs * log(obs / E), 0))
+  X2 <- sum((obs - E)^2 / E)
+  df <- length(obs) - 1
+  c(G = G, X2 = X2, df = df,
+    log10_p_G  = pchisq(G,  df, lower.tail = FALSE, log.p = TRUE) / log(10),
+    log10_p_X2 = pchisq(X2, df, lower.tail = FALSE, log.p = TRUE) / log(10))
+}
+gA <- g_test(k_ips_A, p_rik_A)
+
+# Scheme B: all 19 categories, merging those whose expected count is below 5 (the usual rule of thumb)
+k_ips_B <- pct_to_counts(pct_ips_B, n_primary, remainder_to = which(names(pct_ips_B) == "Invalid ballots"))
+names(k_ips_B) <- names(pct_ips_B)
+small <- n_primary * p_rik_B < 5
+k_ips_B2 <- c(k_ips_B[!small], `Small lists (merged)` = sum(k_ips_B[small]))
+p_rik_B2 <- c(p_rik_B[!small], `Small lists (merged)` = sum(p_rik_B[small]))
+gB <- g_test(k_ips_B2, p_rik_B2)
+
+tibble::tibble(
+  Scheme = c("A: four categories", sprintf("B: all lists (%d categories after merging %d tiny ones)", length(k_ips_B2), sum(small))),
+  `G statistic` = sprintf("%.0f", c(gA["G"], gB["G"])),
+  `Degrees of freedom` = c(gA["df"], gB["df"]),
+  `p-value (G)` = purrr::map_chr(c(gA["log10_p_G"], gB["log10_p_G"]), fmt_log10p),
+  `p-value (Pearson χ², less reliable this far out)` = purrr::map_chr(c(gA["log10_p_X2"], gB["log10_p_X2"]), fmt_log10p)
+) |> kable_report(caption = "Table 9. Likelihood-ratio and Pearson chi-square tests of Ipsos's result against the RIK electorate (asymptotic approximations; orders of magnitude).")
+```
+
+<div class="callout callout-result">
+**Result.** In the four-category scheme the chi-square approximation puts the probability of a discrepancy at least as large as Ipsos's at **`r fmt_log10p(gA["log10_p_G"])`**, within a couple of orders of magnitude of the importance-sampling estimate (`r fmt_log10p(log10_p_is)`), as an approximation of this kind should be. Treating lists separately (Scheme B, `r length(k_ips_B2)` categories after merging the `r sum(small)` smallest) gives `r fmt_log10p(gB["log10_p_G"])`: the discrepancy is slightly larger in total (G = `r sprintf("%.0f", gB["G"])` against `r sprintf("%.0f", gA["G"])`), but it is spread over more than three times as many categories, and the chi-square distribution charges for each extra category. All of these agree to within a few orders of magnitude, which, at this depth, is agreement.
+</div>
+
+## All methods side by side
+
+```{r methods-summary}
+summary_tbl <- tibble::tibble(
+  Method = c("Method 1 – Point probability of Ipsos's exact vector (for reference; not a tail)",
+             "Method 2a – Binomial tail: Studentska lista this low or lower (exact)",
+             "Method 2b – Binomial tail: Ujedinjena Srbija this high or higher (exact)",
+             "Method 3 – Joint tail: both at once (exact; plain Monte Carlo)",
+             "Method 4a – Exact multinomial test, plain Monte Carlo",
+             "Method 4b – Exact multinomial test, importance sampling",
+             "Method 5a – Likelihood-ratio G test, Scheme A (chi-square approximation)",
+             "Method 5b – Likelihood-ratio G test, Scheme B, all lists (chi-square approximation)"),
+  `Probability under random sampling` = c(
+    fmt_log10p(log10_point_ips), fmt_log10p(m2$log10_p[1]), fmt_log10p(m2$log10_p[2]),
+    sprintf("exact: %s; Monte Carlo: 0 of %s", fmt_log10p(log10(joint_exact)), fmt_n(n_sim)),
+    ifelse(n_as_extreme == 0, sprintf("below %s (0 of %s)", fmt_log10p(log10(1 / n_sim)), fmt_n(n_sim)),
+           formatC(n_as_extreme / n_sim, format = "e", digits = 2)),
+    sprintf("%s (%d runs: exponents %.1f to %.1f)", fmt_log10p(log10_p_is), n_rep, is_spread[1], is_spread[2]),
+    fmt_log10p(gA["log10_p_G"]), fmt_log10p(gB["log10_p_G"]))
+)
+kable_report(summary_tbl, caption = sprintf("Table 10. Summary of all methods, Scheme A unless stated, n = %s.", fmt_n(n_primary)))
+# the range of tail probabilities across the methods that can reach the tail
+tail_range <- range(c(m2$log10_p[1], log10(joint_exact), log10_p_is, gA["log10_p_G"], gB["log10_p_G"]))
+```
+
+<div class="callout callout-result">
+**Reading the summary.** Every method that can reach the far tail puts the probability between **`r fmt_pow(tail_range[2])` and `r fmt_pow(tail_range[1])`**, depending on how "at least as far from the truth" is defined (one list, both lists, or the whole vector) and on which approximation is used. The two that cannot reach it are consistent with that range: the *Ujedinjena Srbija* tail on its own (`r fmt_pow(m2$log10_p[2])`) is a deliberately weaker, one-list statement, and plain simulation stops at the floor of what two million draws can resolve, which is itself a finding: among two million ideal random polls, not one looks like Ipsos's. Our headline figure is the importance-sampling estimate, **`r fmt_log10p(log10_p_is)`**, because it is the most direct computation of the most general definition; the chi-square figure, `r fmt_pow(gA["log10_p_G"])`, is the textbook approximation to the same quantity. In substance: the hypothesis that Ipsos's published numbers arose from a random sample of the people who voted on 25 October, with chance as the only source of error, is not tenable. Sampling error alone cannot account for the gap.
+</div>
+
+## The same conclusion from Ipsos's own stated precision
+
+There is an even simpler way to see this, which needs no model of ours at all, only Ipsos's own published confidence intervals.
+
+```{r own-precision}
+own <- tibble::tibble(
+  Category = c("Studentska lista", "Ujedinjena Srbija"),
+  ipsos    = c(40.0, 47.4), lo = c(37.9, 45.3), hi = c(42.1, 49.5),
+  actual   = 100 * p_rik_A[1:2]
+) |>
+  dplyr::mutate(se_own = (hi - lo) / 2 / 1.96,
+                outside_by = ifelse(actual > hi, actual - hi, lo - actual),
+                z_own = (actual - ipsos) / se_own,
+                log10_p_own = pnorm(-abs(z_own), log.p = TRUE) / log(10))
+own |>
+  dplyr::transmute(Category, `Ipsos 95% interval` = sprintf("%.1f – %.1f", lo, hi),
+                   `Actual result` = fmt_pct(actual), `Outside the interval by (pts)` = sprintf("%.1f", outside_by),
+                   `Ipsos's own SE (pts)` = sprintf("%.2f", se_own), `Distance in SEs` = sprintf("%.1f", abs(z_own)),
+                   `One-sided probability` = purrr::map_chr(log10_p_own, fmt_log10p)) |>
+  kable_report(caption = "Table 11. The actual result measured against Ipsos's own published margins of error.")
+```
+
+<div class="callout callout-result">
+**Result.** Ipsos's interval for *Studentska lista*, 37.9–42.1%, says in effect: "an interval built this way would cover the true value in 95 out of 100 polls like ours". The truth was `r fmt_pct(own$actual[1])`: **`r sprintf("%.1f", own$outside_by[1])` points above the top of the interval**, which is `r sprintf("%.0f", abs(own$z_own[1]))` of Ipsos's own standard errors away from its estimate. For *Ujedinjena Srbija* the truth was `r sprintf("%.1f", own$outside_by[2])` points below the bottom of the interval, `r sprintf("%.0f", abs(own$z_own[2]))` standard errors away. By the precision Ipsos itself claimed, the chance of being this wrong on *Studentska lista* alone is about `r fmt_log10p(own$log10_p_own[1])`. A 95% interval is supposed to miss one time in twenty, and typically by a fraction of a point, not by eleven.
+</div>
+
+## The sampling cloud
+
+One picture summarises the whole section (Figure 6). Each grey dot is a random poll of `r fmt_n(n_primary)` decided voters from the real electorate; together they show everything that chance can produce. Ipsos's result is marked, and for comparison the only other published poll of this election, by NSPM (fieldwork 25 September – 5 October, published 20 October).
+
+```{r fig-cloud, fig.height=6.5, fig.cap="Figure 6. Where ideal random polls land (grey cloud, 20,000 simulations from the RIK electorate), Ipsos's published result (orange), Ipsos's own 95% box (orange dashed rectangle), the NSPM poll (aqua; fieldwork ended 5 October), and the official result (blue cross)."}
+cloud <- tibble::tibble(
+  sl = 100 * sim_A[1, 1:20000] / n_primary,
+  us = 100 * sim_A[2, 1:20000] / n_primary
+)
+points <- tibble::tibble(
+  who = c("RIK (official)", "Ipsos (poll)", "NSPM (poll)"),
+  sl  = c(100 * p_rik_A[1], 40.0, 44.5),
+  us  = c(100 * p_rik_A[2], 47.4, 42.7),
+  note = c("Official result\n(RIK, preliminary)",
+           sprintf("Ipsos, fieldwork 20–22 Oct\n%s interviews, effective n ≈ %s", fmt_n(ipsos_n), fmt_n(n_primary)),
+           "NSPM, fieldwork 25 Sep – 5 Oct\nn = 1,050"),
+  # label positions: RIK below-left of the cloud, Ipsos to the right of its box, NSPM above-left
+  hjust = c(1, 0, 1), lx = c(52.3, 42.6, 44.0), ly = c(36.2, 47.4, 43.6)
+) |>
+  dplyr::mutate(lbl = sprintf("%s\n(%.1f%%, %.1f%%)", note, sl, us))
+
+ggplot() +
+  geom_point(data = cloud, aes(x = sl, y = us), colour = "#898781", alpha = 0.15, size = 0.9) +
+  annotate("rect", xmin = 37.9, xmax = 42.1, ymin = 45.3, ymax = 49.5,
+           fill = NA, colour = "#eb6834", linetype = "dashed", linewidth = 0.6) +
+  annotate("text", x = 42.1, y = 49.5, label = "Ipsos's own 95% intervals", hjust = 1, vjust = -0.5,
+           size = 3.4, colour = "#eb6834") +
+  geom_point(data = points, aes(x = sl, y = us, colour = who, shape = who), size = 4, stroke = 1.6) +
+  geom_text(data = points, aes(x = lx, y = ly, label = lbl, hjust = hjust),
+            size = 3.4, colour = "#52514e", lineheight = 0.95) +
+  scale_colour_manual(values = col) +
+  scale_shape_manual(values = c("RIK (official)" = 4, "Ipsos (poll)" = 16, "NSPM (poll)" = 16)) +
+  scale_x_continuous(labels = function(x) paste0(x, "%")) +
+  scale_y_continuous(labels = function(x) paste0(x, "%")) +
+  labs(x = "Studentska lista share", y = "Ujedinjena Srbija share",
+       title = "Everything chance can produce, and where Ipsos landed",
+       subtitle = sprintf("Grey: 20,000 random polls of n = %s from the RIK electorate. Each point is labelled (Studentska, Ujedinjena).", fmt_n(n_primary))) +
+  theme_report()
+```
+
+<div class="callout callout-result">
+**What the cloud shows.** The grey cloud, every result chance can plausibly produce, is a compact blob around the official result, about two points across. Ipsos's point is in a different part of the plane altogether, and its own 95% box does not come close to touching the cloud. The NSPM poll, with roughly half the effective sample and fieldwork that ended almost three weeks before the vote, also missed (it had the race nearly tied) but by a fraction of Ipsos's distance; we return to it as a benchmark in Section 9.
+</div>
+
+# Sensitivity: does the conclusion depend on our choices?
+
+## Why check
+
+Two choices in the analysis were ours rather than given: the effective sample size (Section 6) and the exact definition of the population (RIK's totals include Kosovo i Metohija and the diaspora, which Ipsos did not sample). A robust conclusion should survive any reasonable alternative for both. Here we vary them and watch the answer.
+
+## Varying the sample size
+
+We rerun the G test and the binomial tails for a deliberately low *n* = 1,500 (more generous to Ipsos than its own intervals justify), our adopted *n*, a "raw decided" *n* = `r fmt_n(round(0.8 * ipsos_n, -2))` (what the decided base would be if 80% of respondents named a list and there were no design effect at all; the 80% is an assumption, since Ipsos does not publish the figure), and the full 3,624 interviews.
+
+```{r sens-n}
+n_grid <- c(1500, n_primary, round(0.8 * ipsos_n, -2), ipsos_n)
+sens_n <- purrr::map_dfr(n_grid, function(n) {
+  k <- pct_to_counts(pct_ips_A, n, 4)
+  g <- g_test(k, p_rik_A)
+  tibble::tibble(
+    n = n,
+    `G test (Scheme A)` = g["log10_p_G"],
+    `Studentska this low` = binom_tail(k[1], n, p_rik_A[1], "low"),
+    `Ujedinjena this high` = binom_tail(k[2], n, p_rik_A[2], "high")
+  )
+})
+sens_n |>
+  dplyr::mutate(n = fmt_n(n), dplyr::across(-n, ~ purrr::map_chr(.x, fmt_log10p))) |>
+  dplyr::rename(`Assumed n` = n) |>
+  kable_report(caption = "Table 12. Probability of Ipsos's result for different assumed sample sizes.")
+```
+
+```{r fig-sens-n, fig.height=4.5, fig.cap="Figure 7. Log-probability of Ipsos's result as a function of the assumed effective sample size. Every line is far below the conventional 5% and 1-in-a-million thresholds at every n."}
+sens_n |>
+  tidyr::pivot_longer(-n, names_to = "method", values_to = "log10_p") |>
+  ggplot(aes(x = n, y = log10_p, colour = method)) +
+  geom_hline(yintercept = log10(0.05), linetype = "dotted", colour = "#898781") +
+  geom_hline(yintercept = -6, linetype = "dotted", colour = "#898781") +
+  annotate("text", x = 1500, y = log10(0.05), label = "p = 0.05", hjust = 0, vjust = -0.5, size = 3.6, colour = "#52514e") +
+  annotate("text", x = 1500, y = -6, label = "p = one in a million", hjust = 0, vjust = -0.5, size = 3.6, colour = "#52514e") +
+  geom_line(linewidth = 1) + geom_point(size = 3) +
+  scale_colour_manual(values = c("G test (Scheme A)" = "#0b0b0b", "Studentska this low" = "#2a78d6", "Ujedinjena this high" = "#eb6834")) +
+  scale_x_continuous(breaks = n_grid, labels = scales::comma) +
+  scale_y_continuous(labels = function(x) parse(text = paste0("10^", x)), expand = expansion(mult = c(0.02, 0.1))) +
+  labs(x = "Assumed effective sample size", y = "Probability under random sampling",
+       title = "The conclusion does not depend on the sample size we assume") +
+  theme_report()
+```
+
+## Varying the population: excluding Kosovo i Metohija and the diaspora
+
+Ipsos surveyed only citizens present in Serbia without Kosovo i Metohija. Voters abroad broke overwhelmingly for *Studentska lista* (`r fmt_pct(100 * abroad_votes[3] / sum(abroad_votes), 1)` of their valid votes), voters in Kosovo i Metohija overwhelmingly for *Ujedinjena Srbija* (`r fmt_pct(100 * kim_votes[1] / sum(kim_votes), 1)`). The fair comparison removes both from the population.
+
+```{r sens-pop}
+scheme_a_adj <- scheme_a |>
+  dplyr::mutate(votes_adj = votes - kim - abroad,
+                rik_p_adj = votes_adj / sum(votes_adj),
+                rik_pct_adj = 100 * rik_p_adj)
+p_rik_A_adj <- setNames(scheme_a_adj$rik_p_adj, scheme_a_adj$group)
+g_adj  <- g_test(k_ips_A, p_rik_A_adj)
+bin_adj <- c(binom_tail(k_ips_A[1], n_primary, p_rik_A_adj[1], "low"),
+             binom_tail(k_ips_A[2], n_primary, p_rik_A_adj[2], "high"))
+
+scheme_a_adj |>
+  dplyr::transmute(Category = group, `RIK % (all voters)` = fmt_pct(rik_pct),
+                   `RIK % (Serbia proper, without Kosovo i Metohija and abroad)` = fmt_pct(rik_pct_adj),
+                   `Ipsos %` = fmt_pct(ipsos_pct, 1)) |>
+  kable_report(caption = sprintf("Table 13. The population redefined to match Ipsos's sampling frame (removes %s ballots).",
+                                 fmt_n(sum(scheme_a$kim + scheme_a$abroad))))
+```
+
+<div class="callout callout-result">
+**Result.** Matching Ipsos's sampling frame moves the *Studentska lista* share from `r fmt_pct(scheme_a$rik_pct[1])` to `r fmt_pct(scheme_a_adj$rik_pct_adj[1])` and *Ujedinjena Srbija* from `r fmt_pct(scheme_a$rik_pct[2])` to `r fmt_pct(scheme_a_adj$rik_pct_adj[2])`: changes in the second decimal, because the two excluded populations are small and pull in opposite directions. The G-test probability rises slightly, from `r fmt_log10p(gA["log10_p_G"])` to `r fmt_log10p(g_adj["log10_p_G"])`. The population definition is not the explanation.
+</div>
+
+## Varying the base: valid votes only
+
+As explained in Section 4 (Issue 1), Ipsos's 2.5% invalid share is an assumption rather than a measurement, so it should not really be allowed to count as "sampling evidence". Here we remove invalid ballots from both sides: Ipsos's list shares are rescaled to the 97.5% that its respondents actually produced, and RIK's shares are taken over valid votes. This is the fairest version of the test for Ipsos.
+
+```{r sens-valid}
+# Scheme A on the valid-vote base: drop the invalid row from both sources
+ips_valid <- ipsos |> dplyr::filter(short != "Invalid ballots") |>
+  dplyr::group_by(group) |> dplyr::summarise(pct = sum(ipsos_pct) / 0.975, .groups = "drop") |>
+  dplyr::mutate(group = factor(group, levels = grp_levels)) |> dplyr::arrange(group)
+rik_valid <- rik |> dplyr::filter(short != "Invalid ballots") |>
+  dplyr::group_by(group) |> dplyr::summarise(votes = sum(votes), .groups = "drop") |>
+  dplyr::mutate(group = factor(group, levels = grp_levels)) |> dplyr::arrange(group)
+p_rik_A_valid   <- setNames(rik_valid$votes / sum(rik_valid$votes), grp_levels)
+pct_ips_A_valid <- setNames(ips_valid$pct, grp_levels)
+k_ips_A_valid   <- pct_to_counts(pct_ips_A_valid, n_primary, 4)
+g_valid   <- g_test(k_ips_A_valid, p_rik_A_valid)
+bin_valid <- binom_tail(k_ips_A_valid[1], n_primary, p_rik_A_valid[1], "low")
+
+# Scheme B on the valid-vote base
+sb_valid <- scheme_b |> dplyr::filter(short != "Invalid ballots") |>
+  dplyr::mutate(p = votes / sum(votes), pct = ipsos_pct / 0.975)
+k_B_valid <- pct_to_counts(sb_valid$pct, n_primary, which.max(sb_valid$pct)); names(k_B_valid) <- sb_valid$short
+p_B_valid <- setNames(sb_valid$p, sb_valid$short)
+small_v   <- n_primary * p_B_valid < 5
+k_B_valid2 <- c(k_B_valid[!small_v], `Small lists (merged)` = sum(k_B_valid[small_v]))
+p_B_valid2 <- c(p_B_valid[!small_v], `Small lists (merged)` = sum(p_B_valid[small_v]))
+gB_valid <- g_test(k_B_valid2, p_B_valid2)
+
+tibble::tibble(
+  Test = c("Studentska lista this low or lower (binomial)", "G test, Scheme A", "G test, Scheme B"),
+  `All ballots (main analysis)` = purrr::map_chr(c(m2$log10_p[1], gA["log10_p_G"], gB["log10_p_G"]), fmt_log10p),
+  `Valid votes only` = purrr::map_chr(c(bin_valid, g_valid["log10_p_G"], gB_valid["log10_p_G"]), fmt_log10p)
+) |> kable_report(caption = "Table 14. The key tests with invalid ballots removed from both sources.")
+# the overall range of tail probabilities across methods AND bases, used in the conclusions
+tail_range_all <- range(c(tail_range, g_valid["log10_p_G"], gB_valid["log10_p_G"]))
+```
+
+<div class="callout callout-result">
+**Result.** On the valid-vote base *Studentska lista*'s true share is `r fmt_pct(100 * p_rik_A_valid[1])` and Ipsos's rescaled estimate `r sprintf("%.1f%%", pct_ips_A_valid[1])`; the gap narrows by a fraction of a point and the "Other" category loses the 1.2-point invalid-ballot overestimate. The probabilities move accordingly: the Scheme A test from `r fmt_pow(gA["log10_p_G"])` to `r fmt_pow(g_valid["log10_p_G"])`, Scheme B from `r fmt_pow(gB["log10_p_G"])` to `r fmt_pow(gB_valid["log10_p_G"])`. Three or four powers of ten is a real difference, and it is the reason this document reports its headline as an order of magnitude rather than a precise figure. It does not come close to changing the conclusion.
+
+Across every combination of sample size, population definition and base, the probability of Ipsos's result under random sampling never rises above about `r fmt_pow(max(c(sens_n[["G test (Scheme A)"]], g_valid["log10_p_G"], gB_valid["log10_p_G"])))`. The conclusion of Section 7 is not an artefact of our choices.
+</div>
+
+# What would it take to rescue the poll?
+
+## Why ask
+
+A probability of `r fmt_pow(log10_p_is)` is not a number anyone can feel. A more useful way to express the same finding is to ask: **how large would each innocent explanation have to be to make Ipsos's result ordinary?** This section quantifies the three explanations that concern the electorate rather than the pollster's instrument: a genuine late swing of opinion, differential turnout, and the behaviour of undecided voters. It then uses the only other published poll of this election as a benchmark for what an ordinary polling miss looks like.
+
+## Scenario 1: a late swing between 22 and 25 October
+
+Suppose the electorate on 22 October was closer to Ipsos's picture than the final result shows, and that voters then moved in the final three days. How many would have had to move for Ipsos's result to have been merely unlucky, i.e. to have had a 5% probability, the conventional border of "could be chance"?
+
+Ipsos's picture differs from the result in all four categories (too few *Studentska* voters, too many *Ujedinjena Srbija* voters, and too many voters for the small lists and invalid ballots), so the cleanest way to pose the question is this: suppose the electorate on 22 October was somewhere **on the straight line between Ipsos's picture and the actual result**, and then drifted towards the actual result by election day. How far along that line towards Ipsos's picture would the electorate have had to be for Ipsos's poll to have had a 5% probability? We express the answer as the number of voters who would then have had to switch **to *Studentska lista*** in the final three days. Moving along this particular line is also the direction that needs the *fewest* movers (any swing that left the small-list excess in place could never rescue the poll), so the figure below is a lower bound, i.e. the most generous answer for Ipsos.
+
+```{r swing}
+p_ips_A <- pct_ips_A / 100
+# population a fraction t of the way from the actual result towards Ipsos's picture
+swing_log10p <- function(t, k = k_ips_A, p_from = p_rik_A, p_to = p_ips_A) {
+  p2 <- (1 - t) * p_from + t * p_to
+  g_test(k, p2)["log10_p_G"]
+}
+t_05 <- uniroot(function(t) swing_log10p(t) - log10(0.05), c(0, 1))$root
+t_50 <- uniroot(function(t) swing_log10p(t) - log10(0.50), c(0, 1))$root
+to_sl <- function(t) t * (p_rik_A[1] - p_ips_A[1]) * rik_meta$ballots       # voters who must move TO Studentska
+from_us <- function(t) t * (p_ips_A[2] - p_rik_A[2]) * rik_meta$ballots     # ... of whom from Ujedinjena Srbija
+voters_05 <- to_sl(t_05); voters_50 <- to_sl(t_50)
+
+swing_df <- tibble::tibble(t = seq(0, 1, by = 0.01)) |>
+  dplyr::mutate(voters = to_sl(t), log10_p = purrr::map_dbl(t, swing_log10p))
+
+# how much does the answer depend on the assumed sample size?
+voters_05_by_n <- vapply(n_grid, function(n) {
+  k <- pct_to_counts(pct_ips_A, n, 4)
+  to_sl(uniroot(function(t) swing_log10p(t, k = k) - log10(0.05), c(0, 1))$root)
+}, numeric(1))
+```
+
+```{r fig-swing, fig.height=4.5, fig.cap="Figure 8. How the probability of Ipsos's result rises as we assume ever more voters moved to Studentska lista after the poll (the electorate drifting from Ipsos's picture towards the actual result)."}
+ggplot(swing_df, aes(x = voters, y = log10_p)) +
+  geom_hline(yintercept = log10(0.05), linetype = "dotted", colour = "#898781") +
+  annotate("text", x = 0, y = log10(0.05), label = "p = 0.05 (“could be chance”)", hjust = 0, vjust = -0.5, size = 3.6, colour = "#52514e") +
+  geom_line(colour = "#2a78d6", linewidth = 1.1) +
+  geom_vline(xintercept = voters_05, colour = "#eb6834", linewidth = 0.7) +
+  annotate("label", x = voters_05, y = min(swing_df$log10_p) * 0.5,
+           label = sprintf("about %s voters\nwould have had to move\nto Studentska lista", fmt_n(round(voters_05, -3))),
+           hjust = 1.05, size = 3.5, colour = "#eb6834", fill = "#fcfcfb", label.size = 0) +
+  scale_x_continuous(labels = scales::comma, expand = expansion(mult = c(0.02, 0.08))) +
+  scale_y_continuous(labels = function(x) parse(text = paste0("10^", x)), expand = expansion(mult = c(0.02, 0.1))) +
+  labs(x = "Voters assumed to have moved to Studentska lista between 22 and 25 October",
+       y = "Probability of Ipsos's result", title = "Scenario 1: how big a late swing would rescue the poll?") +
+  theme_report()
+```
+
+<div class="callout callout-result">
+**Result.** For Ipsos's result to have been merely a 1-in-20 unlucky draw, the electorate on 22 October would have had to be **`r sprintf("%.0f", 100 * t_05)`% of the way** from the actual result to Ipsos's picture, which means that about **`r fmt_n(round(voters_05, -3))` voters** (`r fmt_pct(100 * voters_05 / rik_meta$ballots, 1)` of all ballots cast) would have had to move to *Studentska lista* in the three days after the fieldwork, roughly `r fmt_n(round(from_us(t_05), -3))` of them from *Ujedinjena Srbija* and the rest voters who would otherwise have backed a small list or cast an invalid ballot. (The figure depends a little on the assumed sample size: between `r fmt_n(round(min(voters_05_by_n), -3))` and `r fmt_n(round(max(voters_05_by_n), -3))` across the range of *n* used in Section 8.) For Ipsos's poll to have been a typical, median poll, about `r fmt_n(round(voters_50, -3))` voters would have had to move. That is a swing of some `r sprintf("%.0f", 100 * voters_05 / rik_meta$ballots)` points within 72 hours, in an election where no event of that magnitude was reported between 22 and 25 October; it would mean *Ujedinjena Srbija* losing about one in `r sprintf("%.0f", 1 / (from_us(t_05) / (p_rik_A[2] * rik_meta$ballots + from_us(t_05))))` of its 22-October supporters by polling day. Late swings of one to three points are common in the polling literature; a swing of this size within three days is, to our knowledge, undocumented in comparable elections. (For what polling error normally looks like across 351 elections in 45 countries, see [Jennings & Wlezien, 2018](https://doi.org/10.1038/s41562-018-0315-6); for a forensic account of an unusually bad polling year and why non-response rather than late swing or turnout models was the likely cause, see the [AAPOR Task Force report on 2020 U.S. pre-election polls](https://aapor.org/wp-content/uploads/2022/11/AAPOR-Task-Force-on-2020-Pre-Election-Polling_Report-FNL.pdf).)
+</div>
+
+## Scenario 2: differential turnout (the net surplus)
+
+Ipsos predicted a turnout of `r ipsos_turnout["est"]`%; actual turnout was `r fmt_pct(rik_meta$turnout_pct)`. The difference is about **`r fmt_n(round((rik_meta$turnout_pct - ipsos_turnout["est"]) / 100 * rik_meta$turned_out / (rik_meta$turnout_pct / 100), -3))` voters** who turned out but whom Ipsos's model expected to stay home. (The two percentages have slightly different bases, Ipsos's being adults in Serbia proper and RIK's registered voters including Kosovo i Metohija and abroad, so this is an approximation; the scenario is deliberately extreme in any case.) Could these "unexpected" voters account for the gap? We take the extreme case for this *net* surplus: **every single one of them voted for *Studentska lista***. Removing them from the count gives the electorate Ipsos thought it was measuring.
+
+```{r turnout}
+registered_processed <- rik_meta$turned_out / (rik_meta$turnout_pct / 100)       # registered voters at the processed stations
+extra_voters <- (rik_meta$turnout_pct - ipsos_turnout["est"]) / 100 * registered_processed
+votes_t <- scheme_a$votes
+votes_t[1] <- votes_t[1] - extra_voters                      # all extra voters assumed to be Studentska voters
+p_turnout <- votes_t / sum(votes_t)
+g_turn <- g_test(k_ips_A, p_turnout)
+
+tibble::tibble(Category = scheme_a$group,
+               `RIK % (actual)` = fmt_pct(100 * p_rik_A),
+               `% if all extra turnout were Studentska voters` = fmt_pct(100 * p_turnout),
+               `Ipsos %` = fmt_pct(pct_ips_A, 1)) |>
+  kable_report(caption = sprintf("Table 15. Scenario 2: the electorate Ipsos expected, under the extreme assumption that all %s voters it did not expect voted Studentska lista.", fmt_n(round(extra_voters, -3))))
+```
+
+<div class="callout callout-result">
+**Result.** Even in this deliberately extreme scenario, in which the entire turnout surprise consists of *Studentska* voters, the electorate Ipsos was trying to measure would have had *Studentska lista* at `r fmt_pct(100 * p_turnout[1])` and *Ujedinjena Srbija* at `r fmt_pct(100 * p_turnout[2])`, still a clear Studentska lead and still far from Ipsos's 40.0 / 47.4. The probability of Ipsos's result under this adjusted population is `r fmt_log10p(g_turn["log10_p_G"])`. The turnout *surplus* is not the explanation.
+
+One caveat belongs here. Turnout can also shift a poll without changing the total: if many people who told Ipsos they would vote for *Ujedinjena Srbija* stayed at home, while an equal number who had said they would *not* vote turned out for *Studentska lista*, aggregate turnout is unchanged but the electorate Ipsos modelled is not the one that voted. Such *gross* flows are a failure of the pollster's likely-voter model rather than of sampling, and they are not observable from the outside; to produce Ipsos's picture they would have to involve several hundred thousand voters swapping places. We treat this, together with the handling of undecided respondents, under Scenario 4 and under non-sampling error in the conclusions.
+</div>
+
+## Scenario 3: both together
+
+Combining the two, an extreme turnout assumption *and* a late swing, how large would the swing still have to be?
+
+```{r combined}
+t_05_comb <- uniroot(function(t) swing_log10p(t, p_from = p_turnout) - log10(0.05), c(0, 1))$root
+voters_05_comb <- t_05_comb * (p_turnout[1] - p_ips_A[1]) * sum(votes_t)
+```
+
+<div class="callout callout-result">
+**Result.** With the extreme turnout assumption already in place, a further **`r fmt_n(round(voters_05_comb, -3))` voters** (`r fmt_pct(100 * voters_05_comb / sum(votes_t), 1)` of the remaining ballots) would still have had to move to *Studentska lista* in three days to bring Ipsos's result up to a 5% probability. The two electorate-side explanations do not add up to an explanation.
+</div>
+
+## Scenario 4: undecided voters
+
+Ipsos's percentages describe only the respondents who named a list. Section 6 suggested that this "decided" base was perhaps `r sprintf("%.0f%%", 100 * n_primary * deff_full / ipsos_n)` of the sample, leaving roughly a fifth undecided. Suppose Ipsos's decided respondents were a perfect picture of the decided electorate, and that the entire gap arose because the undecided voters, once they made up their minds, voted very differently. How lopsided would their choice have had to be?
+
+If a share *u* of eventual voters was undecided at the time of the poll, the final result is (1 − *u*) × (Ipsos's decided picture) + *u* × (how the undecided voted). Knowing the final result and Ipsos's picture, we can solve for the third term.
+
+```{r undecided}
+undec <- purrr::map_dfr(c(0.20, 0.25, 0.30, 0.40, 0.50), function(u) {
+  q <- (p_rik_A - (1 - u) * p_ips_A) / u          # how the undecided must have voted
+  tibble::tibble(u = u,
+                 `Studentska lista` = 100 * q[1], `Ujedinjena Srbija` = 100 * q[2],
+                 `Manjinske liste` = 100 * q[3], Other = 100 * q[4])
+})
+undec |>
+  dplyr::mutate(`Undecided share` = fmt_pct(100 * u, 0), .keep = "unused", .before = 1) |>
+  dplyr::mutate(dplyr::across(-`Undecided share`, ~ gsub("-", "−", sprintf("%.0f%%", .x)))) |>
+  kable_report(caption = "Table 16. Scenario 4: how the undecided voters would have had to split for Ipsos's decided picture to have been exactly right. Negative values are impossible.")
+```
+
+<div class="callout callout-result">
+**Result.** If a fifth of the eventual voters were undecided when Ipsos polled, no split works at all: they would have had to vote *more than 100%* for *Studentska lista*. With a quarter undecided they would have had to vote **`r sprintf("%.0f%%", undec[["Studentska lista"]][2])` for *Studentska lista*** and `r sprintf("%.0f%%", undec[["Ujedinjena Srbija"]][2])` for *Ujedinjena Srbija*; with a third undecided, `r sprintf("%.0f%%", undec[["Studentska lista"]][3])` and `r sprintf("%.0f%%", undec[["Ujedinjena Srbija"]][3])`. And in every row up to about 40% undecided the small lists come out *negative*: because Ipsos put the small lists and invalid ballots too high as well, no split of the undecided voters can reconcile the whole vector; they would have had to take votes *away* from the small lists, which is impossible. Undecided voters do break unevenly in real elections, and a late-deciding bloc favouring a protest movement is entirely plausible; a bloc of this size voting almost unanimously is not what the literature describes. This scenario is also, like the previous two, the most generous reading possible: it assumes Ipsos's decided respondents were a perfect sample, with zero sampling error of their own.
+</div>
+
+## Benchmark: what an ordinary polling miss looks like
+
+The only other published poll of this election is by NSPM: fieldwork **25 September – 5 October 2026**, n = 1,050, published 20 October, with *Ujedinjena Srbija* at 42.7% and *Studentska lista* at 44.5% among respondents who named a list, i.e. an almost tied race. It also missed, in the same direction, and it is useful to see by how much, with two caveats that make the comparison coarse. NSPM's fieldwork ended twenty days before the vote and two and a half weeks before Ipsos's, so a genuine shift of opinion in October could legitimately account for part of its miss in a way it cannot for Ipsos's. And NSPM's percentages exclude undecided respondents without any assumption about invalid ballots, so its "everything else" is not quite on the same base as RIK's (this, if anything, penalises NSPM in the comparison). For a like-for-like test we use three categories (the two large lists and everything else) for both polls, since NSPM did not publish a minority-list breakdown; Ipsos enters with the effective sample size derived in Section 6 and NSPM with its reported 1,050 interviews, because NSPM published no intervals from which to derive an effective size. Using the raw 1,050 treats NSPM as *more* precise than it probably was, which again works against NSPM, not for it.
+
+```{r nspm}
+p3 <- c(p_rik_A[1], p_rik_A[2], 1 - p_rik_A[1] - p_rik_A[2]); names(p3)[3] <- "Other"
+bench <- tibble::tibble(
+  Poll = c("Ipsos, fieldwork 20–22 Oct", "NSPM, fieldwork 25 Sep – 5 Oct"),
+  n = c(n_primary, 1050),
+  sl = c(40.0, 44.5), us = c(47.4, 42.7)
+) |>
+  dplyr::mutate(other = 100 - sl - us,
+                k = purrr::pmap(list(sl, us, other, n), ~ pct_to_counts(c(..1, ..2, ..3), ..4, 3)),
+                log10_p = purrr::map_dbl(k, ~ g_test(.x, p3)["log10_p_G"]),
+                z_sl = (sl - 100 * p3[1]) / (100 * sqrt(p3[1] * (1 - p3[1]) / n)))
+bench |>
+  dplyr::transmute(Poll, `n used` = fmt_n(n), `Studentska %` = fmt_pct(sl, 1), `Ujedinjena %` = fmt_pct(us, 1),
+                   `Studentska miss (pts)` = gsub("-", "−", sprintf("%+.1f", sl - 100 * p3[1])),
+                   `Studentska miss in standard errors` = sprintf("%.1f", abs(z_sl)),
+                   `Probability under random sampling (G test)` = purrr::map_chr(log10_p, fmt_log10p)) |>
+  kable_report(caption = "Table 17. Ipsos's final poll against NSPM's, measured the same way (three categories).")
+```
+
+<div class="callout callout-result">
+**Result.** NSPM's miss was also far outside sampling error (probability `r fmt_log10p(bench$log10_p[2])`), which is a reminder that *all* polls carry non-sampling error, from who answers the phone to how undecided voters are handled, and that both published polls of this race were too favourable to *Ujedinjena Srbija*. But the scale is different: NSPM was off by `r sprintf("%.1f", abs(bench$sl[2] - 100*p3[1]))` points on *Studentska lista*, Ipsos by `r sprintf("%.1f", abs(bench$sl[1] - 100*p3[1]))`, about `r sprintf("%.1f", abs(bench$sl[1] - 100*p3[1]) / abs(bench$sl[2] - 100*p3[1]))` times as much, with an effective sample about twice as large and fieldwork that ended three days, not three weeks, before the vote. On the logarithmic scale of probability Ipsos's result is about `r fmt_pow(bench$log10_p[2] - bench$log10_p[1])` times less likely than NSPM's. A benchmark of one poll is a thin benchmark, but on this evidence an ordinary bad poll and Ipsos's poll are not in the same category.
+</div>
+
+# Summary and conclusions
+
+## What we did
+
+1. **Collected both records.** Ipsos's final estimate of 22 October 2026 (n = 3,624; *Ujedinjena Srbija* 47.4%, *Studentska lista* 40.0%, with 95% intervals of about ±2.1 points, commissioned by the *Ujedinjena Srbija* list) and RIK's count as of 31 October 2026 (8,339 of 8,392 polling stations; *Studentska lista* `r fmt_pct(scheme_a$rik_pct[1])`, *Ujedinjena Srbija* `r fmt_pct(scheme_a$rik_pct[2])`; turnout `r fmt_pct(rik_meta$turnout_pct)`).
+2. **Made them comparable.** Both use "all ballots cast" as the base, so no rescaling was needed. We grouped the lists into *Studentska lista*, *Ujedinjena Srbija*, the four *manjinske liste* that entered Parliament, and everything else. Ipsos's error is concentrated in the two large lists, `r sprintf("%.1f", scheme_a$rik_pct[1] - 40)` points too low for *Studentska lista* and `r sprintf("%.1f", 47.4 - scheme_a$rik_pct[2])` points too high for *Ujedinjena Srbija*, with the remaining `r sprintf("%.1f", sum(scheme_a$ipsos_pct[3:4] - scheme_a$rik_pct[3:4]))` points spread as small overestimates across the minor lists, the minority lists and invalid ballots.
+3. **Established the effective sample size** from Ipsos's own confidence intervals: about `r fmt_n(n_primary)` decided respondents, the most generous figure the published precision supports.
+4. **Computed the probability** of Ipsos's result under the hypothesis that it was a random sample of the actual electorate, in five different ways, including an exact simulation-based estimate (importance sampling) and the textbook chi-square approximation.
+5. **Stress-tested** the result against every alternative sample size, population definition and base (all ballots versus valid votes).
+6. **Quantified** what a late swing, a turnout surprise or a lopsided break of undecided voters would have had to look like to explain the gap, and benchmarked against the only other published poll of this election.
+
+## What we found
+
+<div class="callout callout-result">
+<div class="hero">≈ `r sub(" \\(.*$", "", fmt_log10p(log10_p_is))`</div>
+<div class="hero-sub">the probability that a random sample of the people who voted on 25 October 2026 would produce a result at least as far from the truth as Ipsos's published numbers (exact multinomial test by importance sampling, four categories, n = `r fmt_n(n_primary)`; every other method and every variant we tried lands between `r fmt_pow(tail_range_all[2])` and `r fmt_pow(tail_range_all[1])`)</div>
+
+- Taken one list at a time, the chance of a random sample putting *Studentska lista* at or below 40.0% when its true share was `r fmt_pct(scheme_a$rik_pct[1], 1)` is `r fmt_log10p(m2$log10_p[1])`; the chance of putting *Ujedinjena Srbija* at or above 47.4% when its true share was `r fmt_pct(scheme_a$rik_pct[2], 1)` is `r fmt_log10p(m2$log10_p[2])`.
+- Asking for both at once (*Studentska lista* at or below 40.0% *and* *Ujedinjena Srbija* at or above 47.4%) gives `r fmt_log10p(log10(joint_exact))` exactly. The textbook chi-square approximation gives `r fmt_log10p(gA["log10_p_G"])` with four categories and `r fmt_log10p(gB["log10_p_G"])` with all lists kept separate.
+- Among **two million** simulated ideal random polls from the real electorate, **none** came close to Ipsos's combination, under any of the definitions of "close" we tried.
+- The conclusion is unchanged for any sample size from 1,500 to 3,624, whether or not Kosovo i Metohija and the diaspora are removed from the population to match Ipsos's sampling frame, and whether the comparison is made on all ballots or on valid votes only: the probability never rises above about `r fmt_pow(max(c(sens_n[["G test (Scheme A)"]], g_valid["log10_p_G"], gB_valid["log10_p_G"])))`.
+- By Ipsos's **own** published margins of error, the true *Studentska lista* share lay `r sprintf("%.1f", own$outside_by[1])` points outside the top of its 95% interval, `r sprintf("%.0f", abs(own$z_own[1]))` of its own standard errors from its estimate.
+- To make Ipsos's result an ordinary 1-in-20 unlucky draw, about **`r fmt_n(round(voters_05, -3))` voters** would have had to move to *Studentska lista* in the three days between fieldwork and election day; even if every one of the `r fmt_n(round(extra_voters, -3))` unexpected extra voters had voted *Studentska*, a further `r fmt_n(round(voters_05_comb, -3))` would still have had to move. If a quarter of voters were undecided at the time of the poll, they would have had to vote `r sprintf("%.0f%%", undec[["Studentska lista"]][2])` for *Studentska lista*, and even then the small-list excess remains unexplained.
+- The only other published poll (NSPM, fieldwork ending 5 October) also missed, in the same direction, but Ipsos's result is about `r fmt_pow(bench$log10_p[2] - bench$log10_p[1])` times less probable than NSPM's.
+</div>
+
+```{r words}
+# the headline exponent in words (short scale, as used in English; long scale, as used in Serbian)
+pow_words <- function(l10) {
+  # the number 1/p written as  lead × 10^e, then named: e.g. 3 × 10^36 = "three undecillion"
+  e <- floor(-l10); lead <- round(10^(-l10 - e)); if (lead == 10) { lead <- 1; e <- e + 1 }
+  grp <- e %/% 3; mult <- lead * 10^(e %% 3)                      # mult in 1..900
+  short_names <- c(`10` = "nonillion", `11` = "decillion", `12` = "undecillion", `13` = "duodecillion")
+  # Serbian forms: singular (1), paucal (2–4), plural (5+)
+  long_names  <- list(`10` = c("kvintilion", "kvintiliona", "kvintiliona"), `11` = c("kvintilijarda", "kvintilijarde", "kvintilijardi"),
+                      `12` = c("sekstilion", "sekstiliona", "sekstiliona"), `13` = c("sekstilijarda", "sekstilijarde", "sekstilijardi"))
+  if (!as.character(grp) %in% names(short_names)) return(sprintf("one in a %d followed by %d zeros", lead, e))
+  en_small <- c("one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
+  en_tens  <- c("ten", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety")
+  en_mult  <- if (mult < 10) en_small[mult] else if (mult < 100) en_tens[mult / 10] else paste(en_small[mult / 100], "hundred")
+  sr_small <- c("", "dva", "tri", "četiri", "pet", "šest", "sedam", "osam", "devet")
+  sr_tens  <- c("deset", "dvadeset", "trideset", "četrdeset", "pedeset", "šezdeset", "sedamdeset", "osamdeset", "devedeset")
+  sr_hund  <- c("sto", "dvesta", "trista", "četiristo", "petsto", "šeststo", "sedamsto", "osamsto", "devetsto")
+  sr_mult  <- if (mult < 10) sr_small[mult] else if (mult < 100) sr_tens[mult / 10] else sr_hund[mult / 100]
+  sr_form  <- if (mult == 1) 1 else if (mult %% 10 %in% 2:4 && !(mult %% 100 %in% 12:14)) 2 else 3
+  sr_name  <- long_names[[as.character(grp)]][sr_form]
+  sprintf("**one in %s %s** (a %d followed by %d zeros; in the long-scale naming used in Serbian and most of continental Europe, *%s*)",
+          en_mult, short_names[as.character(grp)], lead, e, trimws(paste(sr_mult, sr_name)))
+}
+```
+
+## What it means, and what it does not
+
+**Sampling error alone cannot account for the gap.** The hypothesis that Ipsos's published numbers are what a random sample of actual voters would produce, with chance as the only source of discrepancy, is rejected by every method: the best estimate of the probability is about `r sub(" \\(.*$", "", fmt_log10p(log10_p_is))`, that is, roughly `r pow_words(log10_p_is)`. Depending on the definition of "at least as far from the truth", on the test used and on the treatment of invalid ballots, the figure moves between `r fmt_pow(tail_range_all[2])` and `r fmt_pow(tail_range_all[1])`; at this depth a few powers of ten change nothing. For a sense of scale: picking one specific star at random from all the roughly 10²⁴ stars in the observable universe is a 1-in-10²⁴ event, and that is about `r fmt_pow(-24 - log10_p_is)` times *more* likely than Ipsos's result under random sampling. No reasonable choice of sample size, population definition, base or test statistic changes that conclusion. Ipsos's own stated precision leads to the same conclusion without any modelling on our part.
+
+**What the numbers do not establish on their own is the *cause*.** Several candidate explanations remain, and statistics alone cannot pick between them, nor rule out a combination; the evidence in this document bears on each as follows:
+
+- *A genuine late swing.* Possible in principle, and flagged by Ipsos itself as a caveat; but it would have had to involve some `r fmt_n(round(voters_05, -3))` voters moving to the student list within 72 hours, among them roughly one in `r sprintf("%.0f", 1 / (from_us(t_05) / (p_rik_A[2] * rik_meta$ballots + from_us(t_05))))` of all *Ujedinjena Srbija* supporters, a movement several times larger than the late swings documented in comparable elections, and one that no other evidence from those three days suggests.
+- *Differential turnout.* Ruled out as a sufficient explanation *in its net form*: even the most extreme assumption about the unexpected extra voters leaves the gap essentially intact. Gross flows (intending voters staying home while others turned out) cannot be assessed from outside; they belong under non-sampling error below.
+- *Undecided voters.* A quarter of the electorate undecided and then voting `r sprintf("%.0f%%", undec[["Studentska lista"]][2])` for one list would reconcile the two big numbers; nothing reconciles the small-list excess. A real but modest contribution is plausible; a full explanation is not.
+- *Non-sampling error* (telephone coverage, non-response, concealment of intention, mode and house effects, likely-voter modelling, weighting; see [total survey error](https://en.wikipedia.org/wiki/Total_survey_error)). This is the explanation that the test cannot address directly, and it is real: the one other published poll of this election also leaned the same way. On the evidence available, a non-sampling bias large enough to explain Ipsos's numbers would have to be about `r sprintf("%.1f", abs(bench$sl[1] - 100*p3[1]) / abs(bench$sl[2] - 100*p3[1]))` times the size of NSPM's, with fieldwork much closer to the vote. Ipsos's election-night projection with CeSID was accurate to within a few tenths of a point, but that projection rested on counted ballots at sampled polling stations, not on interviews, so it does not share the pre-election survey's sources of error and does not by itself tell us how large those could have been.
+- *Misrepresentation of the published numbers.* The data are consistent with it, exactly as they are consistent with a sufficiently large version of each explanation above; the test cannot separate them. The fact that the poll was commissioned by one of the contestants is a reason to ask for transparency, not evidence of intent, and this document makes no claim about intent.
+
+The defensible public statement is therefore: **Ipsos's final pre-election numbers cannot have arisen from random sampling error. What remains is some combination of a late swing far larger than any for which there is independent evidence, a turnout or undecided-voter shift of a size the literature does not describe, a methodological bias well beyond what the other poll of the same election exhibited, and the published numbers not reflecting what the survey measured.** This document cannot distinguish among these, nor between any of them and misreporting. Doing so requires what a probability calculation cannot supply: Ipsos's raw data, its weighting scheme, its likely-voter model, and its treatment of undecided respondents.
+
+## Caveats
+
+- RIK's results used here are **preliminary** (`r fmt_n(rik_meta$stations_done)` of `r fmt_n(rik_meta$stations_total)` polling stations, snapshot of `r rik_meta$snapshot`), and they are taken as the truth throughout. The outstanding `r sprintf("%.1f%%", 100 * (1 - rik_meta$stations_done / rik_meta$stations_total))` of polling stations cannot move the national shares by more than a few tenths of a point. Re-knitting this document with the final figures entered in Section 3 will update every computed number automatically.
+- The effective sample size is inferred from Ipsos's published intervals, not stated by Ipsos. The sensitivity analysis shows the conclusion is insensitive to it. The counts "out of `r fmt_n(n_primary)`" are a construction that matches the precision of Ipsos's intervals, not interviews Ipsos actually conducted.
+- The chi-square figures are asymptotic approximations and are read as orders of magnitude; the importance-sampling estimate carries its own simulation error (independent runs spread over `r sprintf("%.1f", diff(is_spread))` in the exponent). Pearson's chi-square is reported for completeness but is known to be unreliable this far into the tail.
+- Ipsos's percentages are published to one decimal place; converting them to counts introduces errors of up to about one respondent per category, which is immaterial in Scheme A but a reason to treat the smallest Scheme B cells as indicative only.
+- Ipsos's assumed 2.5% invalid share is not a sampled quantity; Section 8 shows the effect of removing it from the comparison (a few powers of ten, conclusion unchanged).
+- Minority lists are defined here as the four that won seats. Other lists representing national minorities (e.g. *Zukorlić (SPP)*) are in the "Other" category in both sources, so the comparison is consistent.
+
+# Appendix
+
+## Sources
+
+- Ipsos Strategic Marketing, *Rezultati istraživanja pred parlamentarne izbore – oktobar 2026*, press release of 22 October 2026. [PDF](https://www.ipsos.com/sites/default/files/ct/news/documents/2026-10/Saopstenje_-_Ipsos_Strategic_Marketing_-_Parlamentarni%20Izbori_2026_-_finalna_procena.pdf) · [web page](https://www.ipsos.com/sr-rs/rezultati-istrazivanja-pred-parlamentarne-izbore-oktobar-2026)
+- Republička izborna komisija, [*Rezultati izbora* portal](https://www.rik.parlament.gov.rs/542645/rezultati/), Парламентарни 2026, read 31 October 2026, 11:00 CET; regional sub-totals for Косово и Метохија and Иностранство from the same portal; diaspora valid/invalid split from the [RIK 73rd session](https://www.rik.parlament.gov.rs/vest/818648/73-sednica-republicke-izborne-komisije.php), 29 October 2026.
+- NSPM, [*Србија, јесен 2026 (I)*](https://www.nspm.rs/istrazivanja-javnog-mnjenja/srbija-jesen-2026.-i.html), telephone survey, fieldwork 25 September – 5 October 2026, n = 1,050, published 20 October 2026; also tabulated on [Wikipedia](https://en.wikipedia.org/wiki/Opinion_polling_for_the_2026_Serbian_parliamentary_election).
+- CeSID–Ipsos election-night projection (*Studentska lista* 52.9%, *Ujedinjena Srbija* 38.8%), as reported by [Balkan Insight](https://balkaninsight.com/2026/10/26/student-list-wins-outright-majority-in-serbian-parliamentary-polls/bi/), 26 October 2026.
+- Davis, A. (2019). *pmultinom: One-Sided Multinomial Probabilities.* R package.
+
+## References {#references}
+
+For every statistical and methodological concept used above, one or two sound, readable resources and the corresponding Wikipedia article. All links were checked on 31 October 2026.
+
+**Probability distributions**
+
+- *Multinomial distribution.* Blitzstein, J. K. & Hwang, J. (2019). *Introduction to Probability*, 2nd ed., ch. 7 "Joint distributions". Free online at [probabilitybook.net](http://probabilitybook.net) · Weisstein, E. W., [*Multinomial Distribution*](https://mathworld.wolfram.com/MultinomialDistribution.html), Wolfram MathWorld (formulas incl. covariance) · [Wikipedia](https://en.wikipedia.org/wiki/Multinomial_distribution).
+- *Binomial distribution and its normal approximation.* [Seeing Theory, ch. 3 "Probability Distributions"](https://seeing-theory.brown.edu/probability-distributions/index.html), Brown University (interactive) · [Wikipedia](https://en.wikipedia.org/wiki/Binomial_distribution).
+- *Multinomial cumulative probabilities (the `pmultinom` algorithm).* Levin, B. (1981). A representation for multinomial cumulative distribution functions. *Annals of Statistics* 9(5), 1123–1126. [doi:10.1214/aos/1176345593](https://doi.org/10.1214/aos/1176345593) · Davis, A. *pmultinom: One-Sided Multinomial Probabilities*, R package, [CRAN](https://cran.r-project.org/package=pmultinom).
+
+**Sampling error, confidence intervals, sample size**
+
+- *Standard error and confidence interval for a proportion.* [Seeing Theory, ch. 4 "Frequentist Inference"](https://seeing-theory.brown.edu/frequentist-inference/index.html) (interactive) · [Wikipedia: Binomial proportion confidence interval](https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval).
+- *Margin of error in polls.* Pew Research Center (2016), [*Understanding the margin of error in election polls*](https://www.pewresearch.org/short-reads/2016/09/08/understanding-the-margin-of-error-in-election-polls/) · [Wikipedia](https://en.wikipedia.org/wiki/Margin_of_error).
+- *Design effect and effective sample size.* Zipf, G. & Valliant, R., [*Design Effects and Effective Sample Size*](https://cran.r-project.org/web/packages/PracTools/vignettes/Design-effects.html), PracTools vignette (CRAN) · Kish, L. (1965). *Survey Sampling*. Wiley (the original source of the weighting design-effect formula) · [Wikipedia](https://en.wikipedia.org/wiki/Design_effect).
+- *z-scores and "sigma" levels.* [Wikipedia: Standard score](https://en.wikipedia.org/wiki/Standard_score) · [Wikipedia: 68–95–99.7 rule](https://en.wikipedia.org/wiki/68%E2%80%9395%E2%80%9399.7_rule).
+
+**Hypothesis testing**
+
+- *p-values and tail probabilities.* Wasserstein, R. L. & Lazar, N. A. (2016). The ASA Statement on p-Values: Context, Process, and Purpose. *The American Statistician* 70(2), 129–133. [doi:10.1080/00031305.2016.1154108](https://doi.org/10.1080/00031305.2016.1154108) (free access) · [Wikipedia](https://en.wikipedia.org/wiki/P-value).
+- *Goodness-of-fit tests (Pearson chi-square, G / likelihood-ratio) and the chi-square distribution.* McDonald, J. H. (2014). *Handbook of Biological Statistics*, 3rd ed.: [Chi-square test of goodness-of-fit](https://www.biostathandbook.com/chigof.html), [G-test of goodness-of-fit](https://www.biostathandbook.com/gtestgof.html), [Small numbers in chi-square and G-tests](https://www.biostathandbook.com/small.html) · Wikipedia: [Goodness of fit](https://en.wikipedia.org/wiki/Goodness_of_fit), [Pearson's chi-squared test](https://en.wikipedia.org/wiki/Pearson%27s_chi-squared_test), [G-test](https://en.wikipedia.org/wiki/G-test), [Likelihood-ratio test](https://en.wikipedia.org/wiki/Likelihood-ratio_test), [Chi-squared distribution](https://en.wikipedia.org/wiki/Chi-squared_distribution).
+- *Exact tests and Monte Carlo (simulation-based) p-values.* Downey, A. (2011), [*There is only one test!*](http://allendowney.blogspot.com/2011/05/there-is-only-one-test.html) · VanderPlas, J. (2016), [*Statistics for Hackers*](https://speakerdeck.com/jakevdp/statistics-for-hackers), PyCon ([video](https://www.youtube.com/watch?v=Iq9DzN6mvYA)) · Wikipedia: [Exact test](https://en.wikipedia.org/wiki/Exact_test), [Monte Carlo method](https://en.wikipedia.org/wiki/Monte_Carlo_method).
+- *Importance sampling (estimating very small probabilities by simulation).* Owen, A. B. (2013), *Monte Carlo theory, methods and examples*, ch. 9 "Importance sampling", free online at [artowen.su.domains/mc](https://artowen.su.domains/mc/) · [Wikipedia](https://en.wikipedia.org/wiki/Importance_sampling).
+- *Asymptotic (large-sample) approximations and their limits in the far tail.* [Wikipedia: Asymptotic distribution](https://en.wikipedia.org/wiki/Asymptotic_distribution) · the G statistic's exact tail behaviour follows from [Sanov's theorem](https://en.wikipedia.org/wiki/Sanov%27s_theorem) (Wikipedia).
+- *Why probabilities are computed in logarithms.* [Wikipedia: Arithmetic underflow](https://en.wikipedia.org/wiki/Arithmetic_underflow).
+
+**Polling methodology**
+
+- *Sampling vs non-sampling error.* Groves, R. M. & Lyberg, L. (2010). Total survey error: past, present, and future. *Public Opinion Quarterly* 74(5), 849–879 · [Wikipedia: Total survey error](https://en.wikipedia.org/wiki/Total_survey_error).
+- *How large polling errors normally are; late swings.* Jennings, W. & Wlezien, C. (2018). Election polling errors across time and space. *Nature Human Behaviour* 2, 276–283. [doi:10.1038/s41562-018-0315-6](https://doi.org/10.1038/s41562-018-0315-6) (30,000+ polls, 351 elections, 45 countries).
+- *Diagnosing a polling miss (non-response, turnout models, "shy" voters).* AAPOR Task Force (2021), [*2020 Pre-Election Polling: An Evaluation of the 2020 General Election Polls*](https://aapor.org/wp-content/uploads/2022/11/AAPOR-Task-Force-on-2020-Pre-Election-Polling_Report-FNL.pdf).
+- *Turnout and likely-voter models.* Keeter, S. & Igielnik, R. (2016), [*Can Likely U.S. Voter Models Be Improved?*](https://www.pewresearch.org/methods/2016/01/07/can-likely-voter-models-be-improved/), Pew Research Center.
+
+## Reproducibility
+
+```{r session-info}
+sessionInfo()
+```
