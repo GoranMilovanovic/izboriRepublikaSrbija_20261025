@@ -13,7 +13,7 @@ A statistical analysis of the final Ipsos pre-election poll (22 October 2026) ag
 
 ## English
 
-![2 × 10<sup>−36</sup>](_img/hero_en_v4.png)
+![2 × 10<sup>−36</sup>](_img/hero_en_v5.png)
 
 # 2 × 10<sup>−36</sup>
 
@@ -28,7 +28,7 @@ Numbers this small have no everyday meaning, so here are some comparisons with a
 | Event | Odds | Compared with Ipsos's result |
 |---|---|---|
 | Pick, at random, one **specific star** out of all ~10<sup>24</sup> stars in the observable universe | 1 in 10<sup>24</sup> | about **500,000,000,000 times more likely** |
-| Win the jackpot of a 6/49 lottery **five weeks in a row** with a single ticket each week | 1 in 5 × 10<sup>35</sup> | **the same odds** |
+| Pick one **specific star** in the observable universe *and*, independently, one **specific second** out of all the seconds since the end of the last Ice Age (~11,700 years ≈ 3.7 × 10<sup>11</sup> seconds) | 1 in 4 × 10<sup>35</sup> | **the same odds** |
 | Pick one **specific grain of sand** from all the sand on Earth (~7.5 × 10<sup>18</sup> grains) *and*, independently, one **specific second** out of all the seconds since the Big Bang (~4.4 × 10<sup>17</sup>) | 1 in 3 × 10<sup>36</sup> | about **7 times less likely** than Ipsos's result |
 | Pick one specific star *and* one specific minute of the year | 1 in 5 × 10<sup>29</sup> | roughly the **Ipsos-friendliest bound**, 10<sup>−30</sup> |
 
@@ -129,7 +129,7 @@ jupyter nbconvert --to html --TagRemovePreprocessor.enabled=True --TagRemovePrep
 
 ## Srpski
 
-![2 × 10<sup>−36</sup>](_img/hero_sr_v4.png)
+![2 × 10<sup>−36</sup>](_img/hero_sr_v5.png)
 
 # 2 × 10<sup>−36</sup>
 
@@ -144,7 +144,7 @@ Ovako mali brojevi nemaju svakodnevno značenje, pa evo poređenja sa astronomsk
 | Događaj | Šanse | U poređenju sa Ipsosovim rezultatom |
 |---|---|---|
 | Nasumice izvući jednu **određenu zvezdu** od svih ~10<sup>24</sup> zvezda u vidljivom svemiru | 1 u 10<sup>24</sup> | oko **500.000.000.000 puta verovatnije** |
-| Dobiti glavni zgoditak lota 6/49 **pet nedelja zaredom**, sa po jednim tiketom nedeljno | 1 u 5 × 10<sup>35</sup> | **iste šanse** |
+| Izvući jednu **određenu zvezdu** u vidljivom svemiru *i*, nezavisno od toga, jednu **određenu sekundu** od svih sekundi od kraja poslednjeg ledenog doba (~11.700 godina ≈ 3,7 × 10<sup>11</sup> sekundi) | 1 u 4 × 10<sup>35</sup> | **iste šanse** |
 | Izvući jedno **određeno zrno peska** od sveg peska na Zemlji (~7,5 × 10<sup>18</sup> zrna) *i*, nezavisno od toga, jednu **određenu sekundu** od svih sekundi od Velikog praska (~4,4 × 10<sup>17</sup>) | 1 u 3 × 10<sup>36</sup> | oko **7 puta manje verovatno** od Ipsosovog rezultata |
 | Izvući jednu određenu zvezdu *i* jedan određeni minut u godini | 1 u 5 × 10<sup>29</sup> | otprilike **granica najpovoljnija za Ipsos**, 10<sup>−30</sup> |
 

@@ -1,5 +1,5 @@
 # Renders the two large-type "hero" cards used at the top of README.md
-# (_img/hero_en_v4.png and _img/hero_sr_v4.png). Run from the repository root:
+# (_img/hero_en_v5.png and _img/hero_sr_v5.png). Run from the repository root:
 #   Rscript make_hero_figures.R
 # Powers of ten are typeset with plotmath (parse = TRUE), not with Unicode
 # superscript characters: most fonts lack native glyphs for several of those
@@ -20,7 +20,7 @@ hero <- function(file, lines) {
 
 ink <- "#0b0b0b"; grey <- "#52514e"; muted <- "#898781"
 
-hero("_img/hero_en_v4.png", list(
+hero("_img/hero_en_v5.png", list(
   # headline as plain bold text: "2 × 10" plus a hand-placed bold exponent (plotmath cannot do bold Helvetica)
   list(y = 0.76, x = -0.12, label = "2 × 10", size = 44, colour = ink, bold = TRUE),
   list(y = 0.88, x = 0.325, label = "−36", size = 24, colour = ink, bold = TRUE, hjust = 0),
@@ -31,14 +31,14 @@ hero("_img/hero_en_v4.png", list(
   list(y = 0.17, size = 6.2, colour = grey, parse = TRUE,
        label = "'Even with every assumption chosen in Ipsos\\'s favour, the probability never rises above about '*10^-30*'.'"),
   list(y = 0.02, size = 6.2, colour = grey,
-       label = "For scale: winning the jackpot of a 6/49 lottery five weeks in a row, with a single ticket each week,"),
+       label = "For scale: picking one specific star in the observable universe and, independently, one specific second"),
   list(y = -0.07, size = 6.2, colour = grey, parse = TRUE,
-       label = "'is about a 1 in '*5 %*% 10^35*' event — the same odds.'"),
+       label = "'from all the seconds since the last Ice Age ended, is about a 1 in '*4 %*% 10^35*' event — the same odds.'"),
   list(y = -0.19, size = 4.4, colour = muted,
        label = "Exact multinomial test (all 1.57 billion outcomes enumerated), four categories, effective n = 2,110. RIK preliminary results, 31 October 2026.")
 ))
 
-hero("_img/hero_sr_v4.png", list(
+hero("_img/hero_sr_v5.png", list(
   # headline as plain bold text: "2 × 10" plus a hand-placed bold exponent (plotmath cannot do bold Helvetica)
   list(y = 0.76, x = -0.12, label = "2 × 10", size = 44, colour = ink, bold = TRUE),
   list(y = 0.88, x = 0.325, label = "−36", size = 24, colour = ink, bold = TRUE, hjust = 0),
@@ -49,9 +49,9 @@ hero("_img/hero_sr_v4.png", list(
   list(y = 0.17, size = 6.2, colour = grey, parse = TRUE,
        label = "'Čak i kad se svaka pretpostavka izabere u korist Ipsosa, verovatnoća ne prelazi oko '*10^-30*'.'"),
   list(y = 0.02, size = 6.2, colour = grey,
-       label = "Za osećaj razmere: dobiti glavni zgoditak lota 6/49 pet nedelja zaredom, sa po jednim tiketom nedeljno,"),
+       label = "Za osećaj razmere: izvući jednu određenu zvezdu u vidljivom svemiru i, nezavisno od toga, jednu određenu"),
   list(y = -0.07, size = 6.2, colour = grey, parse = TRUE,
-       label = "'događaj je od oko 1 u '*5 %*% 10^35*'. Iste šanse.'"),
+       label = "'sekundu od kraja poslednjeg ledenog doba — to je događaj od oko 1 u '*4 %*% 10^35*'. Iste šanse.'"),
   list(y = -0.19, size = 4.4, colour = muted,
        label = "Tačan multinomni test (nabrojano svih 1,57 milijardi ishoda), četiri grupe, stvarna veličina uzorka 2.110. Preliminarni rezultati RIK-a, 31. oktobar 2026.")
 ))
