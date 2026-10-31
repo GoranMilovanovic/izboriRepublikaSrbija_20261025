@@ -120,11 +120,29 @@ l10_sl <- binom_tail(k_ips_A[1], n_primary, p_rik_A[1], TRUE); l10_us <- binom_t
 set.seed(2026); n_sim <- 2e6; sim_A <- rmultinom(n_sim, n_primary, p_rik_A)
 log10_point_ips <- dmultinom(k_ips_A, prob = p_rik_A, log = TRUE) / log(10)
 log10_sim <- log10_dmultinom_mat(sim_A, p_rik_A); n_as_extreme <- sum(log10_sim <= log10_point_ips)
-# tačan test uzorkovanjem po važnosti (10 nezavisnih ponavljanja)
-set.seed(2026); n_rep <- 10; n_per <- 1e6; q_prop <- k_ips_A / n_primary
-p_is_rep <- vapply(seq_len(n_rep), function(i) { S <- rmultinom(n_per, n_primary, q_prop); a <- log10_dmultinom_mat(S, p_rik_A); b <- log10_dmultinom_mat(S, q_prop)
-  mean(10^(a - b) * (a <= log10_point_ips)) }, numeric(1))
-log10_p_is <- log10(mean(p_is_rep))
+# tačan proračun: nabrajanje svih mogućih ishoda ankete (oko 1,6 milijardi), sabiranje verovatnoća onih
+# koji su bar toliko neverovatni koliko i Ipsosov
+exact_tail_enum <- function(k_obs, p, n) {
+  thr <- lgamma(n + 1) - sum(lgamma(k_obs + 1)) + sum(k_obs * log(p)); x <- 0:n
+  a <- lapply(seq_along(p), function(i) x * log(p[i]) - lgamma(x + 1)); const <- lgamma(n + 1); tot <- 0
+  for (n1 in 0:n) { m <- n - n1; idx <- 0:m
+    lp <- const + a[[1]][n1 + 1] + outer(a[[2]][idx + 1], a[[3]][idx + 1], "+"); n4 <- m - outer(idx, idx, "+"); ok <- n4 >= 0
+    lp[ok] <- lp[ok] + a[[4]][n4[ok] + 1]; tot <- tot + sum(exp(lp[ok & lp <= thr])) }
+  c(p = tot, n_outcomes = choose(n + 3, 3))
+}
+enum <- exact_tail_enum(k_ips_A, p_rik_A, n_primary); log10_p_exact <- log10(enum[["p"]])
+# broj 1/p rečima (dugačka skala): npr. 5 × 10^35 = "petsto kvintilijardi"
+sr_words <- function(l10) {
+  e <- floor(-l10); lead <- round(10^(-l10 - e)); if (lead == 10) { lead <- 1; e <- e + 1 }
+  grp <- e %/% 3; mult <- lead * 10^(e %% 3)
+  nm <- list(`10` = c("kvintilion", "kvintiliona", "kvintiliona"), `11` = c("kvintilijarda", "kvintilijarde", "kvintilijardi"),
+             `12` = c("sekstilion", "sekstiliona", "sekstiliona"), `13` = c("sekstilijarda", "sekstilijarde", "sekstilijardi"))
+  sm <- c("", "dva", "tri", "četiri", "pet", "šest", "sedam", "osam", "devet"); tn <- c("deset", "dvadeset", "trideset", "četrdeset", "pedeset", "šezdeset", "sedamdeset", "osamdeset", "devedeset")
+  hd <- c("sto", "dvesta", "trista", "četiristo", "petsto", "šeststo", "sedamsto", "osamsto", "devetsto")
+  w <- if (mult < 10) sm[mult] else if (mult < 100) tn[mult / 10] else hd[mult / 100]
+  f <- if (mult == 1) 1 else if (mult %% 10 %in% 2:4 && !(mult %% 100 %in% 12:14)) 2 else 3
+  sprintf("**jedan u %s** (broj %d sa %d nula)", trimws(paste(w, nm[[as.character(grp)]][f])), lead, e)
+}
 gA <- g_test(k_ips_A, p_rik_A)
 # osetljivost: veličina uzorka i osnova (samo važeći glasovi)
 n_grid <- c(1500, n_primary, round(0.8 * ipsos_n, -2), ipsos_n)
@@ -134,7 +152,7 @@ sens_n <- map_dfr(n_grid, function(n) { k <- pct_to_counts(pct_ips_A, n, 4)
 ips_v <- ipsos |> filter(short != "Nevažeći listići") |> group_by(group) |> summarise(pct = sum(ipsos_pct) / 0.975, .groups = "drop") |> mutate(group = factor(group, grp_levels)) |> arrange(group)
 rik_v <- rik |> filter(short != "Nevažeći listići") |> group_by(group) |> summarise(v = sum(votes), .groups = "drop") |> mutate(group = factor(group, grp_levels)) |> arrange(group)
 g_valid <- g_test(pct_to_counts(ips_v$pct, n_primary, 4), rik_v$v / sum(rik_v$v))
-range_all <- range(c(l10_sl, log10_p_is, gA["log10_p_G"], g_valid["log10_p_G"]))
+range_all <- range(c(l10_sl, log10_p_exact, gA["log10_p_G"], g_valid["log10_p_G"]))
 # sopstvena preciznost
 own_out <- scheme_a$rik_pct[1] - 42.1; own_se <- (42.1 - 37.9) / 2 / 1.96
 # scenario 1: kasni preokret
@@ -163,8 +181,8 @@ bench <- tibble(poll = c("Ipsos", "NSPM"), n = c(n_primary, 1050), sl = c(40.0, 
 # Ukratko
 
 <div class="callout callout-result">
-<div class="hero">≈ `r sub(" \\(.*$", "", fmt_p(log10_p_is))`</div>
-<div class="hero-sub">tolika je verovatnoća da slučajno izabran uzorak ljudi koji su glasali 25. oktobra 2026. dâ rezultat bar toliko udaljen od istine koliko su to bile objavljene brojke Ipsosa. Rečima: otprilike **jedan u tri sekstiliona** (broj 3 sa 36 nula). U zavisnosti od načina računanja, brojka se kreće između `r fmt_pow(range_all[2])` i `r fmt_pow(range_all[1])`.</div>
+<div class="hero">≈ `r sub(" \\(.*$", "", fmt_p(log10_p_exact))`</div>
+<div class="hero-sub">tolika je verovatnoća da slučajno izabran uzorak ljudi koji su glasali 25. oktobra 2026. dâ rezultat bar toliko udaljen od istine koliko su to bile objavljene brojke Ipsosa. Rečima: otprilike `r sr_words(log10_p_exact)`. Taj broj je izračunat tačno, nabrajanjem svih `r fmt_n(enum[["n_outcomes"]])` mogućih ishoda ankete, bez simulacije. U zavisnosti od načina računanja, brojka se kreće između `r fmt_pow(range_all[2])` i `r fmt_pow(range_all[1])`.</div>
 
 - Ipsos je 22. oktobra objavio: *Ujedinjena Srbija* **47,4%**, *Studentska lista* **40,0%**. Birači su 25. oktobra rekli: *Studentska lista* **`r fmt_pct(scheme_a$rik_pct[1])`**, *Ujedinjena Srbija* **`r fmt_pct(scheme_a$rik_pct[2])`**.
 - Promašaj od `r fmt_d(gap_sl)` poena za jednu i `r fmt_d(gap_us)` poena za drugu listu je oko **`r sprintf("%.0f", abs(z_A[1]))` odnosno `r sprintf("%.0f", z_A[2])` puta veći** od uobičajene greške ankete te veličine.
@@ -264,11 +282,11 @@ Verovatnoću smo izračunali na više načina, i svi daju isti odgovor u suštin
 tibble(Pitanje = c("Da slučajna anketa dâ Studentskoj listi 40,0% ili manje?",
                    "Da slučajna anketa dâ Ujedinjenoj Srbiji 47,4% ili više?",
                    sprintf("Da bude bar ovoliko daleko od istine u sve četiri grupe (simulacija %s anketa)?", fmt_n(n_sim)),
-                   "Isto pitanje, tačan proračun",
-                   "Isto pitanje, klasična udžbenička formula"),
+                   sprintf("Isto pitanje, tačan proračun (nabrojano svih %s mogućih ishoda)", fmt_n(enum[["n_outcomes"]])),
+                   "Isto pitanje, klasična udžbenička formula (približna)"),
        Verovatnoća = c(fmt_p(l10_sl), fmt_p(l10_us),
                        sprintf("nijedna od %s anketa, dakle ispod %s", fmt_n(n_sim), fmt_p(log10(1 / n_sim))),
-                       fmt_p(log10_p_is), fmt_p(gA["log10_p_G"]))) |>
+                       sprintf("<b>%s</b>", fmt_p(log10_p_exact)), fmt_p(gA["log10_p_G"]))) |>
   kable_sr(caption = sprintf("Tabela 2. Verovatnoća Ipsosovog rezultata ako je anketa bila slučajan uzorak stvarnog biračkog tela (uzorak %s).", fmt_n(n_primary)))
 ```
 
@@ -286,7 +304,7 @@ tibble(l10 = log10_sim) |> ggplot(aes(x = l10)) +
 ```
 
 <div class="callout callout-result">
-**Rezultat.** Najbolja procena verovatnoće je **`r fmt_p(log10_p_is)`**. Za osećaj razmere: pogoditi jednu unapred izabranu zvezdu među svih oko 10<sup>24</sup> zvezda u vidljivom svemiru događaj je verovatnoće jedan u 10<sup>24</sup>, a to je oko `r fmt_pow(-24 - log10_p_is)` puta *verovatnije* od Ipsosovog rezultata pod pretpostavkom slučajnog uzorka.
+**Rezultat.** Tačna verovatnoća je **`r fmt_p(log10_p_exact)`**. Za osećaj razmere: pogoditi jednu unapred izabranu zvezdu među svih oko 10<sup>24</sup> zvezda u vidljivom svemiru događaj je verovatnoće jedan u 10<sup>24</sup>, a to je oko `r fmt_pow(-24 - log10_p_exact)` puta *verovatnije* od Ipsosovog rezultata pod pretpostavkom slučajnog uzorka.
 
 Do istog zaključka vodi i sama Ipsosova objavljena preciznost: Ipsos je za *Studentsku listu* naveo raspon 37,9–42,1%. Stvarni rezultat, `r fmt_pct(scheme_a$rik_pct[1])`, bio je **`r fmt_d(own_out)` poena iznad gornje granice** tog raspona, `r sprintf("%.0f", (scheme_a$rik_pct[1] - 40) / own_se)` puta dalje od procene nego što Ipsosova sopstvena mera greške dopušta. Raspon od 95% sme da promaši jednom u dvadeset puta, i to obično za deo poena, ne za jedanaest.
 </div>
@@ -359,7 +377,7 @@ ggplot(swing_df, aes(x = voters, y = log10_p)) +
 # Zaključak
 
 <div class="callout callout-warn">
-**Šta brojevi pokazuju.** Pretpostavka da su Ipsosove objavljene brojke ono što bi dao slučajan uzorak stvarnih glasača, uz slučaj kao jedini izvor greške, odbačena je svakim načinom računanja: verovatnoća je reda **`r sub(" \\(.*$", "", fmt_p(log10_p_is))`**, odnosno između `r fmt_pow(range_all[2])` i `r fmt_pow(range_all[1])` u zavisnosti od pristupa. Nikakav razuman izbor veličine uzorka, definicije biračkog tela ili načina računanja to ne menja. Ipsosova sopstvena objavljena preciznost vodi istom zaključku.
+**Šta brojevi pokazuju.** Pretpostavka da su Ipsosove objavljene brojke ono što bi dao slučajan uzorak stvarnih glasača, uz slučaj kao jedini izvor greške, odbačena je svakim načinom računanja: verovatnoća je reda **`r sub(" \\(.*$", "", fmt_p(log10_p_exact))`**, odnosno između `r fmt_pow(range_all[2])` i `r fmt_pow(range_all[1])` u zavisnosti od pristupa. Nikakav razuman izbor veličine uzorka, definicije biračkog tela ili načina računanja to ne menja. Ipsosova sopstvena objavljena preciznost vodi istom zaključku.
 
 **Šta brojevi ne pokazuju: uzrok.** Preostala objašnjenja su: kasni preokret daleko veći od svega za šta postoje nezavisni dokazi; pomak u izlaznosti ili među neodlučnima kakav literatura ne opisuje; metodološka pristrasnost ankete (koga telefon dosegne, ko odbija ili krije nameru, način ponderisanja) znatno veća od one koju je pokazala druga anketa istih izbora; ili to da objavljene brojke ne odražavaju ono što je anketa izmerila. Moguća je i kombinacija. **Statistika sama ne može da izabere između njih**, niti između bilo kog od njih i pogrešnog izveštavanja. To što je anketu naručio jedan od učesnika izbora razlog je da se traži transparentnost, a ne dokaz namere; ovaj dokument ne iznosi nikakvu tvrdnju o namerama. Razrešenje zahteva ono što proračun ne može da pruži: Ipsosove sirove podatke, shemu ponderisanja i postupanje sa neodlučnima.
 </div>

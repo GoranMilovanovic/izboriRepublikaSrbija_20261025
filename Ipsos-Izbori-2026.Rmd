@@ -658,17 +658,49 @@ tibble::tibble(
 **Result.** The exact algorithm puts the joint probability at **`r fmt_log10p(log10(joint_exact))`**, and the brute-force check agrees in the only way it can: not one of `r fmt_n(n_sim)` simulated random polls from the real electorate came anywhere near Ipsos's combination. The joint probability is necessarily no larger than the rarer of its two parts (`r fmt_log10p(min(m2$log10_p))` from Method 2), and it is close to it: because the two counts are strongly negatively correlated (ρ = `r gsub("-", "−", sprintf("%.2f", rho))`; a correlation of −1 would mean one count always rises exactly when the other falls, 0 that they are unrelated), once a poll has *Studentska lista* that low, *Ujedinjena Srbija* being that high is no longer very surprising. In fact, given a *Studentska* count of `r fmt_n(k_ips_A[1])`, a random poll would put *Ujedinjena Srbija* at about `r fmt_n(us_cond_exp)` ± `r sprintf("%.0f", us_cond_sd)`; Ipsos's `r fmt_n(k_ips_A[2])` is `r sprintf("%.1f", (us_cond_exp - k_ips_A[2]) / us_cond_sd)` standard deviations *below* that. In other words, the votes Ipsos took away from *Studentska lista* did not all go to its rival; a sizeable part went to the small lists and invalid ballots. The correlation explains why the two headline errors travel together; it does nothing to make either of them plausible.
 </div>
 
-## Method 4: the exact multinomial test (Monte Carlo)
+## Method 4: the exact multinomial test
 
 <div class="concept">
 #### Concept: "at least as unusual" measured by likelihood {-}
 
-The most general definition of "at least as far from the truth" does not single out particular lists: it calls a result *at least as extreme* as Ipsos's if its **probability under H₀ is no larger** than that of Ipsos's result. The p-value is then the total probability of all such results. This is the *exact multinomial goodness-of-fit test* ("goodness of fit": how well observed counts match what a hypothesised population would produce). For four categories and *n* ≈ 2,000 there are too many count vectors to enumerate, so we estimate it by simulation, a **Monte Carlo** method: draw millions of polls from H₀ and count how many are at least as improbable as Ipsos's.
+The most general definition of "at least as far from the truth" does not single out particular lists: it calls a result *at least as extreme* as Ipsos's if its **probability under H₀ is no larger** than that of Ipsos's result. The p-value is then the total probability of all such results. This is the *exact multinomial goodness-of-fit test* ("goodness of fit": how well observed counts match what a hypothesised population would produce).
 
-Plain simulation has a floor: with two million draws it cannot see probabilities below one in two million. A standard refinement, **importance sampling**, removes the floor. Instead of drawing polls from the true electorate (where results like Ipsos's essentially never occur), we draw them from a *made-up* electorate centred on Ipsos's numbers, where they occur all the time, and then correct each draw by the ratio "how likely was this poll under the real electorate / how likely was it under the made-up one". The corrected average is an unbiased estimate of the true tail probability, however small, and comes with its own standard error.
+How many possible results are there? A poll of *n* respondents split across four categories can come out in about *n*³/6 different ways: for *n* ≈ 2,000 that is roughly 1.6 billion count vectors. That sounds like a lot, but it is well within reach of a laptop: we can **list every one of them**, compute its probability, and add up the probabilities of those at least as improbable as Ipsos's. The result is exact, with no approximation and no randomness.
+
+The textbook route is instead to *estimate* the same quantity by simulation, a **Monte Carlo** method: draw millions of polls from H₀ and count how many are at least as improbable as Ipsos's. Plain simulation has a floor: with two million draws it cannot see probabilities below one in two million. A standard refinement, **importance sampling**, is meant to remove the floor. Instead of drawing polls from the true electorate (where results like Ipsos's essentially never occur), it draws them from a *made-up* electorate centred on Ipsos's numbers, where they occur all the time, and corrects each draw by the ratio "how likely was this poll under the real electorate / how likely was it under the made-up one". We run both, and compare them with the exact answer: the comparison is instructive, because one of them quietly fails.
 
 *Further reading:* Wikipedia on [goodness of fit](https://en.wikipedia.org/wiki/Goodness_of_fit), [exact tests](https://en.wikipedia.org/wiki/Exact_test), the [Monte Carlo method](https://en.wikipedia.org/wiki/Monte_Carlo_method) and [importance sampling](https://en.wikipedia.org/wiki/Importance_sampling) · Allen Downey, [*There is only one test!*](http://allendowney.blogspot.com/2011/05/there-is-only-one-test.html), a short, plain-language case that every hypothesis test is "simulate the null, count how often you beat the observation" · Jake VanderPlas, [*Statistics for Hackers*](https://speakerdeck.com/jakevdp/statistics-for-hackers) (PyCon 2016 talk; [video](https://www.youtube.com/watch?v=Iq9DzN6mvYA)), the same idea with worked examples.
 </div>
+
+```{r m4-exact-enum}
+# The exact test by exhaustive enumeration: visit every count vector (n1, n2, n3, n4) with
+# n1 + n2 + n3 + n4 = n, and add up P(vector | H0) over those no more probable than Ipsos's.
+# One loop over n1; for each n1 the (n2, n3) grid is handled as a matrix, n4 being what is left.
+exact_tail_enum <- function(k_obs, p, n) {
+  thr   <- lgamma(n + 1) - sum(lgamma(k_obs + 1)) + sum(k_obs * log(p))   # log P(Ipsos's vector)
+  x     <- 0:n
+  a     <- lapply(seq_along(p), function(i) x * log(p[i]) - lgamma(x + 1)) # per-category pieces of log P
+  const <- lgamma(n + 1)
+  E     <- n * p
+  tot <- corner <- 0
+  for (n1 in 0:n) {
+    m   <- n - n1
+    idx <- 0:m
+    lp  <- const + a[[1]][n1 + 1] + outer(a[[2]][idx + 1], a[[3]][idx + 1], "+")
+    n4  <- m - outer(idx, idx, "+")
+    ok  <- n4 >= 0                                      # n4 must be a count
+    lp[ok] <- lp[ok] + a[[4]][n4[ok] + 1]
+    sel <- ok & lp <= thr                               # at least as improbable as Ipsos's
+    tot <- tot + sum(exp(lp[sel]))
+    # the part of that mass in the "Ipsos-like" corner: Studentska below and Ujedinjena above expectation
+    if (n1 < E[1]) corner <- corner + sum(exp(lp[sel & (idx >= E[2])]))
+  }
+  c(p = tot, corner_share = corner / tot, n_outcomes = choose(n + 3, 3))
+}
+enum <- exact_tail_enum(k_ips_A, p_rik_A, n_primary)
+p_exact       <- enum[["p"]]
+log10_p_exact <- log10(p_exact)
+```
 
 ```{r m4-exact-mc}
 log10_sim <- log10_dmultinom_mat(sim_A, p_rik_A)
@@ -691,9 +723,13 @@ log10_p_is <- log10(p_is)
 is_spread  <- range(log10(p_is_rep))                 # exponents of the individual replicates
 ```
 
-Of **`r fmt_n(n_sim)`** simulated random polls, **`r n_as_extreme`** were at least as improbable as Ipsos's result. The plain Monte Carlo p-value is therefore **`r ifelse(n_as_extreme == 0, sprintf("below 1 / %s = %s", fmt_n(n_sim), fmt_log10p(log10(1 / n_sim))), formatC(n_as_extreme / n_sim, format = "e", digits = 2))`**, the resolution limit of this simulation. The histogram below shows where Ipsos's result sits relative to the two million simulated ones.
+<div class="callout callout-result">
+**The exact answer.** Enumerating all `r fmt_n(enum[["n_outcomes"]])` possible outcomes of a four-category poll of `r fmt_n(n_primary)` and adding up the probabilities of those at least as improbable as Ipsos's gives **`r fmt_log10p(log10_p_exact)`**. This is the headline figure of this document: the most general definition of "at least as far from the truth", computed exactly, with no approximation and no simulation error.
+</div>
 
-Importance sampling gets past the floor. Re-weighting `r fmt_n(n_is)` polls drawn from an electorate shaped like Ipsos's numbers gives an exact-test p-value of **`r fmt_log10p(log10_p_is)`**. The `r n_rep` independent runs of `r fmt_n(n_per)` draws each gave exponents between `r sprintf("%.1f", is_spread[1])` and `r sprintf("%.1f", is_spread[2])`, so the estimate is good to a few tenths of a power of ten. This is the most direct estimate of the tail probability in this document: it uses no approximation beyond the simulation itself.
+The two simulation estimates of the same quantity are instructive. Of **`r fmt_n(n_sim)`** simulated random polls, **`r n_as_extreme`** were at least as improbable as Ipsos's result. The plain Monte Carlo p-value is therefore **`r ifelse(n_as_extreme == 0, sprintf("below 1 / %s = %s", fmt_n(n_sim), fmt_log10p(log10(1 / n_sim))), formatC(n_as_extreme / n_sim, format = "e", digits = 2))`**, the resolution limit of this simulation, and consistent with the exact value. The histogram below shows where Ipsos's result sits relative to the two million simulated ones.
+
+Importance sampling, re-weighting `r fmt_n(n_is)` polls drawn from an electorate shaped like Ipsos's numbers, gives **`r fmt_log10p(log10_p_is)`** (the `r n_rep` independent runs of `r fmt_n(n_per)` draws gave exponents between `r sprintf("%.1f", is_spread[1])` and `r sprintf("%.1f", is_spread[2])`). That is about `r sprintf("%.0f", 10^(log10_p_exact - log10_p_is))` times *smaller* than the exact answer, and the runs agree with each other far better than they agree with the truth. The reason is worth knowing. The set of results "at least as improbable as Ipsos's" is not a patch around Ipsos's numbers: it is a shell all the way around the true result, and it includes, for instance, polls that overstate *Studentska lista* by as much as Ipsos understated it. Only `r sprintf("%.0f%%", 100 * enum[["corner_share"]])` of the exact tail probability lies in the Ipsos-like corner (*Studentska* below and *Ujedinjena* above expectation), and even within that corner the made-up electorate concentrates its draws near one point of a long ridge. Importance sampling is unbiased in theory, but in practice it almost never visits most of the shell, so it undercounts, and more draws do not cure it (we checked: a hundred times more draws moved the estimate by less than a third). We report it here as a caution, not as evidence.
 
 ```{r fig-m4, fig.height=4.5, fig.cap="Figure 5. Log-probability (base 10) of two million simulated random polls under H₀. Ipsos's result lies far to the left of every one of them."}
 tibble::tibble(l10 = log10_sim) |>
@@ -723,7 +759,7 @@ tibble::tibble(l10 = log10_sim) |>
 
 The classical textbook route to the far tail is an approximation. The **G statistic** (likelihood-ratio statistic) summarises the discrepancy between observed and expected counts in one number, G = 2 Σ Oᵢ ln(Oᵢ / Eᵢ). Under H₀, and for samples this large, G approximately follows a known distribution, the **chi-square distribution** with (categories − 1) **degrees of freedom** (roughly: the number of independent ways the counts can deviate from expectation; with four categories that must sum to *n*, three), whose tail we can compute analytically to any depth. Its close cousin is Pearson's chi-square, Σ (O − E)² / E; we report both.
 
-Two honest caveats. First, the chi-square distribution is an **asymptotic approximation**: excellent near the centre, rougher the deeper into the tail one goes, which is why the G and Pearson versions below disagree by a few powers of ten even though they measure the same thing. Second, when they disagree in the far tail, G is the one to trust: its tail behaviour is governed exactly by the information-theoretic distance between the two vectors, whereas Pearson's statistic is known to overstate extremeness far out. We therefore treat Method 5 as a cross-check on the importance-sampling estimate of Method 4, not as the headline, and read all of these figures as orders of magnitude.
+Two honest caveats. First, the chi-square distribution is an **asymptotic approximation**: excellent near the centre, rougher the deeper into the tail one goes, which is why the G and Pearson versions below disagree by a few powers of ten even though they measure the same thing. Second, when they disagree in the far tail, G is the one to trust: its tail behaviour is governed exactly by the information-theoretic distance between the two vectors, whereas Pearson's statistic is known to overstate extremeness far out. We therefore treat Method 5 as a cross-check on the exact computation of Method 4, not as the headline, and read all of these figures as orders of magnitude.
 
 *Further reading:* McDonald, *Handbook of Biological Statistics*: [G-test of goodness-of-fit](https://www.biostathandbook.com/gtestgof.html), [chi-square test of goodness-of-fit](https://www.biostathandbook.com/chigof.html) and [small numbers in chi-square and G-tests](https://www.biostathandbook.com/small.html) (the "expected count below 5" rule used for Scheme B), all written for non-statisticians · Wikipedia on the [G-test](https://en.wikipedia.org/wiki/G-test), the [likelihood-ratio test](https://en.wikipedia.org/wiki/Likelihood-ratio_test), [Pearson's chi-squared test](https://en.wikipedia.org/wiki/Pearson%27s_chi-squared_test) and the [chi-squared distribution](https://en.wikipedia.org/wiki/Chi-squared_distribution).
 </div>
@@ -758,7 +794,7 @@ tibble::tibble(
 ```
 
 <div class="callout callout-result">
-**Result.** In the four-category scheme the chi-square approximation puts the probability of a discrepancy at least as large as Ipsos's at **`r fmt_log10p(gA["log10_p_G"])`**, within a couple of orders of magnitude of the importance-sampling estimate (`r fmt_log10p(log10_p_is)`), as an approximation of this kind should be. Treating lists separately (Scheme B, `r length(k_ips_B2)` categories after merging the `r sum(small)` smallest) gives `r fmt_log10p(gB["log10_p_G"])`: the discrepancy is slightly larger in total (G = `r sprintf("%.0f", gB["G"])` against `r sprintf("%.0f", gA["G"])`), but it is spread over more than three times as many categories, and the chi-square distribution charges for each extra category. All of these agree to within a few orders of magnitude, which, at this depth, is agreement.
+**Result.** In the four-category scheme the chi-square approximation puts the probability of a discrepancy at least as large as Ipsos's at **`r fmt_log10p(gA["log10_p_G"])`**, within a factor of `r sprintf("%.0f", 10^abs(gA["log10_p_G"] - log10_p_exact))` of the exact value from Method 4 (`r fmt_log10p(log10_p_exact)`): remarkably close for an approximation this deep in the tail, and a reminder that the G statistic's tail is governed by the right quantity. Treating lists separately (Scheme B, `r length(k_ips_B2)` categories after merging the `r sum(small)` smallest) gives `r fmt_log10p(gB["log10_p_G"])`: the discrepancy is slightly larger in total (G = `r sprintf("%.0f", gB["G"])` against `r sprintf("%.0f", gA["G"])`), but it is spread over more than three times as many categories, and the chi-square distribution charges for each extra category. All of these agree to within a few orders of magnitude, which, at this depth, is agreement.
 </div>
 
 ## All methods side by side
@@ -769,25 +805,28 @@ summary_tbl <- tibble::tibble(
              "Method 2a – Binomial tail: Studentska lista this low or lower (exact)",
              "Method 2b – Binomial tail: Ujedinjena Srbija this high or higher (exact)",
              "Method 3 – Joint tail: both at once (exact; plain Monte Carlo)",
-             "Method 4a – Exact multinomial test, plain Monte Carlo",
-             "Method 4b – Exact multinomial test, importance sampling",
+             "Method 4a – Exact multinomial test, exhaustive enumeration (exact; the headline)",
+             "Method 4b – Exact multinomial test, plain Monte Carlo",
+             "Method 4c – Exact multinomial test, importance sampling (biased low here; see text)",
              "Method 5a – Likelihood-ratio G test, Scheme A (chi-square approximation)",
              "Method 5b – Likelihood-ratio G test, Scheme B, all lists (chi-square approximation)"),
   `Probability under random sampling` = c(
     fmt_log10p(log10_point_ips), fmt_log10p(m2$log10_p[1]), fmt_log10p(m2$log10_p[2]),
     sprintf("exact: %s; Monte Carlo: 0 of %s", fmt_log10p(log10(joint_exact)), fmt_n(n_sim)),
+    sprintf("<b>%s</b>", fmt_log10p(log10_p_exact)),
     ifelse(n_as_extreme == 0, sprintf("below %s (0 of %s)", fmt_log10p(log10(1 / n_sim)), fmt_n(n_sim)),
            formatC(n_as_extreme / n_sim, format = "e", digits = 2)),
     sprintf("%s (%d runs: exponents %.1f to %.1f)", fmt_log10p(log10_p_is), n_rep, is_spread[1], is_spread[2]),
     fmt_log10p(gA["log10_p_G"]), fmt_log10p(gB["log10_p_G"]))
 )
 kable_report(summary_tbl, caption = sprintf("Table 10. Summary of all methods, Scheme A unless stated, n = %s.", fmt_n(n_primary)))
-# the range of tail probabilities across the methods that can reach the tail
-tail_range <- range(c(m2$log10_p[1], log10(joint_exact), log10_p_is, gA["log10_p_G"], gB["log10_p_G"]))
+# the range of tail probabilities across the methods that can reach the tail (the importance-sampling
+# estimate is excluded: Method 4 shows it to be biased low)
+tail_range <- range(c(m2$log10_p[1], log10(joint_exact), log10_p_exact, gA["log10_p_G"], gB["log10_p_G"]))
 ```
 
 <div class="callout callout-result">
-**Reading the summary.** Every method that can reach the far tail puts the probability between **`r fmt_pow(tail_range[2])` and `r fmt_pow(tail_range[1])`**, depending on how "at least as far from the truth" is defined (one list, both lists, or the whole vector) and on which approximation is used. The two that cannot reach it are consistent with that range: the *Ujedinjena Srbija* tail on its own (`r fmt_pow(m2$log10_p[2])`) is a deliberately weaker, one-list statement, and plain simulation stops at the floor of what two million draws can resolve, which is itself a finding: among two million ideal random polls, not one looks like Ipsos's. Our headline figure is the importance-sampling estimate, **`r fmt_log10p(log10_p_is)`**, because it is the most direct computation of the most general definition; the chi-square figure, `r fmt_pow(gA["log10_p_G"])`, is the textbook approximation to the same quantity. In substance: the hypothesis that Ipsos's published numbers arose from a random sample of the people who voted on 25 October, with chance as the only source of error, is not tenable. Sampling error alone cannot account for the gap.
+**Reading the summary.** Every method that can reach the far tail puts the probability between **`r fmt_pow(tail_range[2])` and `r fmt_pow(tail_range[1])`**, depending on how "at least as far from the truth" is defined (one list, both lists, or the whole vector) and on which approximation is used. The two that cannot reach it are consistent with that range: the *Ujedinjena Srbija* tail on its own (`r fmt_pow(m2$log10_p[2])`) is a deliberately weaker, one-list statement, and plain simulation stops at the floor of what two million draws can resolve, which is itself a finding: among two million ideal random polls, not one looks like Ipsos's. Our headline figure is the exact multinomial test by exhaustive enumeration, **`r fmt_log10p(log10_p_exact)`**, because it is the most general definition computed without any approximation; the chi-square figure, `r fmt_pow(gA["log10_p_G"])`, is the textbook approximation to the same quantity and lands close to it. The importance-sampling estimate is left out of the range because Method 4 shows it to be biased low. In substance: the hypothesis that Ipsos's published numbers arose from a random sample of the people who voted on 25 October, with chance as the only source of error, is not tenable. Sampling error alone cannot account for the gap.
 </div>
 
 ## The same conclusion from Ipsos's own stated precision
@@ -978,7 +1017,7 @@ Across every combination of sample size, population definition and base, the pro
 
 ## Why ask
 
-A probability of `r fmt_pow(log10_p_is)` is not a number anyone can feel. A more useful way to express the same finding is to ask: **how large would each innocent explanation have to be to make Ipsos's result ordinary?** This section quantifies the three explanations that concern the electorate rather than the pollster's instrument: a genuine late swing of opinion, differential turnout, and the behaviour of undecided voters. It then uses the only other published poll of this election as a benchmark for what an ordinary polling miss looks like.
+A probability of `r fmt_pow(log10_p_exact)` is not a number anyone can feel. A more useful way to express the same finding is to ask: **how large would each innocent explanation have to be to make Ipsos's result ordinary?** This section quantifies the three explanations that concern the electorate rather than the pollster's instrument: a genuine late swing of opinion, differential turnout, and the behaviour of undecided voters. It then uses the only other published poll of this election as a benchmark for what an ordinary polling miss looks like.
 
 ## Scenario 1: a late swing between 22 and 25 October
 
@@ -1124,15 +1163,15 @@ bench |>
 1. **Collected both records.** Ipsos's final estimate of 22 October 2026 (n = 3,624; *Ujedinjena Srbija* 47.4%, *Studentska lista* 40.0%, with 95% intervals of about ±2.1 points, commissioned by the *Ujedinjena Srbija* list) and RIK's count as of 31 October 2026 (8,339 of 8,392 polling stations; *Studentska lista* `r fmt_pct(scheme_a$rik_pct[1])`, *Ujedinjena Srbija* `r fmt_pct(scheme_a$rik_pct[2])`; turnout `r fmt_pct(rik_meta$turnout_pct)`).
 2. **Made them comparable.** Both use "all ballots cast" as the base, so no rescaling was needed. We grouped the lists into *Studentska lista*, *Ujedinjena Srbija*, the four *manjinske liste* that entered Parliament, and everything else. Ipsos's error is concentrated in the two large lists, `r sprintf("%.1f", scheme_a$rik_pct[1] - 40)` points too low for *Studentska lista* and `r sprintf("%.1f", 47.4 - scheme_a$rik_pct[2])` points too high for *Ujedinjena Srbija*, with the remaining `r sprintf("%.1f", sum(scheme_a$ipsos_pct[3:4] - scheme_a$rik_pct[3:4]))` points spread as small overestimates across the minor lists, the minority lists and invalid ballots.
 3. **Established the effective sample size** from Ipsos's own confidence intervals: about `r fmt_n(n_primary)` decided respondents, the most generous figure the published precision supports.
-4. **Computed the probability** of Ipsos's result under the hypothesis that it was a random sample of the actual electorate, in five different ways, including an exact simulation-based estimate (importance sampling) and the textbook chi-square approximation.
+4. **Computed the probability** of Ipsos's result under the hypothesis that it was a random sample of the actual electorate, in five different ways, including an exact computation that enumerates every possible outcome of the poll, two simulation estimates, and the textbook chi-square approximation.
 5. **Stress-tested** the result against every alternative sample size, population definition and base (all ballots versus valid votes).
 6. **Quantified** what a late swing, a turnout surprise or a lopsided break of undecided voters would have had to look like to explain the gap, and benchmarked against the only other published poll of this election.
 
 ## What we found
 
 <div class="callout callout-result">
-<div class="hero">≈ `r sub(" \\(.*$", "", fmt_log10p(log10_p_is))`</div>
-<div class="hero-sub">the probability that a random sample of the people who voted on 25 October 2026 would produce a result at least as far from the truth as Ipsos's published numbers (exact multinomial test by importance sampling, four categories, n = `r fmt_n(n_primary)`; every other method and every variant we tried lands between `r fmt_pow(tail_range_all[2])` and `r fmt_pow(tail_range_all[1])`)</div>
+<div class="hero">≈ `r sub(" \\(.*$", "", fmt_log10p(log10_p_exact))`</div>
+<div class="hero-sub">the probability that a random sample of the people who voted on 25 October 2026 would produce a result at least as far from the truth as Ipsos's published numbers (exact multinomial test, all `r fmt_n(enum[["n_outcomes"]])` possible outcomes enumerated, four categories, n = `r fmt_n(n_primary)`; every other method and every variant we tried lands between `r fmt_pow(tail_range_all[2])` and `r fmt_pow(tail_range_all[1])`)</div>
 
 - Taken one list at a time, the chance of a random sample putting *Studentska lista* at or below 40.0% when its true share was `r fmt_pct(scheme_a$rik_pct[1], 1)` is `r fmt_log10p(m2$log10_p[1])`; the chance of putting *Ujedinjena Srbija* at or above 47.4% when its true share was `r fmt_pct(scheme_a$rik_pct[2], 1)` is `r fmt_log10p(m2$log10_p[2])`.
 - Asking for both at once (*Studentska lista* at or below 40.0% *and* *Ujedinjena Srbija* at or above 47.4%) gives `r fmt_log10p(log10(joint_exact))` exactly. The textbook chi-square approximation gives `r fmt_log10p(gA["log10_p_G"])` with four categories and `r fmt_log10p(gB["log10_p_G"])` with all lists kept separate.
@@ -1170,7 +1209,7 @@ pow_words <- function(l10) {
 
 ## What it means, and what it does not
 
-**Sampling error alone cannot account for the gap.** The hypothesis that Ipsos's published numbers are what a random sample of actual voters would produce, with chance as the only source of discrepancy, is rejected by every method: the best estimate of the probability is about `r sub(" \\(.*$", "", fmt_log10p(log10_p_is))`, that is, roughly `r pow_words(log10_p_is)`. Depending on the definition of "at least as far from the truth", on the test used and on the treatment of invalid ballots, the figure moves between `r fmt_pow(tail_range_all[2])` and `r fmt_pow(tail_range_all[1])`; at this depth a few powers of ten change nothing. For a sense of scale: picking one specific star at random from all the roughly 10<sup>24</sup> stars in the observable universe is a 1-in-10<sup>24</sup> event, and that is about `r fmt_pow(-24 - log10_p_is)` times *more* likely than Ipsos's result under random sampling. No reasonable choice of sample size, population definition, base or test statistic changes that conclusion. Ipsos's own stated precision leads to the same conclusion without any modelling on our part.
+**Sampling error alone cannot account for the gap.** The hypothesis that Ipsos's published numbers are what a random sample of actual voters would produce, with chance as the only source of discrepancy, is rejected by every method: the exact probability is about `r sub(" \\(.*$", "", fmt_log10p(log10_p_exact))`, that is, roughly `r pow_words(log10_p_exact)`. Depending on the definition of "at least as far from the truth", on the test used and on the treatment of invalid ballots, the figure moves between `r fmt_pow(tail_range_all[2])` and `r fmt_pow(tail_range_all[1])`; at this depth a few powers of ten change nothing. For a sense of scale: picking one specific star at random from all the roughly 10<sup>24</sup> stars in the observable universe is a 1-in-10<sup>24</sup> event, and that is about `r fmt_pow(-24 - log10_p_exact)` times *more* likely than Ipsos's result under random sampling. No reasonable choice of sample size, population definition, base or test statistic changes that conclusion. Ipsos's own stated precision leads to the same conclusion without any modelling on our part.
 
 **What the numbers do not establish on their own is the *cause*.** Several candidate explanations remain, and statistics alone cannot pick between them, nor rule out a combination; the evidence in this document bears on each as follows:
 
@@ -1186,7 +1225,7 @@ The defensible public statement is therefore: **Ipsos's final pre-election numbe
 
 - RIK's results used here are **preliminary** (`r fmt_n(rik_meta$stations_done)` of `r fmt_n(rik_meta$stations_total)` polling stations, snapshot of `r rik_meta$snapshot`), and they are taken as the truth throughout. The outstanding `r sprintf("%.1f%%", 100 * (1 - rik_meta$stations_done / rik_meta$stations_total))` of polling stations cannot move the national shares by more than a few tenths of a point. Re-knitting this document with the final figures entered in Section 3 will update every computed number automatically.
 - The effective sample size is inferred from Ipsos's published intervals, not stated by Ipsos. The sensitivity analysis shows the conclusion is insensitive to it. The counts "out of `r fmt_n(n_primary)`" are a construction that matches the precision of Ipsos's intervals, not interviews Ipsos actually conducted.
-- The chi-square figures are asymptotic approximations and are read as orders of magnitude; the importance-sampling estimate carries its own simulation error (independent runs spread over `r sprintf("%.1f", diff(is_spread))` in the exponent). Pearson's chi-square is reported for completeness but is known to be unreliable this far into the tail.
+- The headline figure is computed exactly, by enumeration, and carries no simulation error. The chi-square figures are asymptotic approximations and are read as orders of magnitude; Pearson's chi-square is reported for completeness but is known to be unreliable this far into the tail. The importance-sampling estimate is reported only to document that, with a proposal centred on Ipsos's numbers, it undercounts the tail by a factor of about `r sprintf("%.0f", 10^(log10_p_exact - log10_p_is))` (its runs spread over `r sprintf("%.1f", diff(is_spread))` in the exponent, which understates its true error).
 - Ipsos's percentages are published to one decimal place; converting them to counts introduces errors of up to about one respondent per category, which is immaterial in Scheme A but a reason to treat the smallest Scheme B cells as indicative only.
 - Ipsos's assumed 2.5% invalid share is not a sampled quantity; Section 8 shows the effect of removing it from the comparison (a few powers of ten, conclusion unchanged).
 - Minority lists are defined here as the four that won seats. Other lists representing national minorities (e.g. *Zukorlić (SPP)*) are in the "Other" category in both sources, so the comparison is consistent.

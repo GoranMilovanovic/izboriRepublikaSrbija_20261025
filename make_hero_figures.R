@@ -1,9 +1,10 @@
 # Renders the two large-type "hero" cards used at the top of README.md
-# (_img/hero_en_v3.png and _img/hero_sr_v3.png). Run from the repository root:
+# (_img/hero_en_v4.png and _img/hero_sr_v4.png). Run from the repository root:
 #   Rscript make_hero_figures.R
 # Powers of ten are typeset with plotmath (parse = TRUE), not with Unicode
 # superscript characters: most fonts lack native glyphs for several of those
-# characters and fall back to another font, so "10⁻³⁷" can render as "10⁻³ ⁷".
+# characters and fall back to another font, so "10⁻³⁶" can render as "10⁻³ ⁶".
+# The file names carry a version suffix because GitHub caches README images by path.
 library(ggplot2)
 
 # lines: list of list(y, label, size, colour, parse, bold, x, hjust)
@@ -19,38 +20,38 @@ hero <- function(file, lines) {
 
 ink <- "#0b0b0b"; grey <- "#52514e"; muted <- "#898781"
 
-hero("_img/hero_en_v3.png", list(
-  # headline as plain bold text: "3 × 10" plus a hand-placed bold exponent (plotmath cannot do bold Helvetica)
-  list(y = 0.76, x = -0.12, label = "3 \u00d7 10", size = 44, colour = ink, bold = TRUE),
-  list(y = 0.88, x = 0.325, label = "\u221237", size = 24, colour = ink, bold = TRUE, hjust = 0),
+hero("_img/hero_en_v4.png", list(
+  # headline as plain bold text: "2 × 10" plus a hand-placed bold exponent (plotmath cannot do bold Helvetica)
+  list(y = 0.76, x = -0.12, label = "2 × 10", size = 44, colour = ink, bold = TRUE),
+  list(y = 0.88, x = 0.325, label = "−36", size = 24, colour = ink, bold = TRUE, hjust = 0),
   list(y = 0.47, size = 7.2, colour = ink,
        label = "The probability that a random sample of the people who voted on 25 October 2026\nwould produce a result at least as far from the truth as Ipsos's published numbers."),
   list(y = 0.27, size = 6.2, colour = grey,
-       label = "In words: about one in three undecillion — a 3 followed by 36 zeros."),
+       label = "In words: about one in five hundred decillion — a 5 followed by 35 zeros. Computed exactly, not estimated."),
   list(y = 0.17, size = 6.2, colour = grey, parse = TRUE,
        label = "'Even with every assumption chosen in Ipsos\\'s favour, the probability never rises above about '*10^-30*'.'"),
   list(y = 0.02, size = 6.2, colour = grey,
-       label = "For scale: picking one specific grain of sand from all the sand on Earth and, independently,"),
+       label = "For scale: winning the jackpot of a 6/49 lottery five weeks in a row, with a single ticket each week,"),
   list(y = -0.07, size = 6.2, colour = grey, parse = TRUE,
-       label = "'one specific second from all the seconds since the Big Bang, is about a 1 in '*3 %*% 10^36*' event — the same odds.'"),
-  list(y = -0.19, size = 4.6, colour = muted,
-       label = "Exact multinomial test (importance sampling), four categories, effective n = 2,110. RIK preliminary results, 31 October 2026.")
+       label = "'is about a 1 in '*5 %*% 10^35*' event — the same odds.'"),
+  list(y = -0.19, size = 4.4, colour = muted,
+       label = "Exact multinomial test (all 1.57 billion outcomes enumerated), four categories, effective n = 2,110. RIK preliminary results, 31 October 2026.")
 ))
 
-hero("_img/hero_sr_v3.png", list(
-  # headline as plain bold text: "3 × 10" plus a hand-placed bold exponent (plotmath cannot do bold Helvetica)
-  list(y = 0.76, x = -0.12, label = "3 \u00d7 10", size = 44, colour = ink, bold = TRUE),
-  list(y = 0.88, x = 0.325, label = "\u221237", size = 24, colour = ink, bold = TRUE, hjust = 0),
+hero("_img/hero_sr_v4.png", list(
+  # headline as plain bold text: "2 × 10" plus a hand-placed bold exponent (plotmath cannot do bold Helvetica)
+  list(y = 0.76, x = -0.12, label = "2 × 10", size = 44, colour = ink, bold = TRUE),
+  list(y = 0.88, x = 0.325, label = "−36", size = 24, colour = ink, bold = TRUE, hjust = 0),
   list(y = 0.47, size = 7.2, colour = ink,
        label = "Verovatnoća da slučajno izabran uzorak ljudi koji su glasali 25. oktobra 2026.\ndâ rezultat bar toliko udaljen od istine koliko su to bile objavljene brojke Ipsosa."),
   list(y = 0.27, size = 6.2, colour = grey,
-       label = "Rečima: otprilike jedan u tri sekstiliona — broj 3 sa 36 nula."),
+       label = "Rečima: otprilike jedan u petsto kvintilijardi — broj 5 sa 35 nula. Izračunato tačno, ne procenjeno."),
   list(y = 0.17, size = 6.2, colour = grey, parse = TRUE,
        label = "'Čak i kad se svaka pretpostavka izabere u korist Ipsosa, verovatnoća ne prelazi oko '*10^-30*'.'"),
   list(y = 0.02, size = 6.2, colour = grey,
-       label = "Za osećaj razmere: izvući jedno određeno zrno peska od sveg peska na Zemlji i, nezavisno od toga,"),
+       label = "Za osećaj razmere: dobiti glavni zgoditak lota 6/49 pet nedelja zaredom, sa po jednim tiketom nedeljno,"),
   list(y = -0.07, size = 6.2, colour = grey, parse = TRUE,
-       label = "'jednu određenu sekundu od svih sekundi od Velikog praska — to je događaj od oko 1 u '*3 %*% 10^36*'. Iste šanse.'"),
-  list(y = -0.19, size = 4.6, colour = muted,
-       label = "Tačan multinomni test (uzorkovanje po važnosti), četiri grupe, stvarna veličina uzorka 2.110. Preliminarni rezultati RIK-a, 31. oktobar 2026.")
+       label = "'događaj je od oko 1 u '*5 %*% 10^35*'. Iste šanse.'"),
+  list(y = -0.19, size = 4.4, colour = muted,
+       label = "Tačan multinomni test (nabrojano svih 1,57 milijardi ishoda), četiri grupe, stvarna veličina uzorka 2.110. Preliminarni rezultati RIK-a, 31. oktobar 2026.")
 ))
