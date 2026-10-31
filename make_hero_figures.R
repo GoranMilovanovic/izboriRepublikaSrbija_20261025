@@ -1,26 +1,28 @@
 # Renders the two large-type "hero" cards used at the top of README.md
-# (_img/hero_en_v2.png and _img/hero_sr_v2.png). Run from the repository root:
+# (_img/hero_en_v3.png and _img/hero_sr_v3.png). Run from the repository root:
 #   Rscript make_hero_figures.R
 # Powers of ten are typeset with plotmath (parse = TRUE), not with Unicode
 # superscript characters: most fonts lack native glyphs for several of those
 # characters and fall back to another font, so "10⁻³⁷" can render as "10⁻³ ⁷".
 library(ggplot2)
 
-# lines: list of list(y, label, size, colour, parse)
+# lines: list of list(y, label, size, colour, parse, bold, x, hjust)
 hero <- function(file, lines) {
   g <- ggplot() + xlim(-1, 1) + ylim(-0.22, 0.95) + theme_void() +
     theme(plot.background = element_rect(fill = "#fcfcfb", colour = NA)) +
     annotate("segment", x = -0.35, xend = 0.35, y = 0.62, yend = 0.62, colour = "#eb6834", linewidth = 1.2)
   for (l in lines)
-    g <- g + annotate("text", x = 0, y = l$y, label = l$label, size = l$size, colour = l$colour,
+    g <- g + annotate("text", x = if (is.null(l$x)) 0 else l$x, y = l$y, hjust = if (is.null(l$hjust)) 0.5 else l$hjust, label = l$label, size = l$size, colour = l$colour,
                       fontface = if (isTRUE(l$bold)) "bold" else "plain", parse = isTRUE(l$parse), lineheight = 0.95)
   ggsave(file, g, width = 12, height = 7.2, dpi = 150, bg = "#fcfcfb")
 }
 
 ink <- "#0b0b0b"; grey <- "#52514e"; muted <- "#898781"
 
-hero("_img/hero_en_v2.png", list(
-  list(y = 0.78, label = "bold(3 %*% 10^-37)", size = 44, colour = ink, bold = TRUE, parse = TRUE),
+hero("_img/hero_en_v3.png", list(
+  # headline as plain bold text: "3 × 10" plus a hand-placed bold exponent (plotmath cannot do bold Helvetica)
+  list(y = 0.76, x = -0.12, label = "3 \u00d7 10", size = 44, colour = ink, bold = TRUE),
+  list(y = 0.88, x = 0.325, label = "\u221237", size = 24, colour = ink, bold = TRUE, hjust = 0),
   list(y = 0.47, size = 7.2, colour = ink,
        label = "The probability that a random sample of the people who voted on 25 October 2026\nwould produce a result at least as far from the truth as Ipsos's published numbers."),
   list(y = 0.27, size = 6.2, colour = grey,
@@ -35,8 +37,10 @@ hero("_img/hero_en_v2.png", list(
        label = "Exact multinomial test (importance sampling), four categories, effective n = 2,110. RIK preliminary results, 31 October 2026.")
 ))
 
-hero("_img/hero_sr_v2.png", list(
-  list(y = 0.78, label = "bold(3 %*% 10^-37)", size = 44, colour = ink, bold = TRUE, parse = TRUE),
+hero("_img/hero_sr_v3.png", list(
+  # headline as plain bold text: "3 × 10" plus a hand-placed bold exponent (plotmath cannot do bold Helvetica)
+  list(y = 0.76, x = -0.12, label = "3 \u00d7 10", size = 44, colour = ink, bold = TRUE),
+  list(y = 0.88, x = 0.325, label = "\u221237", size = 24, colour = ink, bold = TRUE, hjust = 0),
   list(y = 0.47, size = 7.2, colour = ink,
        label = "Verovatnoća da slučajno izabran uzorak ljudi koji su glasali 25. oktobra 2026.\ndâ rezultat bar toliko udaljen od istine koliko su to bile objavljene brojke Ipsosa."),
   list(y = 0.27, size = 6.2, colour = grey,

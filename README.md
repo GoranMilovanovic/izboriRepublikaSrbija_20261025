@@ -13,7 +13,7 @@ A statistical analysis of the final Ipsos pre-election poll (22 October 2026) ag
 
 ## English
 
-![3 × 10<sup>−37</sup>](_img/hero_en_v2.png)
+![3 × 10<sup>−37</sup>](_img/hero_en_v3.png)
 
 # 3 × 10<sup>−37</sup>
 
@@ -111,7 +111,7 @@ Knitting takes a few minutes (two Monte Carlo simulations of 2 million polls and
 
 ## Srpski
 
-![3 × 10<sup>−37</sup>](_img/hero_sr_v2.png)
+![3 × 10<sup>−37</sup>](_img/hero_sr_v3.png)
 
 # 3 × 10<sup>−37</sup>
 
