@@ -39,6 +39,26 @@ The analysis treats the official result as the true composition of the electorat
 - **What would it take to rescue the poll:** a late swing of about **450,000 voters** to *Studentska lista* within three days; or, if every one of the ~275,000 unexpected extra voters had voted *Studentska*, a further ~300,000 still switching; or a quarter of voters undecided and then voting 92% for one list — and even then the small-list excess remains unexplained.
 - The only other published poll (NSPM, fieldwork 25 September – 5 October) also missed in the same direction, but Ipsos's result is about 10²⁴ times less probable than NSPM's.
 
+### The findings in four pictures
+
+**1. Where the poll put each list, and where the voters did.** The sixteen small lists are close; the entire miss is in the two large lists.
+
+![Poll versus result, list by list](_img/en_01_poll_vs_result.png)
+
+**2. What chance alone produces.** 100,000 simulated random polls of 2,000 voters from the real electorate. Ipsos's published shares (solid black lines) lie far outside everything chance produced.
+
+![What chance alone produces](_img/en_03_what_chance_produces.png)
+
+**3. How unusual Ipsos's result is, measured by its own probability.** Two million simulated random polls; Ipsos's result is about 10²⁹ times less likely than the least likely of them.
+
+![How unusual is Ipsos's result](_img/en_05_how_unusual.png)
+
+**4. How big a late swing would rescue the poll.** About 450,000 voters would have had to move to *Studentska lista* between 22 and 25 October for Ipsos's result to be an ordinary 1-in-20 unlucky draw.
+
+![Late swing needed to rescue the poll](_img/en_08_late_swing.png)
+
+All figures, including the effective-sample-size derivation, the sensitivity analysis and the sampling cloud, are in the technical report; the PNG files are in [`_img/`](_img/).
+
 ### What the findings do and do not mean
 
 Sampling error alone **cannot** account for the gap. The analysis does **not** establish *why* the gap exists. The remaining explanations — a very large late swing, a turnout or undecided-voter shift of unusual size, a methodological bias well beyond the other poll's, or the published numbers not reflecting what the survey measured — cannot be separated by statistics, nor can any of them be separated from misreporting. The reports make no claim about intent. Resolving the question requires Ipsos's raw data, weighting scheme, likely-voter model and treatment of undecided respondents.
@@ -95,6 +115,26 @@ Analiza uzima zvanični rezultat kao stvarni sastav biračkog tela i pita: **kol
 - Zaključak ne zavisi od pretpostavljene veličine uzorka (od 1.500 do 3.624), od toga da li se isključe Kosovo i Metohija i dijaspora, niti od toga da li se nevažeći listići računaju u osnovu.
 - **Šta bi „spaslo“ anketu:** kasni preokret od oko **450.000 birača** ka *Studentskoj listi* u tri dana; ili, čak i da je svaki od ~275.000 neočekivanih dodatnih glasača glasao za *Studentsku listu*, još ~300.000 koji menjaju mišljenje; ili četvrtina neodlučnih birača koja potom glasa 92% za jednu listu — a ni tada višak kod malih lista ne može da se objasni.
 - Jedina druga objavljena anketa (NSPM, terenski rad 25. septembar – 5. oktobar) takođe je promašila u istom smeru, ali je Ipsosov rezultat oko 10²⁴ puta manje verovatan od NSPM-ovog.
+
+### Nalazi u četiri slike
+
+**1. Gde je anketa smestila svaku listu, a gde birači.** Šesnaest malih lista je pogođeno; ceo promašaj je u dve velike liste.
+
+![Anketa i rezultat, lista po listi](_img/sr_01_anketa_i_rezultat.png)
+
+**2. Šta sâm slučaj proizvodi.** 100.000 simuliranih slučajnih anketa od po 2.000 birača iz stvarnog biračkog tela. Ipsosovi objavljeni udeli (pune crne linije) su daleko izvan svega što slučaj proizvodi.
+
+![Šta sâm slučaj proizvodi](_img/sr_03_sta_slucaj_proizvodi.png)
+
+**3. Koliko je Ipsosov rezultat neobičan, meren sopstvenom verovatnoćom.** Dva miliona simuliranih slučajnih anketa; Ipsosov rezultat je oko 10²⁹ puta manje verovatan od najneobičnije među njima.
+
+![Koliko je Ipsosov rezultat neobičan](_img/sr_05_koliko_neobican.png)
+
+**4. Koliki bi kasni preokret spasao anketu.** Oko 450.000 birača moralo bi da pređe na *Studentsku listu* između 22. i 25. oktobra da bi Ipsosov rezultat bio obična „loša sreća“ (jedan u 20).
+
+![Kasni preokret koji bi spasao anketu](_img/sr_08_kasni_preokret.png)
+
+Svi grafici, uključujući izvođenje stvarne veličine uzorka, proveru osetljivosti i „oblak“ slučajnih anketa, nalaze se u izveštajima; PNG fajlovi su u folderu [`_img/`](_img/).
 
 ### Šta nalazi znače, a šta ne
 
