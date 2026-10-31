@@ -13,24 +13,24 @@ A statistical analysis of the final Ipsos pre-election poll (22 October 2026) ag
 
 ## English
 
-![3 × 10⁻³⁷](_img/hero_en.png)
+![3 × 10<sup>−37</sup>](_img/hero_en.png)
 
-# 3 × 10⁻³⁷
+# 3 × 10<sup>−37</sup>
 
 ### What this number means
 
 That is the probability that a **random sample of the people who actually voted** on 25 October 2026 would produce a result **at least as far from the truth** as the numbers Ipsos published three days before the vote. In words: about **one in three undecillion**, a 3 followed by 36 zeros.
 
-It is the best estimate. Every assumption in the analysis can also be pushed in Ipsos's favour at once: the smallest sample size its own margins of error allow, invalid ballots removed from the comparison, all lists kept separate, the textbook approximation instead of the exact test. **Even then the probability never rises above about 10⁻³⁰** — one in a nonillion, a 1 followed by 30 zeros.
+It is the best estimate. Every assumption in the analysis can also be pushed in Ipsos's favour at once: the smallest sample size its own margins of error allow, invalid ballots removed from the comparison, all lists kept separate, the textbook approximation instead of the exact test. **Even then the probability never rises above about 10<sup>−30</sup>** — one in a nonillion, a 1 followed by 30 zeros.
 
 Numbers this small have no everyday meaning, so here are some comparisons with astronomical quantities:
 
 | Event | Odds | Compared with Ipsos's result |
 |---|---|---|
-| Pick, at random, one **specific star** out of all ~10²⁴ stars in the observable universe | 1 in 10²⁴ | about **3,000,000,000,000 times more likely** |
-| Win the jackpot of a 6/49 lottery **five weeks in a row** with a single ticket each week | 1 in 5 × 10³⁵ | still about **6 times more likely** |
-| Pick one **specific grain of sand** from all the sand on Earth (~7.5 × 10¹⁸ grains) *and*, independently, one **specific second** out of all the seconds since the Big Bang (~4.4 × 10¹⁷) | 1 in 3 × 10³⁶ | **the same odds** |
-| Pick one specific star *and* one specific minute of the year | 1 in 5 × 10²⁹ | roughly the **Ipsos-friendliest bound**, 10⁻³⁰ |
+| Pick, at random, one **specific star** out of all ~10<sup>24</sup> stars in the observable universe | 1 in 10<sup>24</sup> | about **3,000,000,000,000 times more likely** |
+| Win the jackpot of a 6/49 lottery **five weeks in a row** with a single ticket each week | 1 in 5 × 10<sup>35</sup> | still about **6 times more likely** |
+| Pick one **specific grain of sand** from all the sand on Earth (~7.5 × 10<sup>18</sup> grains) *and*, independently, one **specific second** out of all the seconds since the Big Bang (~4.4 × 10<sup>17</sup>) | 1 in 3 × 10<sup>36</sup> | **the same odds** |
+| Pick one specific star *and* one specific minute of the year | 1 in 5 × 10<sup>29</sup> | roughly the **Ipsos-friendliest bound**, 10<sup>−30</sup> |
 
 What this does **not** say: *why* the gap exists. See [What the findings do and do not mean](#what-the-findings-do-and-do-not-mean).
 
@@ -54,11 +54,11 @@ The analysis treats the official result as the true composition of the electorat
 ### Main findings
 
 - The gap (13.0 points on one list, 8.4 on the other) is about **12 and 8 standard deviations** of a poll of Ipsos's effective size (≈ 2,110 decided respondents, derived from Ipsos's own published margins of error — the most generous choice for Ipsos).
-- The probability that random sampling produces a result at least this far from the truth is about **3 × 10⁻³⁷** (exact multinomial test by importance sampling); every other method and every variant tried lands between **10⁻³⁰ and 10⁻³⁶**. Among two million simulated random polls from the real electorate, none came close.
+- The probability that random sampling produces a result at least this far from the truth is about **3 × 10<sup>−37</sup>** (exact multinomial test by importance sampling); every other method and every variant tried lands between **10<sup>−30</sup> and 10<sup>−36</sup>**. Among two million simulated random polls from the real electorate, none came close.
 - By Ipsos's **own** published margin of error, the true *Studentska lista* share lay 10.9 points outside the top of its 95% interval.
 - The conclusion does not depend on the assumed sample size (1,500 to 3,624), on whether Kosovo i Metohija and the diaspora are excluded, or on whether invalid ballots are included in the base.
 - **What would it take to rescue the poll:** a late swing of about **450,000 voters** to *Studentska lista* within three days; or, if every one of the ~275,000 unexpected extra voters had voted *Studentska*, a further ~300,000 still switching; or a quarter of voters undecided and then voting 92% for one list — and even then the small-list excess remains unexplained.
-- The only other published poll (NSPM, fieldwork 25 September – 5 October) also missed in the same direction, but Ipsos's result is about 10²⁴ times less probable than NSPM's.
+- The only other published poll (NSPM, fieldwork 25 September – 5 October) also missed in the same direction, but Ipsos's result is about 10<sup>24</sup> times less probable than NSPM's.
 
 ### The findings in four pictures
 
@@ -70,7 +70,7 @@ The analysis treats the official result as the true composition of the electorat
 
 ![What chance alone produces](_img/en_03_what_chance_produces.png)
 
-**3. How unusual Ipsos's result is, measured by its own probability.** Two million simulated random polls; Ipsos's result is about 10²⁹ times less likely than the least likely of them.
+**3. How unusual Ipsos's result is, measured by its own probability.** Two million simulated random polls; Ipsos's result is about 10<sup>29</sup> times less likely than the least likely of them.
 
 ![How unusual is Ipsos's result](_img/en_05_how_unusual.png)
 
@@ -111,24 +111,24 @@ Knitting takes a few minutes (two Monte Carlo simulations of 2 million polls and
 
 ## Srpski
 
-![3 × 10⁻³⁷](_img/hero_sr.png)
+![3 × 10<sup>−37</sup>](_img/hero_sr.png)
 
-# 3 × 10⁻³⁷
+# 3 × 10<sup>−37</sup>
 
 ### Šta ovaj broj znači
 
 To je verovatnoća da **slučajno izabran uzorak ljudi koji su zaista glasali** 25. oktobra 2026. dâ rezultat **bar toliko udaljen od istine** koliko su to bile brojke koje je Ipsos objavio tri dana pred izbore. Rečima: otprilike **jedan u tri sekstiliona**, broj 3 sa 36 nula.
 
-To je najbolja procena. Svaka pretpostavka u analizi može se istovremeno pomeriti u korist Ipsosa: najmanja veličina uzorka koju dopuštaju njegovi sopstveni rasponi greške, nevažeći listići isključeni iz poređenja, sve liste posebno, udžbenička aproksimacija umesto tačnog testa. **Čak i tada verovatnoća ne prelazi oko 10⁻³⁰** — jedan u kvintilion, broj 1 sa 30 nula.
+To je najbolja procena. Svaka pretpostavka u analizi može se istovremeno pomeriti u korist Ipsosa: najmanja veličina uzorka koju dopuštaju njegovi sopstveni rasponi greške, nevažeći listići isključeni iz poređenja, sve liste posebno, udžbenička aproksimacija umesto tačnog testa. **Čak i tada verovatnoća ne prelazi oko 10<sup>−30</sup>** — jedan u kvintilion, broj 1 sa 30 nula.
 
 Ovako mali brojevi nemaju svakodnevno značenje, pa evo poređenja sa astronomskim veličinama:
 
 | Događaj | Šanse | U poređenju sa Ipsosovim rezultatom |
 |---|---|---|
-| Nasumice izvući jednu **određenu zvezdu** od svih ~10²⁴ zvezda u vidljivom svemiru | 1 u 10²⁴ | oko **3.000.000.000.000 puta verovatnije** |
-| Dobiti glavni zgoditak lota 6/49 **pet nedelja zaredom**, sa po jednim tiketom nedeljno | 1 u 5 × 10³⁵ | i dalje oko **6 puta verovatnije** |
-| Izvući jedno **određeno zrno peska** od sveg peska na Zemlji (~7,5 × 10¹⁸ zrna) *i*, nezavisno od toga, jednu **određenu sekundu** od svih sekundi od Velikog praska (~4,4 × 10¹⁷) | 1 u 3 × 10³⁶ | **iste šanse** |
-| Izvući jednu određenu zvezdu *i* jedan određeni minut u godini | 1 u 5 × 10²⁹ | otprilike **granica najpovoljnija za Ipsos**, 10⁻³⁰ |
+| Nasumice izvući jednu **određenu zvezdu** od svih ~10<sup>24</sup> zvezda u vidljivom svemiru | 1 u 10<sup>24</sup> | oko **3.000.000.000.000 puta verovatnije** |
+| Dobiti glavni zgoditak lota 6/49 **pet nedelja zaredom**, sa po jednim tiketom nedeljno | 1 u 5 × 10<sup>35</sup> | i dalje oko **6 puta verovatnije** |
+| Izvući jedno **određeno zrno peska** od sveg peska na Zemlji (~7,5 × 10<sup>18</sup> zrna) *i*, nezavisno od toga, jednu **određenu sekundu** od svih sekundi od Velikog praska (~4,4 × 10<sup>17</sup>) | 1 u 3 × 10<sup>36</sup> | **iste šanse** |
+| Izvući jednu određenu zvezdu *i* jedan određeni minut u godini | 1 u 5 × 10<sup>29</sup> | otprilike **granica najpovoljnija za Ipsos**, 10<sup>−30</sup> |
 
 Šta ovo **ne** govori: *zašto* je razlika nastala. Videti [Šta nalazi znače, a šta ne](#šta-nalazi-znače-a-šta-ne).
 
@@ -152,11 +152,11 @@ Analiza uzima zvanični rezultat kao stvarni sastav biračkog tela i pita: **kol
 ### Glavni nalazi
 
 - Razlika (13,0 poena za jednu i 8,4 za drugu listu) iznosi oko **12 odnosno 8 standardnih devijacija** ankete Ipsosove stvarne veličine (≈ 2.110 opredeljenih ispitanika, izvedeno iz Ipsosovih sopstvenih objavljenih raspona greške — izbor najpovoljniji za Ipsos).
-- Verovatnoća da slučajan uzorak dâ rezultat bar ovoliko udaljen od istine iznosi oko **3 × 10⁻³⁷** (tačan multinomni test uzorkovanjem po važnosti); svaki drugi metod i svaka isprobana varijanta daju između **10⁻³⁰ i 10⁻³⁶**. Od dva miliona simuliranih slučajnih anketa iz stvarnog biračkog tela, nijedna nije ni blizu.
+- Verovatnoća da slučajan uzorak dâ rezultat bar ovoliko udaljen od istine iznosi oko **3 × 10<sup>−37</sup>** (tačan multinomni test uzorkovanjem po važnosti); svaki drugi metod i svaka isprobana varijanta daju između **10<sup>−30</sup> i 10<sup>−36</sup>**. Od dva miliona simuliranih slučajnih anketa iz stvarnog biračkog tela, nijedna nije ni blizu.
 - Po Ipsosovom **sopstvenom** objavljenom rasponu greške, stvarni udeo *Studentske liste* bio je 10,9 poena iznad gornje granice njegovog intervala od 95%.
 - Zaključak ne zavisi od pretpostavljene veličine uzorka (od 1.500 do 3.624), od toga da li se isključe Kosovo i Metohija i dijaspora, niti od toga da li se nevažeći listići računaju u osnovu.
 - **Šta bi „spaslo“ anketu:** kasni preokret od oko **450.000 birača** ka *Studentskoj listi* u tri dana; ili, čak i da je svaki od ~275.000 neočekivanih dodatnih glasača glasao za *Studentsku listu*, još ~300.000 koji menjaju mišljenje; ili četvrtina neodlučnih birača koja potom glasa 92% za jednu listu — a ni tada višak kod malih lista ne može da se objasni.
-- Jedina druga objavljena anketa (NSPM, terenski rad 25. septembar – 5. oktobar) takođe je promašila u istom smeru, ali je Ipsosov rezultat oko 10²⁴ puta manje verovatan od NSPM-ovog.
+- Jedina druga objavljena anketa (NSPM, terenski rad 25. septembar – 5. oktobar) takođe je promašila u istom smeru, ali je Ipsosov rezultat oko 10<sup>24</sup> puta manje verovatan od NSPM-ovog.
 
 ### Nalazi u četiri slike
 
@@ -168,7 +168,7 @@ Analiza uzima zvanični rezultat kao stvarni sastav biračkog tela i pita: **kol
 
 ![Šta sâm slučaj proizvodi](_img/sr_03_sta_slucaj_proizvodi.png)
 
-**3. Koliko je Ipsosov rezultat neobičan, meren sopstvenom verovatnoćom.** Dva miliona simuliranih slučajnih anketa; Ipsosov rezultat je oko 10²⁹ puta manje verovatan od najneobičnije među njima.
+**3. Koliko je Ipsosov rezultat neobičan, meren sopstvenom verovatnoćom.** Dva miliona simuliranih slučajnih anketa; Ipsosov rezultat je oko 10<sup>29</sup> puta manje verovatan od najneobičnije među njima.
 
 ![Koliko je Ipsosov rezultat neobičan](_img/sr_05_koliko_neobican.png)
 

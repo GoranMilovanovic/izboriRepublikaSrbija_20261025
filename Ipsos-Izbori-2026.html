@@ -5234,10 +5234,10 @@ careful analysis uses several and checks that they agree. We will use
 five.</p>
 <p>One technical point: the probabilities we are about to compute are so
 small that ordinary computer arithmetic cannot represent them (anything
-below about 10⁻³⁰⁸ becomes exactly zero). We therefore work with
-<strong>logarithms</strong> of probabilities throughout and report
-results as powers of ten: “10⁻³⁰” means “one chance in a million million
-million million million”.</p>
+below about 10<sup>−308</sup> becomes exactly zero). We therefore work
+with <strong>logarithms</strong> of probabilities throughout and report
+results as powers of ten: “10<sup>−30</sup>” means “one chance in a
+million million million million million”.</p>
 <p><em>Further reading:</em> Wikipedia on the <a href="https://en.wikipedia.org/wiki/P-value">p-value</a> · Wasserstein
 &amp; Lazar, <a href="https://doi.org/10.1080/00031305.2016.1154108"><em>The ASA
 Statement on p-Values: Context, Process, and Purpose</em></a> (<em>The
@@ -5275,7 +5275,7 @@ this low or lower” is computed exactly with <code>pbinom</code>. The
 units: (observed − expected) / standard deviation. For large <em>n</em>
 the binomial is well approximated by the bell curve, and a z-score of 3
 corresponds to a one-sided tail of about 1 in 740, of 5 to about 1 in
-3.5 million, of 10 to about 1 in 10²³.</p>
+3.5 million, of 10 to about 1 in 10<sup>23</sup>.</p>
 <p><em>Further reading:</em> Wikipedia on the <a href="https://en.wikipedia.org/wiki/Binomial_distribution">binomial
 distribution</a> (section “Normal approximation”), the <a href="https://en.wikipedia.org/wiki/Standard_score">z-score</a> and the
 <a href="https://en.wikipedia.org/wiki/68%E2%80%9395%E2%80%9399.7_rule">68–95–99.7
@@ -7047,13 +7047,13 @@ long-scale naming used in Serbian and most of continental Europe,
 far from the truth”, on the test used and on the treatment of invalid
 ballots, the figure moves between 10<sup>−30</sup> and 10<sup>−36</sup>;
 at this depth a few powers of ten change nothing. For a sense of scale:
-picking one specific star at random from all the roughly 10²⁴ stars in
-the observable universe is a 1-in-10²⁴ event, and that is about
-10<sup>12</sup> times <em>more</em> likely than Ipsos’s result under
-random sampling. No reasonable choice of sample size, population
-definition, base or test statistic changes that conclusion. Ipsos’s own
-stated precision leads to the same conclusion without any modelling on
-our part.</p>
+picking one specific star at random from all the roughly 10<sup>24</sup>
+stars in the observable universe is a 1-in-10<sup>24</sup> event, and
+that is about 10<sup>12</sup> times <em>more</em> likely than Ipsos’s
+result under random sampling. No reasonable choice of sample size,
+population definition, base or test statistic changes that conclusion.
+Ipsos’s own stated precision leads to the same conclusion without any
+modelling on our part.</p>
 <p><strong>What the numbers do not establish on their own is the
 <em>cause</em>.</strong> Several candidate explanations remain, and
 statistics alone cannot pick between them, nor rule out a combination;

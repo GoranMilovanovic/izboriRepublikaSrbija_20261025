@@ -55,7 +55,7 @@ fmt_d   <- function(x, d = 1) formatC(x, format = "f", digits = d, big.mark = ".
 fmt_pct <- function(x, d = 1) paste0(fmt_d(x, d), "%")
 pct_lab <- function(x) paste0(format(x, decimal.mark = ","), "%")
 fmt_pow <- function(l10) sprintf("10<sup>%s</sup>", gsub("-", "−", sprintf("%.0f", l10)))
-fmt_p   <- function(l10) {                       # npr. "3 × 10⁻³⁷ (jedan u 3 sa 36 nula)"
+fmt_p   <- function(l10) {                       # npr. "3 × 10<sup>−37</sup> (jedan u 3 sa 36 nula)"
   e <- floor(-l10); lead <- round(10^(-l10 - e)); if (lead == 10) { lead <- 1; e <- e + 1 }
   sprintf("%d × 10<sup>−%d</sup> (otprilike jedan u broju %d sa %d nula)", lead, e + 1, lead, e)
 }
@@ -285,7 +285,7 @@ tibble(l10 = log10_sim) |> ggplot(aes(x = l10)) +
 ```
 
 <div class="callout callout-result">
-**Rezultat.** Najbolja procena verovatnoće je **`r fmt_p(log10_p_is)`**. Za osećaj razmere: pogoditi jednu unapred izabranu zvezdu među svih oko 10²⁴ zvezda u vidljivom svemiru događaj je verovatnoće jedan u 10²⁴, a to je oko `r fmt_pow(-24 - log10_p_is)` puta *verovatnije* od Ipsosovog rezultata pod pretpostavkom slučajnog uzorka.
+**Rezultat.** Najbolja procena verovatnoće je **`r fmt_p(log10_p_is)`**. Za osećaj razmere: pogoditi jednu unapred izabranu zvezdu među svih oko 10<sup>24</sup> zvezda u vidljivom svemiru događaj je verovatnoće jedan u 10<sup>24</sup>, a to je oko `r fmt_pow(-24 - log10_p_is)` puta *verovatnije* od Ipsosovog rezultata pod pretpostavkom slučajnog uzorka.
 
 Do istog zaključka vodi i sama Ipsosova objavljena preciznost: Ipsos je za *Studentsku listu* naveo raspon 37,9–42,1%. Stvarni rezultat, `r fmt_pct(scheme_a$rik_pct[1])`, bio je **`r fmt_d(own_out)` poena iznad gornje granice** tog raspona, `r sprintf("%.0f", (scheme_a$rik_pct[1] - 40) / own_se)` puta dalje od procene nego što Ipsosova sopstvena mera greške dopušta. Raspon od 95% sme da promaši jednom u dvadeset puta, i to obično za deo poena, ne za jedanaest.
 </div>
