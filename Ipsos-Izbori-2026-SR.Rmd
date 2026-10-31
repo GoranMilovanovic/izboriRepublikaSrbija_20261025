@@ -1,6 +1,6 @@
 ---
 title: "Da li je Ipsos svoje brojke mogao dobiti slučajno?"
-subtitle: "Poslednja predizborna anketa agencije Ipsos i zvanični rezultati parlamentarnih izbora 2026 – sažetak za javnost"
+subtitle: "Poslednja predizborna anketa agencije Ipsos i zvanični rezultati parlamentarnih izbora 2026"
 author: "Goran S. Milovanović, PhD"
 date: "31. oktobar 2026."
 lang: sr
