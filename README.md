@@ -13,6 +13,27 @@ A statistical analysis of the final Ipsos pre-election poll (22 October 2026) ag
 
 ## English
 
+![3 × 10⁻³⁷](_img/hero_en.png)
+
+# 3 × 10⁻³⁷
+
+### What this number means
+
+That is the probability that a **random sample of the people who actually voted** on 25 October 2026 would produce a result **at least as far from the truth** as the numbers Ipsos published three days before the vote. In words: about **one in three undecillion**, a 3 followed by 36 zeros.
+
+It is the best estimate. Every assumption in the analysis can also be pushed in Ipsos's favour at once: the smallest sample size its own margins of error allow, invalid ballots removed from the comparison, all lists kept separate, the textbook approximation instead of the exact test. **Even then the probability never rises above about 10⁻³⁰** — one in a nonillion, a 1 followed by 30 zeros.
+
+Numbers this small have no everyday meaning, so here are some comparisons with astronomical quantities:
+
+| Event | Odds | Compared with Ipsos's result |
+|---|---|---|
+| Pick, at random, one **specific star** out of all ~10²⁴ stars in the observable universe | 1 in 10²⁴ | about **3,000,000,000,000 times more likely** |
+| Win the jackpot of a 6/49 lottery **five weeks in a row** with a single ticket each week | 1 in 5 × 10³⁵ | still about **6 times more likely** |
+| Pick one **specific grain of sand** from all the sand on Earth (~7.5 × 10¹⁸ grains) *and*, independently, one **specific second** out of all the seconds since the Big Bang (~4.4 × 10¹⁷) | 1 in 3 × 10³⁶ | **the same odds** |
+| Pick one specific star *and* one specific minute of the year | 1 in 5 × 10²⁹ | roughly the **Ipsos-friendliest bound**, 10⁻³⁰ |
+
+What this does **not** say: *why* the gap exists. See [What the findings do and do not mean](#what-the-findings-do-and-do-not-mean).
+
 ### What this repository contains
 
 Two reports, both written in R Markdown and knitted to self-contained HTML (open the `.html` files in any browser; no installation needed):
@@ -89,6 +110,27 @@ Knitting takes a few minutes (two Monte Carlo simulations of 2 million polls and
 ---
 
 ## Srpski
+
+![3 × 10⁻³⁷](_img/hero_sr.png)
+
+# 3 × 10⁻³⁷
+
+### Šta ovaj broj znači
+
+To je verovatnoća da **slučajno izabran uzorak ljudi koji su zaista glasali** 25. oktobra 2026. dâ rezultat **bar toliko udaljen od istine** koliko su to bile brojke koje je Ipsos objavio tri dana pred izbore. Rečima: otprilike **jedan u tri sekstiliona**, broj 3 sa 36 nula.
+
+To je najbolja procena. Svaka pretpostavka u analizi može se istovremeno pomeriti u korist Ipsosa: najmanja veličina uzorka koju dopuštaju njegovi sopstveni rasponi greške, nevažeći listići isključeni iz poređenja, sve liste posebno, udžbenička aproksimacija umesto tačnog testa. **Čak i tada verovatnoća ne prelazi oko 10⁻³⁰** — jedan u kvintilion, broj 1 sa 30 nula.
+
+Ovako mali brojevi nemaju svakodnevno značenje, pa evo poređenja sa astronomskim veličinama:
+
+| Događaj | Šanse | U poređenju sa Ipsosovim rezultatom |
+|---|---|---|
+| Nasumice izvući jednu **određenu zvezdu** od svih ~10²⁴ zvezda u vidljivom svemiru | 1 u 10²⁴ | oko **3.000.000.000.000 puta verovatnije** |
+| Dobiti glavni zgoditak lota 6/49 **pet nedelja zaredom**, sa po jednim tiketom nedeljno | 1 u 5 × 10³⁵ | i dalje oko **6 puta verovatnije** |
+| Izvući jedno **određeno zrno peska** od sveg peska na Zemlji (~7,5 × 10¹⁸ zrna) *i*, nezavisno od toga, jednu **određenu sekundu** od svih sekundi od Velikog praska (~4,4 × 10¹⁷) | 1 u 3 × 10³⁶ | **iste šanse** |
+| Izvući jednu određenu zvezdu *i* jedan određeni minut u godini | 1 u 5 × 10²⁹ | otprilike **granica najpovoljnija za Ipsos**, 10⁻³⁰ |
+
+Šta ovo **ne** govori: *zašto* je razlika nastala. Videti [Šta nalazi znače, a šta ne](#šta-nalazi-znače-a-šta-ne).
 
 ### Šta se nalazi u ovom repozitorijumu
 
