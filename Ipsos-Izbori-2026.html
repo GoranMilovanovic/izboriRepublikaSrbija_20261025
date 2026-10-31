@@ -3328,16 +3328,16 @@ visualisation. The chunk below installs anything that is missing.</p>
 <span id="cb2-31"><a href="#cb2-31" tabindex="-1"></a><span class="co"># ---- formatting helpers -------------------------------------------------------</span></span>
 <span id="cb2-32"><a href="#cb2-32" tabindex="-1"></a>fmt_n   <span class="ot">&lt;-</span> <span class="cf">function</span>(x) <span class="fu">format</span>(<span class="fu">round</span>(x), <span class="at">big.mark =</span> <span class="st">&quot;,&quot;</span>)</span>
 <span id="cb2-33"><a href="#cb2-33" tabindex="-1"></a>fmt_pct <span class="ot">&lt;-</span> <span class="cf">function</span>(x, <span class="at">d =</span> <span class="dv">2</span>) <span class="fu">sprintf</span>(<span class="fu">paste0</span>(<span class="st">&quot;%.&quot;</span>, d, <span class="st">&quot;f%%&quot;</span>), x)</span>
-<span id="cb2-34"><a href="#cb2-34" tabindex="-1"></a><span class="co"># turn a log10 probability into readable text, e.g. &quot;3 × 10⁻³⁶ (about 1 in a 3 followed by 35 zeros)&quot;</span></span>
-<span id="cb2-35"><a href="#cb2-35" tabindex="-1"></a><span class="co"># (the two halves always describe the same number: lead × 10^-(e+1) = 1 / (lead × 10^e))</span></span>
-<span id="cb2-36"><a href="#cb2-36" tabindex="-1"></a>fmt_log10p <span class="ot">&lt;-</span> <span class="cf">function</span>(l10) {</span>
-<span id="cb2-37"><a href="#cb2-37" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.na</span>(l10)) <span class="fu">return</span>(<span class="st">&quot;not computable&quot;</span>)</span>
-<span id="cb2-38"><a href="#cb2-38" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.finite</span>(l10)) <span class="fu">return</span>(<span class="st">&quot;below 10&lt;sup&gt;−300&lt;/sup&gt; (underflow)&quot;</span>)</span>
-<span id="cb2-39"><a href="#cb2-39" tabindex="-1"></a>  <span class="cf">if</span> (l10 <span class="sc">&gt;</span> <span class="sc">-</span><span class="dv">3</span>) <span class="fu">return</span>(<span class="fu">sprintf</span>(<span class="st">&quot;%.4f&quot;</span>, <span class="dv">10</span><span class="sc">^</span>l10))</span>
-<span id="cb2-40"><a href="#cb2-40" tabindex="-1"></a>  e    <span class="ot">&lt;-</span> <span class="fu">floor</span>(<span class="sc">-</span>l10)                      <span class="co"># 1 in  lead × 10^e</span></span>
-<span id="cb2-41"><a href="#cb2-41" tabindex="-1"></a>  lead <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="dv">10</span><span class="sc">^</span>(<span class="sc">-</span>l10 <span class="sc">-</span> e))</span>
-<span id="cb2-42"><a href="#cb2-42" tabindex="-1"></a>  <span class="cf">if</span> (lead <span class="sc">==</span> <span class="dv">10</span>) { lead <span class="ot">&lt;-</span> <span class="dv">1</span>; e <span class="ot">&lt;-</span> e <span class="sc">+</span> <span class="dv">1</span> }</span>
-<span id="cb2-43"><a href="#cb2-43" tabindex="-1"></a>  <span class="fu">sprintf</span>(<span class="st">&quot;%d × 10&lt;sup&gt;−%d&lt;/sup&gt; (about 1 in a %d followed by %d zeros)&quot;</span>, lead, e <span class="sc">+</span> <span class="dv">1</span>, lead, e)</span>
+<span id="cb2-34"><a href="#cb2-34" tabindex="-1"></a><span class="co"># turn a log10 probability into readable text, e.g. &quot;2 × 10⁻³³ (about 1 in a 4 followed by 32 zeros)&quot;</span></span>
+<span id="cb2-35"><a href="#cb2-35" tabindex="-1"></a><span class="co"># (both halves describe the same number, each rounded to one significant digit:</span></span>
+<span id="cb2-36"><a href="#cb2-36" tabindex="-1"></a><span class="co">#  p ≈ m × 10^f  and  1/p ≈ lead × 10^e; note that m is NOT the same digit as lead unless m ≈ √10)</span></span>
+<span id="cb2-37"><a href="#cb2-37" tabindex="-1"></a>fmt_log10p <span class="ot">&lt;-</span> <span class="cf">function</span>(l10) {</span>
+<span id="cb2-38"><a href="#cb2-38" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.na</span>(l10)) <span class="fu">return</span>(<span class="st">&quot;not computable&quot;</span>)</span>
+<span id="cb2-39"><a href="#cb2-39" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.finite</span>(l10)) <span class="fu">return</span>(<span class="st">&quot;below 10&lt;sup&gt;−300&lt;/sup&gt; (underflow)&quot;</span>)</span>
+<span id="cb2-40"><a href="#cb2-40" tabindex="-1"></a>  <span class="cf">if</span> (l10 <span class="sc">&gt;</span> <span class="sc">-</span><span class="dv">3</span>) <span class="fu">return</span>(<span class="fu">sprintf</span>(<span class="st">&quot;%.4f&quot;</span>, <span class="dv">10</span><span class="sc">^</span>l10))</span>
+<span id="cb2-41"><a href="#cb2-41" tabindex="-1"></a>  f <span class="ot">&lt;-</span> <span class="fu">floor</span>(l10);  m    <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="dv">10</span><span class="sc">^</span>(l10 <span class="sc">-</span> f));  <span class="cf">if</span> (m <span class="sc">==</span> <span class="dv">10</span>)    { m <span class="ot">&lt;-</span> <span class="dv">1</span>;    f <span class="ot">&lt;-</span> f <span class="sc">+</span> <span class="dv">1</span> }   <span class="co"># p    = m × 10^f</span></span>
+<span id="cb2-42"><a href="#cb2-42" tabindex="-1"></a>  e <span class="ot">&lt;-</span> <span class="fu">floor</span>(<span class="sc">-</span>l10); lead <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="dv">10</span><span class="sc">^</span>(<span class="sc">-</span>l10 <span class="sc">-</span> e)); <span class="cf">if</span> (lead <span class="sc">==</span> <span class="dv">10</span>) { lead <span class="ot">&lt;-</span> <span class="dv">1</span>; e <span class="ot">&lt;-</span> e <span class="sc">+</span> <span class="dv">1</span> }   <span class="co"># 1/p  = lead × 10^e</span></span>
+<span id="cb2-43"><a href="#cb2-43" tabindex="-1"></a>  <span class="fu">sprintf</span>(<span class="st">&quot;%d × 10&lt;sup&gt;−%d&lt;/sup&gt; (about 1 in a %d followed by %d zeros)&quot;</span>, m, <span class="sc">-</span>f, lead, e)</span>
 <span id="cb2-44"><a href="#cb2-44" tabindex="-1"></a>}</span>
 <span id="cb2-45"><a href="#cb2-45" tabindex="-1"></a><span class="co"># a power of ten for prose, e.g. fmt_pow(-35.49) -&gt; &quot;10&lt;sup&gt;−35&lt;/sup&gt;&quot;</span></span>
 <span id="cb2-46"><a href="#cb2-46" tabindex="-1"></a>fmt_pow <span class="ot">&lt;-</span> <span class="cf">function</span>(l10, <span class="at">d =</span> <span class="dv">0</span>) {</span>
@@ -5348,7 +5348,7 @@ Studentska lista
 Share this low or lower?
 </td>
 <td style="text-align:right;">
-4 × 10<sup>−33</sup> (about 1 in a 4 followed by 32 zeros)
+2 × 10<sup>−33</sup> (about 1 in a 4 followed by 32 zeros)
 </td>
 </tr>
 <tr>
@@ -5368,16 +5368,16 @@ Ujedinjena Srbija
 Share this high or higher?
 </td>
 <td style="text-align:right;">
-4 × 10<sup>−15</sup> (about 1 in a 4 followed by 14 zeros)
+2 × 10<sup>−15</sup> (about 1 in a 4 followed by 14 zeros)
 </td>
 </tr>
 </tbody>
 </table>
 <div class="callout callout-result">
 <p><strong>Result.</strong> Taken alone, the <em>Studentska lista</em>
-figure has a probability of <strong>4 × 10<sup>−33</sup> (about 1 in a 4
+figure has a probability of <strong>2 × 10<sup>−33</sup> (about 1 in a 4
 followed by 32 zeros)</strong> under random sampling, and the
-<em>Ujedinjena Srbija</em> figure <strong>4 × 10<sup>−15</sup> (about 1
+<em>Ujedinjena Srbija</em> figure <strong>2 × 10<sup>−15</sup> (about 1
 in a 4 followed by 14 zeros)</strong>. Either one, on its own, is far
 beyond anything that sampling error produces.</p>
 </div>
@@ -5440,7 +5440,7 @@ P(Studentska ≤ 40.0% and Ujedinjena ≥ 47.4%)
 pmultinom (exact algorithm)
 </td>
 <td style="text-align:right;">
-4 × 10<sup>−33</sup> (about 1 in a 4 followed by 32 zeros)
+2 × 10<sup>−33</sup> (about 1 in a 4 followed by 32 zeros)
 </td>
 </tr>
 <tr>
@@ -5448,7 +5448,7 @@ pmultinom (exact algorithm)
 Monte Carlo, 2,000,000 simulated polls
 </td>
 <td style="text-align:right;">
-0 of 2,000,000 (so below 2 × 10<sup>−7</sup> (about 1 in a 2 followed by
+0 of 2,000,000 (so below 5 × 10<sup>−7</sup> (about 1 in a 2 followed by
 6 zeros))
 </td>
 </tr>
@@ -5456,11 +5456,11 @@ Monte Carlo, 2,000,000 simulated polls
 </table>
 <div class="callout callout-result">
 <p><strong>Result.</strong> The exact algorithm puts the joint
-probability at <strong>4 × 10<sup>−33</sup> (about 1 in a 4 followed by
+probability at <strong>2 × 10<sup>−33</sup> (about 1 in a 4 followed by
 32 zeros)</strong>, and the brute-force check agrees in the only way it
 can: not one of 2,000,000 simulated random polls from the real
 electorate came anywhere near Ipsos’s combination. The joint probability
-is necessarily no larger than the rarer of its two parts (4 ×
+is necessarily no larger than the rarer of its two parts (2 ×
 10<sup>−33</sup> (about 1 in a 4 followed by 32 zeros) from Method 2),
 and it is close to it: because the two counts are strongly negatively
 correlated (ρ = −0.85; a correlation of −1 would mean one count always
@@ -5534,7 +5534,7 @@ idea with worked examples.</p>
 <span id="cb19-18"><a href="#cb19-18" tabindex="-1"></a>is_spread  <span class="ot">&lt;-</span> <span class="fu">range</span>(<span class="fu">log10</span>(p_is_rep))                 <span class="co"># exponents of the individual replicates</span></span></code></pre></div>
 <p>Of <strong>2,000,000</strong> simulated random polls,
 <strong>0</strong> were at least as improbable as Ipsos’s result. The
-plain Monte Carlo p-value is therefore <strong>below 1 / 2,000,000 = 2 ×
+plain Monte Carlo p-value is therefore <strong>below 1 / 2,000,000 = 5 ×
 10<sup>−7</sup> (about 1 in a 2 followed by 6 zeros)</strong>, the
 resolution limit of this simulation. The histogram below shows where
 Ipsos’s result sits relative to the two million simulated ones.</p>
@@ -5691,7 +5691,7 @@ B: all lists (13 categories after merging 7 tiny ones)
 12
 </td>
 <td style="text-align:right;">
-9 × 10<sup>−33</sup> (about 1 in a 9 followed by 32 zeros)
+1 × 10<sup>−33</sup> (about 1 in a 9 followed by 32 zeros)
 </td>
 <td style="text-align:right;">
 3 × 10<sup>−37</sup> (about 1 in a 3 followed by 36 zeros)
@@ -5707,7 +5707,7 @@ zeros)</strong>, within a couple of orders of magnitude of the
 importance-sampling estimate (3 × 10<sup>−37</sup> (about 1 in a 3
 followed by 36 zeros)), as an approximation of this kind should be.
 Treating lists separately (Scheme B, 13 categories after merging the 7
-smallest) gives 9 × 10<sup>−33</sup> (about 1 in a 9 followed by 32
+smallest) gives 1 × 10<sup>−33</sup> (about 1 in a 9 followed by 32
 zeros): the discrepancy is slightly larger in total (G = 188 against
 168), but it is spread over more than three times as many categories,
 and the chi-square distribution charges for each extra category. All of
@@ -5757,7 +5757,7 @@ Method 1 – Point probability of Ipsos’s exact vector (for reference; not
 a tail)
 </td>
 <td style="text-align:right;">
-1 × 10<sup>−42</sup> (about 1 in a 1 followed by 41 zeros)
+1 × 10<sup>−41</sup> (about 1 in a 1 followed by 41 zeros)
 </td>
 </tr>
 <tr>
@@ -5765,7 +5765,7 @@ a tail)
 Method 2a – Binomial tail: Studentska lista this low or lower (exact)
 </td>
 <td style="text-align:right;">
-4 × 10<sup>−33</sup> (about 1 in a 4 followed by 32 zeros)
+2 × 10<sup>−33</sup> (about 1 in a 4 followed by 32 zeros)
 </td>
 </tr>
 <tr>
@@ -5773,7 +5773,7 @@ Method 2a – Binomial tail: Studentska lista this low or lower (exact)
 Method 2b – Binomial tail: Ujedinjena Srbija this high or higher (exact)
 </td>
 <td style="text-align:right;">
-4 × 10<sup>−15</sup> (about 1 in a 4 followed by 14 zeros)
+2 × 10<sup>−15</sup> (about 1 in a 4 followed by 14 zeros)
 </td>
 </tr>
 <tr>
@@ -5781,7 +5781,7 @@ Method 2b – Binomial tail: Ujedinjena Srbija this high or higher (exact)
 Method 3 – Joint tail: both at once (exact; plain Monte Carlo)
 </td>
 <td style="text-align:right;">
-exact: 4 × 10<sup>−33</sup> (about 1 in a 4 followed by 32 zeros); Monte
+exact: 2 × 10<sup>−33</sup> (about 1 in a 4 followed by 32 zeros); Monte
 Carlo: 0 of 2,000,000
 </td>
 </tr>
@@ -5790,7 +5790,7 @@ Carlo: 0 of 2,000,000
 Method 4a – Exact multinomial test, plain Monte Carlo
 </td>
 <td style="text-align:right;">
-below 2 × 10<sup>−7</sup> (about 1 in a 2 followed by 6 zeros) (0 of
+below 5 × 10<sup>−7</sup> (about 1 in a 2 followed by 6 zeros) (0 of
 2,000,000)
 </td>
 </tr>
@@ -5817,7 +5817,7 @@ Method 5b – Likelihood-ratio G test, Scheme B, all lists (chi-square
 approximation)
 </td>
 <td style="text-align:right;">
-9 × 10<sup>−33</sup> (about 1 in a 9 followed by 32 zeros)
+1 × 10<sup>−33</sup> (about 1 in a 9 followed by 32 zeros)
 </td>
 </tr>
 </tbody>
@@ -5916,7 +5916,7 @@ Studentska lista
 12.2
 </td>
 <td style="text-align:right;">
-4 × 10<sup>−34</sup> (about 1 in a 4 followed by 33 zeros)
+2 × 10<sup>−34</sup> (about 1 in a 4 followed by 33 zeros)
 </td>
 </tr>
 <tr>
@@ -5939,7 +5939,7 @@ Ujedinjena Srbija
 7.9
 </td>
 <td style="text-align:right;">
-6 × 10<sup>−15</sup> (about 1 in a 6 followed by 14 zeros)
+2 × 10<sup>−15</sup> (about 1 in a 6 followed by 14 zeros)
 </td>
 </tr>
 </tbody>
@@ -5953,7 +5953,7 @@ which is 12 of Ipsos’s own standard errors away from its estimate. For
 <em>Ujedinjena Srbija</em> the truth was 6.3 points below the bottom of
 the interval, 8 standard errors away. By the precision Ipsos itself
 claimed, the chance of being this wrong on <em>Studentska lista</em>
-alone is about 4 × 10<sup>−34</sup> (about 1 in a 4 followed by 33
+alone is about 2 × 10<sup>−34</sup> (about 1 in a 4 followed by 33
 zeros). A 95% interval is supposed to miss one time in twenty, and
 typically by a fraction of a point, not by eleven.</p>
 </div>
@@ -6083,13 +6083,13 @@ Ujedinjena this high
 1,500
 </td>
 <td style="text-align:right;">
-1 × 10<sup>−26</sup> (about 1 in a 1 followed by 25 zeros)
+7 × 10<sup>−26</sup> (about 1 in a 1 followed by 25 zeros)
 </td>
 <td style="text-align:right;">
 3 × 10<sup>−24</sup> (about 1 in a 3 followed by 23 zeros)
 </td>
 <td style="text-align:right;">
-5 × 10<sup>−11</sup> (about 1 in a 5 followed by 10 zeros)
+2 × 10<sup>−11</sup> (about 1 in a 5 followed by 10 zeros)
 </td>
 </tr>
 <tr>
@@ -6100,10 +6100,10 @@ Ujedinjena this high
 3 × 10<sup>−36</sup> (about 1 in a 3 followed by 35 zeros)
 </td>
 <td style="text-align:right;">
-4 × 10<sup>−33</sup> (about 1 in a 4 followed by 32 zeros)
+2 × 10<sup>−33</sup> (about 1 in a 4 followed by 32 zeros)
 </td>
 <td style="text-align:right;">
-4 × 10<sup>−15</sup> (about 1 in a 4 followed by 14 zeros)
+2 × 10<sup>−15</sup> (about 1 in a 4 followed by 14 zeros)
 </td>
 </tr>
 <tr>
@@ -6111,13 +6111,13 @@ Ujedinjena this high
 2,900
 </td>
 <td style="text-align:right;">
-1 × 10<sup>−50</sup> (about 1 in a 1 followed by 49 zeros)
+9 × 10<sup>−50</sup> (about 1 in a 1 followed by 49 zeros)
 </td>
 <td style="text-align:right;">
-3 × 10<sup>−45</sup> (about 1 in a 3 followed by 44 zeros)
+4 × 10<sup>−45</sup> (about 1 in a 3 followed by 44 zeros)
 </td>
 <td style="text-align:right;">
-6 × 10<sup>−20</sup> (about 1 in a 6 followed by 19 zeros)
+2 × 10<sup>−20</sup> (about 1 in a 6 followed by 19 zeros)
 </td>
 </tr>
 <tr>
@@ -6125,13 +6125,13 @@ Ujedinjena this high
 3,624
 </td>
 <td style="text-align:right;">
-4 × 10<sup>−62</sup> (about 1 in a 4 followed by 61 zeros)
+3 × 10<sup>−62</sup> (about 1 in a 4 followed by 61 zeros)
 </td>
 <td style="text-align:right;">
-1 × 10<sup>−56</sup> (about 1 in a 1 followed by 55 zeros)
+8 × 10<sup>−56</sup> (about 1 in a 1 followed by 55 zeros)
 </td>
 <td style="text-align:right;">
-3 × 10<sup>−25</sup> (about 1 in a 3 followed by 24 zeros)
+4 × 10<sup>−25</sup> (about 1 in a 3 followed by 24 zeros)
 </td>
 </tr>
 </tbody>
@@ -6268,7 +6268,7 @@ Other
 Srbija</em> from 38.97% to 38.96%: changes in the second decimal,
 because the two excluded populations are small and pull in opposite
 directions. The G-test probability rises slightly, from 3 ×
-10<sup>−36</sup> (about 1 in a 3 followed by 35 zeros) to 9 ×
+10<sup>−36</sup> (about 1 in a 3 followed by 35 zeros) to 1 ×
 10<sup>−35</sup> (about 1 in a 9 followed by 34 zeros). The population
 definition is not the explanation.</p>
 </div>
@@ -6333,10 +6333,10 @@ Valid votes only
 Studentska lista this low or lower (binomial)
 </td>
 <td style="text-align:right;">
-4 × 10<sup>−33</sup> (about 1 in a 4 followed by 32 zeros)
+2 × 10<sup>−33</sup> (about 1 in a 4 followed by 32 zeros)
 </td>
 <td style="text-align:right;">
-8 × 10<sup>−31</sup> (about 1 in a 8 followed by 30 zeros)
+1 × 10<sup>−31</sup> (about 1 in a 8 followed by 30 zeros)
 </td>
 </tr>
 <tr>
@@ -6347,7 +6347,7 @@ G test, Scheme A
 3 × 10<sup>−36</sup> (about 1 in a 3 followed by 35 zeros)
 </td>
 <td style="text-align:right;">
-1 × 10<sup>−33</sup> (about 1 in a 1 followed by 32 zeros)
+8 × 10<sup>−33</sup> (about 1 in a 1 followed by 32 zeros)
 </td>
 </tr>
 <tr>
@@ -6355,10 +6355,10 @@ G test, Scheme A
 G test, Scheme B
 </td>
 <td style="text-align:right;">
-9 × 10<sup>−33</sup> (about 1 in a 9 followed by 32 zeros)
+1 × 10<sup>−33</sup> (about 1 in a 9 followed by 32 zeros)
 </td>
 <td style="text-align:right;">
-7 × 10<sup>−30</sup> (about 1 in a 7 followed by 29 zeros)
+1 × 10<sup>−30</sup> (about 1 in a 7 followed by 29 zeros)
 </td>
 </tr>
 </tbody>
@@ -6877,7 +6877,7 @@ Ipsos, fieldwork 20–22 Oct
 12.0
 </td>
 <td style="text-align:right;">
-2 × 10<sup>−35</sup> (about 1 in a 2 followed by 34 zeros)
+6 × 10<sup>−35</sup> (about 1 in a 2 followed by 34 zeros)
 </td>
 </tr>
 <tr>
@@ -6900,14 +6900,14 @@ NSPM, fieldwork 25 Sep – 5 Oct
 5.5
 </td>
 <td style="text-align:right;">
-6 × 10<sup>−10</sup> (about 1 in a 6 followed by 9 zeros)
+2 × 10<sup>−10</sup> (about 1 in a 6 followed by 9 zeros)
 </td>
 </tr>
 </tbody>
 </table>
 <div class="callout callout-result">
 <p><strong>Result.</strong> NSPM’s miss was also far outside sampling
-error (probability 6 × 10<sup>−10</sup> (about 1 in a 6 followed by 9
+error (probability 2 × 10<sup>−10</sup> (about 1 in a 6 followed by 9
 zeros)), which is a reminder that <em>all</em> polls carry non-sampling
 error, from who answers the phone to how undecided voters are handled,
 and that both published polls of this race were too favourable to
@@ -6976,15 +6976,15 @@ variant we tried lands between 10<sup>−30</sup> and 10<sup>−36</sup>)
 <ul>
 <li>Taken one list at a time, the chance of a random sample putting
 <em>Studentska lista</em> at or below 40.0% when its true share was
-53.0% is 4 × 10<sup>−33</sup> (about 1 in a 4 followed by 32 zeros); the
+53.0% is 2 × 10<sup>−33</sup> (about 1 in a 4 followed by 32 zeros); the
 chance of putting <em>Ujedinjena Srbija</em> at or above 47.4% when its
-true share was 39.0% is 4 × 10<sup>−15</sup> (about 1 in a 4 followed by
+true share was 39.0% is 2 × 10<sup>−15</sup> (about 1 in a 4 followed by
 14 zeros).</li>
 <li>Asking for both at once (<em>Studentska lista</em> at or below 40.0%
-<em>and</em> <em>Ujedinjena Srbija</em> at or above 47.4%) gives 4 ×
+<em>and</em> <em>Ujedinjena Srbija</em> at or above 47.4%) gives 2 ×
 10<sup>−33</sup> (about 1 in a 4 followed by 32 zeros) exactly. The
 textbook chi-square approximation gives 3 × 10<sup>−36</sup> (about 1 in
-a 3 followed by 35 zeros) with four categories and 9 × 10<sup>−33</sup>
+a 3 followed by 35 zeros) with four categories and 1 × 10<sup>−33</sup>
 (about 1 in a 9 followed by 32 zeros) with all lists kept separate.</li>
 <li>Among <strong>two million</strong> simulated ideal random polls from
 the real electorate, <strong>none</strong> came close to Ipsos’s

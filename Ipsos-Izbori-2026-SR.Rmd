@@ -55,9 +55,10 @@ fmt_d   <- function(x, d = 1) formatC(x, format = "f", digits = d, big.mark = ".
 fmt_pct <- function(x, d = 1) paste0(fmt_d(x, d), "%")
 pct_lab <- function(x) paste0(format(x, decimal.mark = ","), "%")
 fmt_pow <- function(l10) sprintf("10<sup>%s</sup>", gsub("-", "−", sprintf("%.0f", l10)))
-fmt_p   <- function(l10) {                       # npr. "3 × 10<sup>−37</sup> (jedan u 3 sa 36 nula)"
+fmt_p   <- function(l10) {                       # npr. "2 × 10⁻³³ (otprilike jedan u broju 4 sa 32 nula)": p = m × 10^f, 1/p = lead × 10^e
+  f <- floor(l10);  m    <- round(10^(l10 - f));  if (m == 10)    { m <- 1;    f <- f + 1 }
   e <- floor(-l10); lead <- round(10^(-l10 - e)); if (lead == 10) { lead <- 1; e <- e + 1 }
-  sprintf("%d × 10<sup>−%d</sup> (otprilike jedan u broju %d sa %d nula)", lead, e + 1, lead, e)
+  sprintf("%d × 10<sup>−%d</sup> (otprilike jedan u broju %d sa %d nula)", m, -f, lead, e)
 }
 pct_to_counts <- function(pct, n, remainder_to = length(pct)) { k <- round(pct / 100 * n); k[remainder_to] <- k[remainder_to] + (n - sum(k)); k }
 log10_dmultinom_mat <- function(X, p) { n <- colSums(X); (lgamma(n + 1) - colSums(lgamma(X + 1)) + colSums(X * log(p))) / log(10) }

@@ -42,8 +42,9 @@ Two reports, both written in R Markdown and knitted to self-contained HTML (open
 |---|---|
 | [`Ipsos-Izbori-2026.Rmd`](Ipsos-Izbori-2026.Rmd) → [`Ipsos-Izbori-2026.html`](Ipsos-Izbori-2026.html) | **Technical report (English).** The full analysis: data with provenance, every statistical concept explained before it is used, five independent methods, sensitivity analyses, "what would it take" scenarios, references. All code included (hidden behind *Code* buttons). |
 | [`Ipsos-Izbori-2026-SR.Rmd`](Ipsos-Izbori-2026-SR.Rmd) → [`Ipsos-Izbori-2026-SR.html`](Ipsos-Izbori-2026-SR.html) | **Summary for the public (Serbian).** A compact, non-technical version in the simplest possible language, with all figures and all essential numbers. The Serbian report links to the English technical report for details. |
+| [`Ipsos-Izbori-2026.ipynb`](Ipsos-Izbori-2026.ipynb) → [`Ipsos-Izbori-2026-py.html`](Ipsos-Izbori-2026-py.html) | **Technical report, Python edition.** A 1:1 translation of the R technical report into a Jupyter notebook (numpy/scipy/pandas/plotnine): same chunks, same narrative, same figures and tables. The only differences are in the stochastic simulations, which use a different random-number generator; the exact and asymptotic results agree to the digit. |
 
-Both reports compute every number from the same data and code, so they always agree.
+All reports compute every number from the same data and code, so they always agree (up to Monte Carlo noise between the R and Python simulations, which is reported in the notebook).
 
 ### The question
 
@@ -103,6 +104,20 @@ rmarkdown::render("Ipsos-Izbori-2026-SR.Rmd")
 
 Knitting takes a few minutes (two Monte Carlo simulations of 2 million polls and an importance-sampling run of 10 million). Results are seeded and reproducible. Knit in a UTF-8 locale so that Serbian diacritics render correctly.
 
+Python edition (Python ≥ 3.11):
+
+```bash
+python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt
+```
+
+```bash
+jupyter nbconvert --to notebook --execute --inplace Ipsos-Izbori-2026.ipynb
+```
+
+```bash
+jupyter nbconvert --to html --TagRemovePreprocessor.enabled=True --TagRemovePreprocessor.remove_input_tags='{"hide-input"}' --HTMLExporter.exclude_input_prompt=True --HTMLExporter.exclude_output_prompt=True --output Ipsos-Izbori-2026-py.html Ipsos-Izbori-2026.ipynb
+```
+
 ### Citing
 
 *Milovanović, G. S. (2026). Could Ipsos Have Obtained Its Numbers by Chance? A multinomial probability analysis of the final Ipsos pre-election poll against the official results of the 2026 Serbian parliamentary elections.* With a link to this repository.
@@ -140,8 +155,9 @@ Dva izveštaja, oba napisana u R Markdownu i pretvorena u samostalne HTML dokume
 |---|---|
 | [`Ipsos-Izbori-2026.Rmd`](Ipsos-Izbori-2026.Rmd) → [`Ipsos-Izbori-2026.html`](Ipsos-Izbori-2026.html) | **Tehnički izveštaj (engleski).** Potpuna analiza: podaci sa izvorima, svaki statistički pojam objašnjen pre upotrebe, pet nezavisnih metoda, provere osetljivosti, scenariji „šta bi bilo potrebno“, literatura. Sav kod je uključen (sakriven iza dugmadi *Code*). |
 | [`Ipsos-Izbori-2026-SR.Rmd`](Ipsos-Izbori-2026-SR.Rmd) → [`Ipsos-Izbori-2026-SR.html`](Ipsos-Izbori-2026-SR.html) | **Sažetak za javnost (srpski).** Kratka, netehnička verzija na najjednostavnijem mogućem jeziku, sa svim graficima i svim bitnim brojevima. Srpski izveštaj upućuje na engleski tehnički izveštaj za detalje. |
+| [`Ipsos-Izbori-2026.ipynb`](Ipsos-Izbori-2026.ipynb) → [`Ipsos-Izbori-2026-py.html`](Ipsos-Izbori-2026-py.html) | **Tehnički izveštaj, Python verzija.** Prevod tehničkog izveštaja iz R-a u Jupyter beležnicu (numpy/scipy/pandas/plotnine), 1:1: isti koraci, isti tekst, isti grafici i tabele. Razlikuju se jedino stohastičke simulacije, koje koriste drugi generator slučajnih brojeva; tačni i asimptotski rezultati poklapaju se do poslednje cifre. |
 
-Oba izveštaja računaju sve brojeve iz istih podataka i istog koda, pa se uvek slažu.
+Svi izveštaji računaju sve brojeve iz istih podataka i istog koda, pa se uvek slažu (do Monte Karlo šuma između simulacija u R-u i Pythonu, koji je prikazan u beležnici).
 
 ### Pitanje
 
@@ -200,6 +216,8 @@ rmarkdown::render("Ipsos-Izbori-2026-SR.Rmd")
 ```
 
 Izrada traje nekoliko minuta (dve simulacije od po dva miliona anketa i uzorkovanje po važnosti od deset miliona). Rezultati su reproducibilni. Pokrenite u UTF-8 okruženju da bi se dijakritici ispravno prikazali.
+
+Python verzija (Python ≥ 3.11): napravite virtuelno okruženje i instalirajte pakete iz `requirements.txt`, zatim izvršite beležnicu i izvezite je u HTML komandama navedenim u engleskom delu iznad.
 
 ### Citiranje
 

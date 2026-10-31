@@ -123,16 +123,16 @@ theme_report <- function(base_size = 13) {
 # ---- formatting helpers -------------------------------------------------------
 fmt_n   <- function(x) format(round(x), big.mark = ",")
 fmt_pct <- function(x, d = 2) sprintf(paste0("%.", d, "f%%"), x)
-# turn a log10 probability into readable text, e.g. "3 × 10⁻³⁶ (about 1 in a 3 followed by 35 zeros)"
-# (the two halves always describe the same number: lead × 10^-(e+1) = 1 / (lead × 10^e))
+# turn a log10 probability into readable text, e.g. "2 × 10⁻³³ (about 1 in a 4 followed by 32 zeros)"
+# (both halves describe the same number, each rounded to one significant digit:
+#  p ≈ m × 10^f  and  1/p ≈ lead × 10^e; note that m is NOT the same digit as lead unless m ≈ √10)
 fmt_log10p <- function(l10) {
   if (is.na(l10)) return("not computable")
   if (!is.finite(l10)) return("below 10<sup>−300</sup> (underflow)")
   if (l10 > -3) return(sprintf("%.4f", 10^l10))
-  e    <- floor(-l10)                      # 1 in  lead × 10^e
-  lead <- round(10^(-l10 - e))
-  if (lead == 10) { lead <- 1; e <- e + 1 }
-  sprintf("%d × 10<sup>−%d</sup> (about 1 in a %d followed by %d zeros)", lead, e + 1, lead, e)
+  f <- floor(l10);  m    <- round(10^(l10 - f));  if (m == 10)    { m <- 1;    f <- f + 1 }   # p    = m × 10^f
+  e <- floor(-l10); lead <- round(10^(-l10 - e)); if (lead == 10) { lead <- 1; e <- e + 1 }   # 1/p  = lead × 10^e
+  sprintf("%d × 10<sup>−%d</sup> (about 1 in a %d followed by %d zeros)", m, -f, lead, e)
 }
 # a power of ten for prose, e.g. fmt_pow(-35.49) -> "10<sup>−35</sup>"
 fmt_pow <- function(l10, d = 0) {
