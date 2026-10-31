@@ -731,6 +731,10 @@ The two simulation estimates of the same quantity are instructive. Of **`r fmt_n
 Importance sampling, re-weighting `r fmt_n(n_is)` polls drawn from an electorate shaped like Ipsos's numbers, gives **`r fmt_log10p(log10_p_is)`** (the `r n_rep` independent runs of `r fmt_n(n_per)` draws gave exponents between `r sprintf("%.1f", is_spread[1])` and `r sprintf("%.1f", is_spread[2])`). That is about `r sprintf("%.0f", 10^(log10_p_exact - log10_p_is))` times *smaller* than the exact answer, and the runs agree with each other far better than they agree with the truth. The reason is worth knowing. The set of results "at least as improbable as Ipsos's" is not a patch around Ipsos's numbers: it is a shell all the way around the true result, and it includes, for instance, polls that overstate *Studentska lista* by as much as Ipsos understated it. Only `r sprintf("%.0f%%", 100 * enum[["corner_share"]])` of the exact tail probability lies in the Ipsos-like corner (*Studentska* below and *Ujedinjena* above expectation), and even within that corner the made-up electorate concentrates its draws near one point of a long ridge. Importance sampling is unbiased in theory, but in practice it almost never visits most of the shell, so it undercounts, and more draws do not cure it (we checked: a hundred times more draws moved the estimate by less than a third). We report it here as a caution, not as evidence.
 
 ```{r fig-m4, fig.height=4.5, fig.cap="Figure 5. Log-probability (base 10) of two million simulated random polls under H₀. Ipsos's result lies far to the left of every one of them."}
+# tallest histogram bar, so the annotations can be placed at fixed fractions of the y range
+brks   <- seq(floor(min(log10_sim) / 0.25) * 0.25, ceiling(max(log10_sim) / 0.25) * 0.25 + 0.25, by = 0.25)
+y_top  <- max(graphics::hist(log10_sim, breaks = brks, plot = FALSE)$counts)
+x_mid  <- mean(c(log10_point_ips, min(log10_sim)))
 tibble::tibble(l10 = log10_sim) |>
   ggplot(aes(x = l10)) +
   geom_histogram(binwidth = 0.25, fill = "#2a78d6", colour = "#fcfcfb", linewidth = 0.2) +
@@ -738,10 +742,10 @@ tibble::tibble(l10 = log10_sim) |>
   annotate("label", x = log10_point_ips, y = Inf, vjust = 1.4, hjust = -0.05,
            label = sprintf("Ipsos*minute*s~result:~10^%.0f", log10_point_ips), parse = TRUE,
            colour = "#eb6834", fill = "#fcfcfb", label.size = 0, size = 3.8) +
-  annotate("text", x = mean(c(log10_point_ips, min(log10_sim))), y = Inf, vjust = 4,
+  annotate("text", x = x_mid, y = 0.80 * y_top,
            label = sprintf("about~10^%.0f~times~less~likely~than", min(log10_sim) - log10_point_ips),
            parse = TRUE, colour = "#52514e", size = 3.4) +
-  annotate("text", x = mean(c(log10_point_ips, min(log10_sim))), y = Inf, vjust = 6.2,
+  annotate("text", x = x_mid, y = 0.735 * y_top,
            label = "the least likely of two million simulated polls", colour = "#52514e", size = 3.4) +
   scale_x_continuous(labels = function(x) parse(text = paste0("10^", x))) +
   scale_y_continuous(labels = scales::comma) +
