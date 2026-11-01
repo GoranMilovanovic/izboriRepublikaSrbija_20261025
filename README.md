@@ -5,6 +5,16 @@ A statistical analysis of the final Ipsos pre-election poll (22 October 2026) ag
 
 **Author:** Goran S. Milovanović, PhD · [goran.s.milovanovic@gmail.com](mailto:goran.s.milovanovic@gmail.com) · [LinkedIn](https://www.linkedin.com/in/gmilovanovic/)
 
+### Read the reports online / Čitajte izveštaje onlajn
+
+Published on GitHub Pages at **<https://goranmilovanovic.github.io/izboriRepublikaSrbija_20261025/>**. Three documents:
+
+| Link | What it is / Šta je to |
+|---|---|
+| **[Sažetak za javnost (srpski)](https://goranmilovanovic.github.io/izboriRepublikaSrbija_20261025/Ipsos-Izbori-2026-SR.html)** | Kratka, netehnička verzija na srpskom, sa svim graficima i bitnim brojevima. / The compact, non-technical summary in Serbian. |
+| **[Technical report, R edition (English)](https://goranmilovanovic.github.io/izboriRepublikaSrbija_20261025/Ipsos-Izbori-2026.html)** | The full analysis with every step explained and all R code included. / Potpuna analiza na engleskom, sa svim R kodom. |
+| **[Technical report, Python edition (English)](https://goranmilovanovic.github.io/izboriRepublikaSrbija_20261025/Ipsos-Izbori-2026-py.html)** | The same analysis as a Jupyter notebook (numpy, scipy, pandas, plotnine). / Ista analiza kao Jupyter beležnica u Python-u. |
+
 ---
 
 [English](#english) · [Srpski](#srpski)
