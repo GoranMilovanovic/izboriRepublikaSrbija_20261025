@@ -38,6 +38,8 @@ What this does **not** say: *why* the gap exists. See [What the findings do and 
 
 Three documents, each rendered to a self-contained HTML file (open the `.html` files in any browser; no installation needed):
 
+**Read them online:** all three are published at **<https://goranmilovanovic.github.io/izboriRepublikaSrbija_20261025/>** (GitHub Pages, served from the [`docs/`](docs/) folder; `publish_docs.sh` copies the knitted files there after each re-knit).
+
 | File | What it is |
 |---|---|
 | [`Ipsos-Izbori-2026.Rmd`](Ipsos-Izbori-2026.Rmd) → [`Ipsos-Izbori-2026.html`](Ipsos-Izbori-2026.html) | **Technical report (English).** The full analysis: data with provenance, every statistical concept explained before it is used, five independent methods, sensitivity analyses, "what would it take" scenarios, references. All code included (hidden behind *Code* buttons). |
@@ -151,6 +153,8 @@ Ovako mali brojevi nemaju svakodnevno značenje, pa evo poređenja sa astronomsk
 ### Šta se nalazi u ovom repozitorijumu
 
 Tri dokumenta, svaki pretvoren u samostalan HTML fajl (otvorite `.html` fajl u bilo kom pregledaču; nije potrebna nikakva instalacija):
+
+**Čitajte onlajn:** sva tri dokumenta objavljena su na **<https://goranmilovanovic.github.io/izboriRepublikaSrbija_20261025/>** (GitHub Pages, iz foldera [`docs/`](docs/); skripta `publish_docs.sh` kopira fajlove tamo posle svakog ponovnog generisanja).
 
 | Fajl | Šta je to |
 |---|---|
