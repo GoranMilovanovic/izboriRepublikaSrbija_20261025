@@ -13,21 +13,23 @@
   h1 { font-size:2rem; line-height:1.2; margin:0 0 8px; }
   .sub { color:var(--grey); margin:0 0 16px; }
   .intro { margin:0 0 14px; color:var(--grey); font-size:0.9rem; line-height:1.55; }
-  .intro.sr { color:var(--muted); margin-bottom:8px; }
+  .intro.sr { color:var(--muted); margin-bottom:0; }
   .author { margin:0 0 8px; color:var(--grey); }
-  .quick { margin:0 0 20px; font-weight:600; color:var(--muted); }
+  .quick { margin:0; font-weight:600; color:var(--muted); }
   .quick a { color:var(--accent); text-decoration:none; }
   .quick a:hover { text-decoration:underline; }
   .author strong { color:var(--ink); }
   .author a { color:var(--accent); text-decoration:none; }
   .author a:hover { text-decoration:underline; }
-  h2 { font-size:1.1rem; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:40px 0 12px; font-weight:600; }
+  h2 { font-size:1.1rem; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:0 0 12px; font-weight:600; }
   .cards { display:grid; gap:16px; }
   a.card { display:block; background:var(--card); border:1px solid var(--line); border-radius:8px; padding:18px 20px; text-decoration:none; color:inherit; transition:border-color .15s; }
   a.card:hover { border-color:var(--accent); }
   a.card strong { display:block; font-size:1.15rem; margin-bottom:4px; }
   a.card span { color:var(--grey); }
   .tag { display:inline-block; font-size:.75rem; font-weight:600; color:var(--accent); border:1px solid var(--accent); border-radius:999px; padding:1px 8px; margin-left:8px; vertical-align:middle; }
+  h2.after { margin-top:32px; }
+  hr { border:0; border-top:1px solid var(--line); margin:24px 0; }
   footer { margin-top:48px; color:var(--muted); font-size:.9rem; border-top:1px solid var(--line); padding-top:16px; }
   footer a { color:var(--grey); }
 </style>
@@ -40,9 +42,11 @@
   <p class="author"><strong>Goran S. Milovanović, PhD</strong><br>
   <a href="mailto:goran.s.milovanovic@gmail.com">goran.s.milovanovic@gmail.com</a> · <a href="https://www.linkedin.com/in/gmilovanovic/">linkedin.com/in/gmilovanovic</a></p>
   <p class="quick"><a href="Ipsos-Izbori-2026-SR.html">Srpski sažetak</a> | <a href="Ipsos-Izbori-2026.html">R Tech Notebook</a> | <a href="Ipsos-Izbori-2026-py.html">Python Tech Notebook</a></p>
+  <hr>
   <p class="intro">On 25 October 2026 Serbia held snap parliamentary elections. Three days before the vote, on 22 October, the polling agency Ipsos Strategic Marketing published its final pre-election estimate: the list <em>Aleksandar Vučić – Ujedinjena Srbija</em> at 47.4% and the <em>Studentska lista – Studenti pobeđuju</em> at 40.0%, with a stated 95% margin of about ±2.1 points for each. The official count by the Republic Electoral Commission (RIK) turned that picture upside down: <em>Studentska lista</em> 53.0%, <em>Ujedinjena Srbija</em> 39.0%. Apart from the two large lists, only four national-minority lists (<em>manjinske liste</em>) entered Parliament. A miss of this size, published by a long-established agency days before the vote and commissioned by one of the contestants, has raised a public question: could a properly conducted random sample have produced Ipsos's numbers, if the electorate looked the way the official results say it did?</p>
   <p class="intro sr">Srbija je 25. oktobra 2026. održala vanredne parlamentarne izbore. Tri dana pred glasanje, 22. oktobra, agencija Ipsos Strategic Marketing objavila je svoju završnu predizbornu procenu: lista <em>Aleksandar Vučić – Ujedinjena Srbija</em> 47,4%, a <em>Studentska lista – Studenti pobeđuju</em> 40,0%, uz navedenu granicu greške od oko ±2,1 poena za svaku (95% pouzdanost). Zvanični rezultati Republičke izborne komisije (RIK) okrenuli su tu sliku naglavačke: <em>Studentska lista</em> 53,0%, <em>Ujedinjena Srbija</em> 39,0%. Pored dve velike liste, u Skupštinu su ušle samo četiri manjinske liste. Promašaj ovih razmera, koji je agencija sa dugom tradicijom objavila nekoliko dana pred izbore po narudžbini jednog od učesnika, otvorio je pitanje u javnosti: da li je ispravno sprovedena slučajna anketa mogla da dâ Ipsosove brojke, ako je biračko telo izgledalo onako kako kažu zvanični rezultati?</p>
 
+  <hr>
   <h2>Srpski</h2>
   <div class="cards">
     <a class="card" href="Ipsos-Izbori-2026-SR.html">
@@ -51,7 +55,7 @@
     </a>
   </div>
 
-  <h2>English</h2>
+  <h2 class="after">English</h2>
   <div class="cards">
     <a class="card" href="Ipsos-Izbori-2026.html">
       <strong>Technical report <span class="tag">R</span></strong>
