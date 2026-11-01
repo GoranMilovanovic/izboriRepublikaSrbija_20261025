@@ -285,13 +285,17 @@ tibble(Pitanje = c("Da slučajna anketa dâ Studentskoj listi 40,0% ili manje?",
 ```
 
 ```{r fig5, fig.height=4.5, fig.cap="Slika 5. Koliko je svaka od dva miliona simuliranih anketa „neobična“ (što levlje, to neobičnija). Ipsosov rezultat je daleko levo od svih."}
+# najviši stubić histograma, da bi se oznake postavile na fiksne delove visine (vjust od vrha se preklapa jer formula sa eksponentom ima drugu visinu reda)
+brks  <- seq(floor(min(log10_sim) / 0.25) * 0.25, ceiling(max(log10_sim) / 0.25) * 0.25 + 0.25, by = 0.25)
+y_top <- max(graphics::hist(log10_sim, breaks = brks, plot = FALSE)$counts)
+x_mid <- mean(c(log10_point_ips, min(log10_sim)))
 tibble(l10 = log10_sim) |> ggplot(aes(x = l10)) +
   geom_histogram(binwidth = 0.25, fill = "#2a78d6", colour = "#fcfcfb", linewidth = 0.2) +
   geom_vline(xintercept = log10_point_ips, colour = "#eb6834", linewidth = 1) +
   annotate("label", x = log10_point_ips, y = Inf, vjust = 1.4, hjust = -0.05, label = "Ipsosov rezultat", colour = "#eb6834", fill = "#fcfcfb", label.size = 0, size = 3.8) +
-  annotate("text", x = mean(c(log10_point_ips, min(log10_sim))), y = Inf, vjust = 4,
+  annotate("text", x = x_mid, y = 0.80 * y_top,
            label = sprintf("oko~10^%.0f~puta~manje~verovatan", min(log10_sim) - log10_point_ips), parse = TRUE, colour = "#52514e", size = 3.4) +
-  annotate("text", x = mean(c(log10_point_ips, min(log10_sim))), y = Inf, vjust = 6.2, label = "od najneobičnije simulirane ankete", colour = "#52514e", size = 3.4) +
+  annotate("text", x = x_mid, y = 0.735 * y_top, label = "od najneobičnije simulirane ankete", colour = "#52514e", size = 3.4) +
   scale_x_continuous(labels = function(x) parse(text = paste0("10^", x))) + scale_y_continuous(labels = label_comma(big.mark = ".")) +
   labs(x = "Verovatnoća rezultata simulirane ankete", y = "Broj simuliranih anketa", title = "Koliko je Ipsosov rezultat neobičan?",
        subtitle = "Dva miliona slučajnih anketa iz stvarnog biračkog tela") + theme_report()
