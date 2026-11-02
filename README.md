@@ -134,6 +134,12 @@ jupyter nbconvert --to notebook --execute --inplace Ipsos-Izbori-2026.ipynb
 jupyter nbconvert --to html --TagRemovePreprocessor.enabled=True --TagRemovePreprocessor.remove_input_tags='{"hide-input"}' --HTMLExporter.exclude_input_prompt=True --HTMLExporter.exclude_output_prompt=True --output Ipsos-Izbori-2026-py.html Ipsos-Izbori-2026.ipynb
 ```
 
+### Related work
+
+Mihajlo Popesku published a separate analysis of the same poll, with its own method and code. It tests each large list on its own, using a normal model built from Ipsos's published ±2.10-point margin, and compares the result with Loto 7/39. For *Ujedinjena Srbija* it obtains about 3.6 × 10<sup>−15</sup>, or 1 in 280 trillion, and for *Studentska lista* about 5.0 × 10<sup>−34</sup>. These figures differ from the 2 × 10<sup>−36</sup> above because they describe a different event: one list at a time under a normal model, not the whole four-category result under the exact multinomial test. That calculation is separate and is not part of this analysis.
+
+Popesku, M. (2026). *Ipsos, verovatnoća i Loto: uslovna normalna analiza izbornih procena 2026.* Verzija 1.0.0. [github.com/mikelatenta/ipsos-verovatnoca-loto-2026](https://github.com/mikelatenta/ipsos-verovatnoca-loto-2026). RIK count used: provisional snapshot of 30 October 2026, 09:10.
+
 ### Citing
 
 *Milovanović, G. S. (2026). Could Ipsos Have Obtained Its Numbers by Chance? A multinomial probability analysis of the final Ipsos pre-election poll against the official results of the 2026 Serbian parliamentary elections.* With a link to this repository.
@@ -239,6 +245,12 @@ rmarkdown::render("Ipsos-Izbori-2026-SR.Rmd")
 Izrada traje oko deset minuta (nabrajanje 1,57 milijardi mogućih ishoda ankete, dve simulacije od po dva miliona anketa i uzorkovanje po važnosti od deset miliona). Rezultati su reproducibilni. Pokrenite u UTF-8 okruženju da bi se dijakritici ispravno prikazali.
 
 Python verzija (Python ≥ 3.11): napravite virtuelno okruženje i instalirajte pakete iz `requirements.txt`, zatim izvršite beležnicu i izvezite je u HTML komandama navedenim u engleskom delu iznad.
+
+### Povezani rad
+
+Zasebnu analizu iste ankete objavio je Mihajlo Popesku, sa sopstvenom metodom i kodom. Ta analiza svaku veliku listu proverava posebno, normalnim modelom izvedenim iz Ipsosove objavljene margine od ±2,10 poena, i rezultat poredi sa Lotom 7/39. Za *Ujedinjenu Srbiju* dobija oko 3,6 × 10<sup>−15</sup>, odnosno 1 u 280 biliona, a za *Studentsku listu* oko 5,0 × 10<sup>−34</sup>. Ove brojke se razlikuju od gornjih 2 × 10<sup>−36</sup> jer opisuju drugi događaj: jednu po jednu listu u normalnom modelu, a ne ceo rezultat u četiri grupe u tačnom multinomnom testu. Taj račun je zaseban i nije deo ove analize.
+
+Popesku, M. (2026). *Ipsos, verovatnoća i Loto: uslovna normalna analiza izbornih procena 2026.* Verzija 1.0.0. [github.com/mikelatenta/ipsos-verovatnoca-loto-2026](https://github.com/mikelatenta/ipsos-verovatnoca-loto-2026). Korišćeni presek RIK-a: privremeni presek od 30. oktobra 2026, 09:10.
 
 ### Citiranje
 
