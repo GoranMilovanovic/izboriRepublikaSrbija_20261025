@@ -7,13 +7,14 @@ A statistical analysis of the final Ipsos pre-election poll (22 October 2026) ag
 
 ### Read the reports online / Čitajte izveštaje onlajn
 
-Published on GitHub Pages at **<https://goranmilovanovic.github.io/izboriRepublikaSrbija_20261025/>**. Three documents:
+Published on GitHub Pages at **<https://goranmilovanovic.github.io/izboriRepublikaSrbija_20261025/>**. Four documents:
 
 | Link | What it is / Šta je to |
 |---|---|
 | **[Sažetak za javnost (srpski)](https://goranmilovanovic.github.io/izboriRepublikaSrbija_20261025/Ipsos-Izbori-2026-SR.html)** | Kratka, netehnička verzija na srpskom, sa svim graficima i bitnim brojevima. / The compact, non-technical summary in Serbian. |
 | **[Technical report, R edition (English)](https://goranmilovanovic.github.io/izboriRepublikaSrbija_20261025/Ipsos-Izbori-2026.html)** | The full analysis with every step explained and all R code included. / Potpuna analiza na engleskom, sa svim R kodom. |
 | **[Technical report, Python edition (English)](https://goranmilovanovic.github.io/izboriRepublikaSrbija_20261025/Ipsos-Izbori-2026-py.html)** | The same analysis as a Jupyter notebook (numpy, scipy, pandas, plotnine). / Ista analiza kao Jupyter beležnica u Python-u. |
+| **[Poll misses 2010–2026 (Serbian summary, English report)](https://goranmilovanovic.github.io/izboriRepublikaSrbija_20261025/Poll-Misses-2010-2026.html)** | A referenced catalogue of 37 failed final polls and where Ipsos 2026 ranks among them. / Pregled 37 promašenih završnih anketa, sa referencama, i mesto Ipsosa 2026. među njima. |
 
 ---
 
@@ -46,9 +47,9 @@ What this does **not** say: *why* the gap exists. See [What the findings do and 
 
 ### What this repository contains
 
-Three documents, each rendered to a self-contained HTML file (open the `.html` files in any browser; no installation needed):
+Three documents analyse the Ipsos poll, each rendered to a self-contained HTML file (open the `.html` files in any browser; no installation needed). A fourth, [`Poll-Misses-2010-2026.Rmd`](Poll-Misses-2010-2026.Rmd) → [`Poll-Misses-2010-2026.html`](Poll-Misses-2010-2026.html), compares the Ipsos miss with 36 other documented poll misses; it uses RIK's complete count of 2 November 2026, while the three below use the preliminary count of 31 October.
 
-**Read them online:** all three are published at **<https://goranmilovanovic.github.io/izboriRepublikaSrbija_20261025/>** (GitHub Pages, served from the [`docs/`](docs/) folder; `publish_docs.sh` copies the knitted files there after each re-knit).
+**Read them online:** all four are published at **<https://goranmilovanovic.github.io/izboriRepublikaSrbija_20261025/>** (GitHub Pages, served from the [`docs/`](docs/) folder; `publish_docs.sh` copies the knitted files there after each re-knit).
 
 | File | What it is |
 |---|---|
@@ -98,6 +99,8 @@ All figures, including the effective-sample-size derivation, the sensitivity ana
 ### What the findings do and do not mean
 
 Sampling error alone **cannot** account for the gap. The analysis does **not** establish *why* the gap exists. The remaining explanations — a very large late swing, a turnout or undecided-voter shift of unusual size, a methodological bias far larger than final pre-election polls ordinarily carry, or the published numbers not reflecting what the survey measured — cannot be separated by statistics, nor can any of them be separated from misreporting. The reports make no claim about intent. Resolving the question requires Ipsos's raw data, weighting scheme, likely-voter model and treatment of undecided respondents.
+
+How this compares with other polling failures: a [catalogue of 37 documented poll misses from 2010 to 2026](https://goranmilovanovic.github.io/izboriRepublikaSrbija_20261025/Poll-Misses-2010-2026.html) ranks Ipsos's margin error of about 21 points fifth-largest overall and third among elections. The larger misses are two referendums (Colombia 2016, Greece 2015) and two polls of the Costa Rican run-off of 2018, published 11 to 16 days before the vote. Among election polls with final-week fieldwork, samples of two thousand or more, a disclosed commissioning party and an undisputed count, it has no counterpart in that catalogue.
 
 ### Data
 
@@ -162,9 +165,9 @@ Ovako mali brojevi nemaju svakodnevno značenje, pa evo poređenja sa astronomsk
 
 ### Šta se nalazi u ovom repozitorijumu
 
-Tri dokumenta, svaki pretvoren u samostalan HTML fajl (otvorite `.html` fajl u bilo kom pregledaču; nije potrebna nikakva instalacija):
+Tri dokumenta analiziraju Ipsosovu anketu, svaki pretvoren u samostalan HTML fajl (otvorite `.html` fajl u bilo kom pregledaču; nije potrebna nikakva instalacija). Četvrti, [`Poll-Misses-2010-2026.Rmd`](Poll-Misses-2010-2026.Rmd) → [`Poll-Misses-2010-2026.html`](Poll-Misses-2010-2026.html), poredi Ipsosov promašaj sa 36 drugih dokumentovanih promašaja anketa; koristi potpune rezultate RIK-a od 2. novembra 2026, dok tri dokumenta ispod koriste preliminarne rezultate od 31. oktobra.
 
-**Čitajte onlajn:** sva tri dokumenta objavljena su na **<https://goranmilovanovic.github.io/izboriRepublikaSrbija_20261025/>** (GitHub Pages, iz foldera [`docs/`](docs/); skripta `publish_docs.sh` kopira fajlove tamo posle svakog ponovnog generisanja).
+**Čitajte onlajn:** sva četiri dokumenta objavljena su na **<https://goranmilovanovic.github.io/izboriRepublikaSrbija_20261025/>** (GitHub Pages, iz foldera [`docs/`](docs/); skripta `publish_docs.sh` kopira fajlove tamo posle svakog ponovnog generisanja).
 
 | Fajl | Šta je to |
 |---|---|
@@ -214,6 +217,8 @@ Svi grafici, uključujući izvođenje stvarne veličine uzorka, proveru osetljiv
 ### Šta nalazi znače, a šta ne
 
 Slučajna greška uzorka **ne može** objasniti razliku. Analiza **ne utvrđuje** *zašto* je razlika nastala. Preostala objašnjenja — veoma veliki kasni preokret, neuobičajeno veliki pomak u izlaznosti ili među neodlučnima, metodološka pristrasnost daleko veća od one koju završne predizborne ankete obično nose, ili to da objavljene brojke ne odražavaju ono što je anketa izmerila — statistika ne može da razdvoji, niti bilo koje od njih od pogrešnog izveštavanja. Izveštaji ne iznose nikakvu tvrdnju o namerama. Razrešenje zahteva Ipsosove sirove podatke, shemu ponderisanja, model verovatnih glasača i postupanje sa neodlučnima.
+
+Poređenje sa drugim promašajima: [pregled 37 dokumentovanih promašaja anketa od 2010. do 2026.](https://goranmilovanovic.github.io/izboriRepublikaSrbija_20261025/Poll-Misses-2010-2026.html) svrstava Ipsosov promašaj razlike od oko 21 poena na 5. mesto ukupno i na 3. među izborima. Veći su samo dva referenduma (Kolumbija 2016, Grčka 2015) i dve ankete pred drugi krug u Kostariki 2018, objavljene 11 do 16 dana pre glasanja. Među izbornim anketama sa terenom u poslednjoj nedelji, uzorkom od dve hiljade ili više, poznatim naručiocem i neospornim prebrojavanjem, u tom pregledu nema promašaja ove veličine.
 
 ### Podaci
 

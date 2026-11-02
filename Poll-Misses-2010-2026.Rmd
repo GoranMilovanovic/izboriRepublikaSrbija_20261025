@@ -1,0 +1,925 @@
+---
+title: "How Bad Was It? Ipsos 2026 Among the Pre-Election Poll Misses of 2010–2026"
+subtitle: "A referenced catalogue of final-poll failures since 2010, and where the Ipsos Strategic Marketing poll for the Serbian parliamentary election of 25 October 2026 sits among them"
+author: "Goran S. Milovanović, PhD"
+date: "`r format(Sys.Date(), '%d %B %Y')`"
+output:
+  html_document:
+    theme: flatly
+    highlight: tango
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: true
+    toc_depth: 3
+    number_sections: true
+    code_folding: hide
+    df_print: paged
+    fig_width: 9
+    fig_height: 5.5
+    fig_caption: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, message = FALSE, warning = FALSE,
+  fig.align = "center", dpi = 110
+)
+options(scipen = 999, digits = 4, knitr.kable.NA = "")
+```
+
+<style>
+body { font-size: 16px; line-height: 1.6; }
+h1, h2, h3 { font-weight: 600; }
+.callout { border-left: 4px solid #2a78d6; background: #f4f8fd; padding: 0.8em 1.2em; margin: 1.2em 0; border-radius: 4px; }
+.callout-warn { border-left-color: #eb6834; background: #fdf6f2; }
+.callout-result { border-left-color: #1baf7a; background: #f2fbf7; }
+.concept { border: 1px solid #e1e0d9; background: #fcfcfb; padding: 0.8em 1.2em; margin: 1.2em 0; border-radius: 4px; }
+.concept h4 { margin-top: 0; color: #52514e; font-size: 0.95em; text-transform: uppercase; letter-spacing: 0.05em; }
+.hero { font-size: 2.2em; font-weight: 600; color: #0b0b0b; margin: 0.2em 0; }
+.hero-sub { color: #52514e; margin-bottom: 1em; }
+table.table { font-variant-numeric: tabular-nums; font-size: 0.86em; }
+caption, table.table caption { color: #52514e; font-weight: 600; caption-side: top; }
+p.caption { color: #52514e; }
+.sr { border-top: 3px solid #0b0b0b; border-bottom: 3px solid #0b0b0b; padding: 0.4em 0 0.8em 0; margin: 1.5em 0 2em 0; }
+sup a { text-decoration: none; }
+ol.refs li { margin-bottom: 0.35em; }
+</style>
+
+```{r packages}
+needed <- c("ggplot2", "dplyr", "tidyr", "tibble", "purrr", "kableExtra", "scales", "forcats")
+to_install <- needed[!vapply(needed, requireNamespace, logical(1), quietly = TRUE)]
+if (length(to_install)) install.packages(to_install, repos = "https://cloud.r-project.org")
+invisible(lapply(needed, library, character.only = TRUE))
+```
+
+```{r helpers}
+# ---- colour roles (fixed per entity, never cycled) ---------------------------
+col <- c(
+  "Ipsos SM, Serbia (2026; 2012 attributed)" = "#eb6834",   # orange
+  "Other Ipsos entities"               = "#2a78d6",   # blue
+  "Other agencies"                     = "#898781",   # muted
+  "Studentska lista"  = "#2a78d6", "Ujedinjena Srbija" = "#eb6834",
+  "Manjinske liste"   = "#1baf7a", "Other" = "#898781"
+)
+col_sr <- c("Ipsos SM, Srbija (2026; 2012 pripisano)" = "#eb6834",
+            "Ostale Ipsos agencije" = "#2a78d6",
+            "Ostale agencije" = "#898781")
+
+# ---- a quiet ggplot theme ----------------------------------------------------
+theme_report <- function(base_size = 13) {
+  theme_minimal(base_size = base_size) +
+    theme(
+      plot.background  = element_rect(fill = "#fcfcfb", colour = NA),
+      panel.grid.minor = element_blank(),
+      panel.grid.major = element_line(colour = "#e1e0d9", linewidth = 0.4),
+      axis.line.x      = element_line(colour = "#c3c2b7", linewidth = 0.4),
+      axis.ticks       = element_blank(),
+      text             = element_text(colour = "#52514e"),
+      plot.title       = element_text(colour = "#0b0b0b", face = "bold", size = base_size + 2),
+      plot.subtitle    = element_text(colour = "#52514e", size = base_size - 1),
+      plot.caption     = element_text(colour = "#898781", size = base_size - 3, hjust = 0),
+      legend.position  = "top",
+      legend.title     = element_blank(),
+      strip.text       = element_text(colour = "#0b0b0b", face = "bold")
+    )
+}
+
+# ---- formatting helpers -------------------------------------------------------
+fmt_n   <- function(x) ifelse(is.na(x), "n/a", format(round(x), big.mark = ","))
+fmt_pct <- function(x, d = 1) ifelse(is.na(x), "", sprintf(paste0("%.", d, "f"), x))
+fmt_sgn <- function(x, d = 1) ifelse(is.na(x), "", sprintf(paste0("%+.", d, "f"), x))
+# Serbian number formats (decimal comma)
+fmt_d_sr <- function(x, d = 1) formatC(x, format = "f", digits = d, big.mark = ".", decimal.mark = ",")
+
+# short agency label for charts: drop "(for …)" and other parentheticals
+short_agency <- function(a, sr = FALSE) {
+  a <- gsub(" \\([^)]*\\)", "", a)
+  a <- sub("^Poll attributed to Ipsos Strategic Marketing$", if (sr) "pripisano Ipsosu SM" else "attributed to Ipsos SM", a)
+  a <- sub("^ABC News / Washington Post$", "ABC News/WaPo", a)
+  a
+}
+country_sr <- c("Canada" = "Kanada", "Serbia" = "Srbija", "Kenya" = "Kenija", "United Kingdom" = "V. Britanija",
+                "United States" = "SAD", "Israel" = "Izrael", "Poland" = "Poljska", "Greece" = "Grčka",
+                "Colombia" = "Kolumbija", "Australia" = "Australija", "Argentina" = "Argentina", "Bolivia" = "Bolivija",
+                "Peru" = "Peru", "Czechia" = "Češka", "Hungary" = "Mađarska", "Chile" = "Čile", "Brazil" = "Brazil",
+                "Turkey" = "Turska", "Spain" = "Španija", "Slovakia" = "Slovačka", "Netherlands" = "Holandija",
+                "Costa Rica" = "Kostarika", "Paraguay" = "Paragvaj")
+
+kable_report <- function(df, ..., align = NULL) {
+  if (is.null(align)) {
+    looks_num <- vapply(df, function(x) is.numeric(x) ||
+                          all(grepl("^[-−+]?[0-9.,%× ]*$|<sup>|^$", as.character(x)) & !all(is.na(x)) & any(grepl("[0-9]", x))),
+                        logical(1))
+    align <- ifelse(looks_num, "r", "l")
+  }
+  kableExtra::kbl(df, ..., align = align, escape = FALSE) |>
+    kableExtra::kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                              full_width = TRUE, position = "center")
+}
+```
+
+```{r early, ref.label=c("references", "data", "summary-numbers"), include=FALSE}
+```
+
+# Sažetak za javnost {.unnumbered}
+
+<div class="sr">
+
+**Pitanje.** Završna anketa agencije Ipsos Strategic Marketing (objavljena 22. oktobra 2026, n = 3.624) promašila je rezultat parlamentarnih izbora u Srbiji 25. oktobra 2026. za 13,0 poena na *Studentskoj listi* i 8,4 poena na listi *Aleksandar Vučić – Ujedinjena Srbija*, i to u pravcu koji je obrnuo pobednika. U [prethodnom izveštaju](Ipsos-Izbori-2026-SR.html) pokazali smo da slučajna greška uzorka ne može da objasni taj promašaj. Ovde postavljamo drugo pitanje: **koliko je ovaj promašaj veliki u poređenju sa najpoznatijim promašajima predizbornih anketa u svetu od 2010. godine?**
+
+**Šta smo uradili.** Sastavili smo katalog od `r nrow(misses)` dobro dokumentovanih promašaja završnih predizbornih anketa (izbori i referendumi, 2010–2026, širom sveta), uključujući Brexit, američke izbore 2016. i 2020, britanske izbore 2015, 2017. i 2024, kolumbijski referendum o miru 2016, grčki referendum 2015, i anketu pripisanu Ipsosu pred drugi krug predsedničkih izbora u Srbiji 2012. (Tadić – Nikolić). Za svaki slučaj navodimo: šta je anketa objavila, šta su birači uradili, i šta su naknadne analize (zvanične istrage, naučni radovi, izjave samih agencija) ponudile kao objašnjenje. **Svaki broj i svaka tvrdnja imaju referencu** (odeljak [References](#references)).
+
+**Kako merimo promašaj.** Standardna mera u literaturi je *greška razlike*: koliko je anketa promašila **razliku između pobednika i drugoplasiranog**, u procentnim poenima. Na primer, Ipsos je 2026. imao *Ujedinjenu Srbiju* ispred *Studentske liste* za 7,4 poena; stvarna razlika bila je 14,0 poena u korist *Studentske liste*. Greška razlike je zato 7,4 + 14,0 = **21,4 poena**. Pored toga računamo i *standardizovanu grešku*: grešku razlike podeljenu sa statističkom greškom koju bi slučajan uzorak te veličine imao — koliko „standardnih devijacija“ je anketa udaljena od istine. To je ista logika kao u prethodnom izveštaju, u pojednostavljenom obliku (dve liste umesto svih devetnaest).
+
+```{r fig-sr-margin, fig.height=9, fig.width=10, fig.cap="Slika S1. Greška razlike (pobednik minus drugoplasirani, anketa minus rezultat) za svaki promašaj u katalogu, po apsolutnoj vrednosti. Narandžasto: Ipsos Strategic Marketing, Srbija (2026, i anketa iz 2012. pripisana Ipsosu). Plavo: druge Ipsos agencije. Sivo: ostale agencije. ✕ = anketa je imala pogrešnog pobednika. Prazan krug na redu 2012: alternativni izveštaj o istoj anketi (52/48).", echo=FALSE}
+plot_df_sr <- misses |>
+  dplyr::mutate(
+    label = sprintf("%s %d. · %s", country_sr[country], year, short_agency(agency, sr = TRUE)),
+    label = ifelse(wrong_winner, paste0(label, " ✕"), label),
+    label = forcats::fct_reorder(label, absE),
+    grp = dplyr::recode(agency_group,
+                        "Ipsos SM, Serbia (2026; 2012 attributed)" = "Ipsos SM, Srbija (2026; 2012 pripisano)",
+                        "Other Ipsos entities" = "Ostale Ipsos agencije",
+                        "Other agencies" = "Ostale agencije"),
+    grp = factor(grp, levels = names(col_sr))
+  )
+ggplot(plot_df_sr, aes(y = label)) +
+  geom_segment(aes(x = 0, xend = E, yend = label, colour = grp), linewidth = 1.6, alpha = 0.55) +
+  geom_point(aes(x = E, colour = grp), size = 3.4) +
+  geom_point(data = plot_df_sr |> dplyr::inner_join(alt_pts |> dplyr::filter(id == "rs12"), by = "id"), aes(x = E_alt), shape = 21, size = 3.4, colour = col[1], fill = "white", stroke = 1.2) +
+  geom_vline(xintercept = 0, colour = "#52514e", linewidth = 0.4) +
+  geom_vline(xintercept = c(-5, 5), colour = "#c3c2b7", linetype = "dashed", linewidth = 0.4) +
+  scale_colour_manual(values = col_sr) +
+  scale_x_continuous(breaks = seq(-35, 20, 5), labels = function(x) ifelse(x == 0, "0", sprintf("%+d", x))) +
+  labs(x = "Greška razlike, poeni (razlika u anketi minus stvarna razlika, pobednik − drugoplasirani)", y = NULL,
+       title = "Koliko je završna anketa promašila razliku pobednik − drugoplasirani",
+       subtitle = sprintf("%d završnih predizbornih anketa, 2010–2026. Isprekidane linije: ±5 poena. ✕ = pogrešan pobednik.", nrow(misses))) +
+  theme_report() +
+  theme(axis.text.y = element_text(size = 9.5), legend.position = "top")
+```
+
+```{r fig-sr-z, fig.height=8, fig.width=10, echo=FALSE, fig.cap="Slika S2. Standardizovana greška: greška razlike podeljena standardnom greškom slučajnog uzorka te veličine. Prikazani su samo slučajevi za koje je veličina uzorka dokumentovana. Za Ipsos 2026. korišćena je efektivna veličina uzorka od 2.110, izvedena iz Ipsosovih sopstvenih objavljenih raspona greške (ne broj opredeljenih ispitanika, koji Ipsos nije objavio); to je izbor najpovoljniji za Ipsos. Prazan krug na redu 2026: vrednost sa nominalnih 3.624 ispitanika; na redu 2012: alternativni izveštaj (52/48).", echo=FALSE}
+plot_z_sr <- plot_df_sr |> dplyr::filter(!is.na(z)) |> dplyr::mutate(label = forcats::fct_reorder(label, z))
+nominal_pt_sr <- plot_z_sr |> dplyr::inner_join(alt_pts, by = "id") |> dplyr::mutate(z = z_alt)
+ggplot(plot_z_sr, aes(y = label)) +
+  annotate("rect", xmin = 0, xmax = 2, ymin = -Inf, ymax = Inf, fill = "#e1e0d9", alpha = 0.5) +
+  geom_segment(aes(x = 0, xend = z, yend = label, colour = grp), linewidth = 1.6, alpha = 0.55) +
+  geom_point(aes(x = z, colour = grp), size = 3.4) +
+  geom_point(data = nominal_pt_sr, aes(x = z), shape = 21, size = 3.4, colour = col[1], fill = "white", stroke = 1.2) +
+  scale_colour_manual(values = col_sr) +
+  scale_x_continuous(breaks = seq(0, 22, 2)) +
+  labs(x = "Standardizovana greška (broj standardnih grešaka slučajnog uzorka te veličine)", y = NULL,
+       title = "Isti promašaji, mereni slučajnom greškom uzorka",
+       subtitle = "Siva traka: z ≤ 2, raspon u kome pošten slučajan uzorak ostaje 19 od 20 puta.\nPrazni krugovi: Ipsos 2026. sa nominalnih n = 3.624; Srbija 2012. po izveštaju 52/48.") +
+  theme_report() +
+  theme(axis.text.y = element_text(size = 9.5), legend.position = "top")
+```
+
+**Šta slike pokazuju.**
+
+- Po *sirovoj* grešci razlike, Ipsos 2026. (`r fmt_d_sr(rs26$absE)` poena) je **`r r26_abs`. najveći promašaj** u katalogu od `r nrow(misses)` slučajeva i **`r r26_abs_e`. najveći među izborima** (za razliku od referenduma). Veći su: kolumbijski plebiscit o miru 2016. (Ipsos Napoleón Franco: `r fmt_d_sr(misses$absE[misses$id=="co16"])` poena, izlaznost upola manja od pretpostavljene), grčki referendum 2015. (Public Issue: `r fmt_d_sr(misses$absE[misses$id=="gr15"])`), i dve završne ankete pred drugi krug predsedničkih izbora u Kostariki 2018. — OPol (`r fmt_d_sr(misses$absE[misses$id=="cr18a"])`; anketa koju je, kako se kasnije saznalo, naručio štab kandidata koji je izgubio) i nezavisni univerzitetski CIEP-UCR (`r fmt_d_sr(misses$absE[misses$id=="cr18b"])`), u trci u kojoj je panel istog univerziteta posle izbora utvrdio da je 60% apstinenata iz prvog kruga glasalo za pobednika. Medijana promašaja ostalih redova — a to su redovi izabrani *zato što* su čuveni promašaji — iznosi `r fmt_d_sr(med_abs)` poena; Ipsos 2026. je `r fmt_d_sr(rs26$absE/med_abs)` puta toliko.
+- Po *standardizovanoj* grešci — koja uzima u obzir da anketa od 3.600 ispitanika „nema pravo“ na grešku koju ima anketa od 600 — Ipsos 2026. je **`r z_rank_sr` od `r nrow(rank_z)`** (z = `r fmt_d_sr(rs26$z)` sa efektivnom veličinom uzorka od 2.110, izvedenom iz Ipsosovih objavljenih raspona greške; `r fmt_d_sr(z26_nominal)` sa nominalnih 3.624), u društvu: `r paste(case_name_sr(top5_z_others), collapse = ", ")`. Slučajevi koji su, kao Ipsos 2026, u prvih pet i po sirovoj i po standardizovanoj meri: `r both_top5_sr`.
+- Ipsos 2026. je takođe **promašio pobednika**, što je u katalogu slučaj u `r round(100 * share_wrong)`% redova, i promašio udeo *Studentske liste* za 13,0 poena — šest puta više od sopstvenog objavljenog raspona greške (±2,1 poena): stvarni udeo *Studentske liste* bio je 10,9 poena iznad gornje granice Ipsosovog intervala.
+- **Ipsos nije bio usamljen, ali je među oktobarskim anketama bio najdalje.** U oktobru 2026. samo je još jedna agencija objavila brojke: NSPM (terensko istraživanje 25. 9.–5. 10, n = 1.050, o sopstvenom trošku) imao je *Studentsku listu* ispred, 44,5 prema 42,7 — tačan pobednik, razlika potcenjena za 12 poena. Faktor plus (16.–20. 9, n = 986, naručilac nenaveden) imao je *Ujedinjenu Srbiju* ispred 48,6 prema 37,1 — promašaj od 25,5 poena, ali pet nedelja pred izbore. Procene CRTA-e (jun) i modela BIRODI (avgust) bile su u granicama pet poena od stvarne razlike. Ipsos je, dakle, anketa sa najsvežijim terenom i najvećim uzorkom; veću grešku imala je samo anketa Faktor plus, pet nedelja pred izbore (odeljak 3.5).
+- Najčešća objašnjenja u dokumentovanim istragama su: nereprezentativni uzorci koje ponderisanje nije popravilo (Velika Britanija 2015, Australija 2019), neodgovaranje i prikrivanje opredeljenja (SAD 2020, Turska 2023, Argentina 2019), modeli izlaznosti i sastav biračkog tela (Kolumbija, Kostarika, Čile, Bolivija), kasni preokret (Alberta 2012, Brazil 2022, Holandija 2023). Nijedno od ovih objašnjenja statistika sama ne može da potvrdi ni za Ipsos 2026; to zahteva Ipsosove sirove podatke. Prikrivanje opredeljenja je, treba reći, mehanizam koji bi delovao u smeru koji je i zabeležen (telefonska anketa u polarizovanoj kampanji, potcenjena opozicija) — ali u dokumentovanim slučajevima proizvodi 5–10 poena, ne 21, i ne objašnjava zašto je svih šesnaest malih lista precenjeno. Ono što katalog pokazuje jeste da među izbornim anketama sa terenom u poslednjoj nedelji, uzorkom od dve hiljade i više, objavljenim naručiocem i neosporenim rezultatom, promašaj ove veličine **nema parnjaka u ovom katalogu**.
+
+**Srbija 2012.** Deset dana pred drugi krug predsedničkih izbora (20. maj 2012), mediji su objavili istraživanje pripisano Ipsos Strategic Marketingu (terensko istraživanje 10. maja, n = 1.198): Tadić 58%, Nikolić 42%; drugi izveštaj iz istih dana navodi 52 prema 48. Nikolić je pobedio sa 51,2% prema 48,8% važećih glasova. Ipsos je naknadno (2021, 2022) saopštio da nikakve brojke za drugi krug nije zvanično objavio, da sopstveno istraživanje za drugi krug nije ni imao, i da je neko medijima dao podatke pod imenom Ipsosa; to je u tabeli i referencama navedeno, a obe verzije brojki prikazane su na graficima. Sa objavljenih 58/42, greška razlike je `r fmt_d_sr(rs12$absE)` poena; sa 52/48, `r fmt_d_sr(abs(E12_alt))`.
+
+Potpuna analiza, tabela sa svim slučajevima i reference slede na engleskom.
+
+</div>
+
+# Introduction
+
+## The question
+
+On 25 October 2026 Serbia held snap parliamentary elections. The final pre-election poll by **Ipsos Strategic Marketing**, published on 22 October (fieldwork 20–22 October, n = 3,624, commissioned by the *Ujedinjena Srbija* list), had *Aleksandar Vučić – Ujedinjena Srbija* at 47.4% and *Studentska lista – Studenti pobeđuju* at 40.0%, with a stated margin of ±2.1 points.<sup><a href="#ref-rs26_ipsos">1</a></sup> The Republic Electoral Commission (RIK) counted *Studentska lista* 53.0%, *Ujedinjena Srbija* 39.0%.<sup><a href="#ref-rs26_rik">2</a></sup>
+
+The [companion technical report](Ipsos-Izbori-2026.html) establishes that random sampling error cannot account for this: the exact multinomial probability of a random sample landing at least that far from the truth is about 2 × 10<sup>−36</sup>, and no variant of the assumptions lifts it above 10<sup>−30</sup>.<sup><a href="#ref-rs26_repo">3</a></sup> That report deliberately says nothing about *why* the gap exists.
+
+This document asks a different, comparative question: **how large is the 2026 Ipsos miss relative to the well-documented pre-election polling failures of the last sixteen years, worldwide?** Polls miss. The literature on polling error is large, and the misses that entered the public memory — the 2015 British general election, the Brexit referendum, the US state polls of 2016 and 2020, Israel 2015, Australia 2019, the Colombian peace plebiscite — each produced inquiries and post-mortems. Putting Ipsos 2026 next to them, on a common scale, is the only way to say whether "polls miss sometimes" is an adequate description of what happened.
+
+## What this document does and does not do
+
+<div class="callout callout-warn">
+**Read this before reading any number below.**
+
+1. **Scope.** Final pre-election polls (published before the vote), for national or sub-national elections and referendums, worldwide, from 2010 to 2026. Exit polls, seat projections built from constituency models, and forecasting aggregators are out of scope, with one exception noted in the table (the Brexit poll of polls is reported alongside individual polls for context). Three further rules. (a) Only polls whose fieldwork ended within 16 days of the vote — the longest legal pre-election blackout among the cases (Chile) — count as final polls; an agency's last poll published five weeks out is not a final poll and is reported in the text, not the table. (b) The official count is taken as the truth, because the metric has no other anchor; elections whose official count is disputed by international observers (Venezuela 2024, Georgia 2024) are therefore excluded and listed in Section 4 with their figures. (c) A case enters the catalogue when the final poll(s) either got the winner wrong, or missed the margin between the top two by at least about five points. The five-point threshold is this document's own choice, not a figure from the literature; it is roughly twice the typical final-week error on a party share reported by Jennings & Wlezien (about 2 points), and large enough that every case in the British, American and Australian inquiries clears it.<sup><a href="#ref-jennings_wlezien">4</a></sup>
+2. **One row per poll, not per election.** Where an election had many pollsters, the table lists the final poll(s) most cited in the post-mortems, so that a named agency with a published sample size can be compared with a named agency. Poll averages, where an official one exists, are mentioned in the text but are not rows.
+3. **Sourcing.** Every poll figure is referenced to the agency's own release or, where that is no longer online, to a contemporaneous report of it; every official result to the electoral authority or a document reproducing its figures; every explanation to the inquiry, academic paper, pollster statement or press analysis that offered it, labelled by type. Where only a secondary source could be reached, the table says so. All links were checked on 2 November 2026.
+4. **What the catalogue cannot show.** It cannot say why Ipsos 2026 missed. The explanations column records what *others* concluded about *their* misses; it is context, not diagnosis. The document makes no claim about intent in any case.
+5. **It is not exhaustive.** Candidate cases that were considered and left out, and why, are listed in Section 4.
+</div>
+
+## How a miss is measured
+
+<div class="concept">
+#### Concept: margin error and standardised error
+
+The measure used here is the **error on the margin**: take the eventual winner and the eventual runner-up (or the winning and losing option in a referendum), compute the poll's lead for the winner, compute the actual lead, and subtract. It is the headline measure of the AAPOR task-force reports on the 2016 and 2020 US polls, and one of the two measures in Jennings & Wlezien's comparative study of 351 elections, whose primary measure is the absolute error on each party's share.<sup><a href="#ref-jennings_wlezien">4</a>,<a href="#ref-us20_aapor">`r ref_num["us20_aapor"]`</a></sup>
+
+$$E = (\hat{p}_{\text{winner}} - \hat{p}_{\text{runner-up}}) - (p_{\text{winner}} - p_{\text{runner-up}})$$
+
+where $\hat{p}$ are the polled shares and $p$ the official shares. A negative $E$ means the poll underestimated the winner's lead; $E$ below $-(p_{\text{winner}} - p_{\text{runner-up}})$ means the poll had the wrong winner. This measure is used because it is what readers of a poll actually act on (who is ahead, and by how much), and because it is insensitive to how undecided respondents or small parties are treated, as long as the two leading options are measured on the same base.
+
+A raw error of five points means different things for a poll of 600 respondents and a poll of 3,600. A random sample of size $n$ from a population in which the two leading options have shares $p_1, p_2$ produces a lead whose standard error is
+
+$$\text{SE}(\hat{p}_1 - \hat{p}_2) = \sqrt{\frac{p_1 + p_2 - (p_1 - p_2)^2}{n}}$$
+
+(the variance of a difference of two multinomial proportions). The **standardised error** $z = |E| / \text{SE}$ is the number of standard errors by which the poll missed, under the hypothesis that it was a simple random sample of the voting population. It is the two-category version of the test in the companion report, and is reported only where the poll's sample size is documented. Under random sampling, $|z| > 2$ happens about one time in twenty; $|z| > 4$ about one time in 16,000; $|z| > 6$ about one time in 500 million.
+</div>
+
+# The data
+
+## Provenance
+
+Every input below is hard-coded with its sources, in the same spirit as the companion report: anyone can check a row against the links in [References](#references), and the document can be re-knitted after a correction. The reference identifiers in the code (`uk15_ipsos`, `rs12_rik`, …) are the anchors used in the table and the reference list.
+
+```{r references}
+refs <- tibble::tribble(
+  ~id, ~type, ~text, ~url,
+  # ---- Serbia 2026 -----------------------------------------------------------
+  "rs26_ipsos",  "Poll",   "Ipsos Strategic Marketing (2026). <i>Rezultati istraživanja pred parlamentarne izbore – oktobar 2026</i>, press release of 22 October 2026 (fieldwork 20–22 Oct, n = 3,624; 90% telephone, 10% online panel; shares computed among decided respondents and including an assumed 2.5% invalid ballots; commissioned by the Ujedinjena Srbija list; Ujedinjena Srbija 47.4 (45.3–49.5), Studentska lista 40.0 (37.9–42.1); expected turnout 64.7%).", "https://www.ipsos.com/sites/default/files/ct/news/documents/2026-10/Saopstenje_-_Ipsos_Strategic_Marketing_-_Parlamentarni%20Izbori_2026_-_finalna_procena.pdf",
+  "rs26_rik",    "Result", "Republička izborna komisija, results portal, parliamentary election of 25 October 2026 (all 8,392 polling stations, including repeat voting of 1 November; read 2 November 2026): Studentska lista 2,354,417 = 53.01%, Ujedinjena Srbija 1,731,323 = 38.98%; percentages are of all ballots found in the boxes (valid 4,385,065 + invalid 56,571); turnout 4,444,310 of 6,451,292 = 68.89%. The portal renders by script; the same figures were reported by Tanjug, 1 Nov 2026 (tanjug.rs/srbija/politika/294196).", "https://www.rik.parlament.gov.rs/542645/rezultati/",
+  "rs26_repo",   "Analysis (self-citation)", "Milovanović, G. S. (2026). <i>Could Ipsos Have Obtained Its Numbers by Chance?</i> Technical report by the author of this document; exact multinomial test p ≈ 2 × 10<sup>−36</sup>; effective sample size 2,110 derived in its Section 6 as the median of the sample sizes implied by Ipsos's 18 published intervals (range 1,783–2,546); late-swing and turnout scenarios in its Section 9.", "https://goranmilovanovic.github.io/izboriRepublikaSrbija_20261025/Ipsos-Izbori-2026.html",
+  "jennings_wlezien", "Academic", "Jennings, W. & Wlezien, C. (2018). Election polling errors across time and space. <i>Nature Human Behaviour</i> 2, 276–283 (30,000+ polls, 351 elections, 45 countries; primary measure the absolute error on each party's share, with the error on the top-two margin as a secondary measure; final-week mean absolute error about 2 points per share). Author manuscript: eprints.soton.ac.uk/421260.", "https://doi.org/10.1038/s41562-018-0315-6",
+  # ---- Serbia 2026: the other polls ------------------------------------------
+  "rs26_nspm",   "Poll",   "Danas (20 October 2026). <i>Novo istraživanje NSPM</i> — NSPM (Nova srpska politička misao), fieldwork 25 Sep–5 Oct 2026, n = 1,050, telephone (CATI), conducted at its own expense; among decided respondents (18.3% undecided or refused excluded): Studentska lista 44.5, Ujedinjena Srbija 42.7. NSPM described it as a regular autumn survey, not an election projection. Also reported by nova.rs.", "https://www.danas.rs/vesti/politika/novo-istrazivanje-nspm-izbori-2026/",
+  "rs26_faktor", "Poll",   "Danas (21 September 2026). <i>Istraživanje Faktor plus</i> — Faktor plus, fieldwork 16–20 Sep 2026, n = 986, mode and commissioner not stated (published by Blic): Ujedinjena Srbija 48.6, Studentska lista 37.1 among those who would vote; no later Faktor plus poll was published.", "https://www.danas.rs/vesti/politika/izbori26/istrazivanje-faktor-plus/",
+  "rs26_crta",   "Poll",   "N1 (15 July 2026). <i>CRTA istraživanje</i> — CRTA with Stanford's Democracy Action Lab, fieldwork 10–24 June 2026, n = 2,324, face-to-face, among decided respondents: Studentska lista 44.9, SNS 35.7.", "https://n1info.rs/vesti/crta-istrazivanje-izbori-studentska-lista-sns/",
+  "rs26_birodi", "Analysis", "nova.rs (30 August 2026). <i>BIRODI: da su danas izbori</i> — BIRODI forecast model (not a survey) combining RIK results since 2012 with published polls: Studentska lista 48.5 (45.9–51.1), Ujedinjena Srbija 38.6 (36.3–40.9).", "https://nova.rs/vesti/politika/analiza-birodi-da-su-danas-izbori-studentska-lista-bi-osvojila-485-odsto-a-vucic-386/",
+  "rs26_roundup", "Press", "021.rs (26 October 2026). <i>Izborna istraživanja koja su baš omanula</i> — post-election comparison of the Ipsos, NSPM and Faktor plus polls with RIK's count; see also Vreme, 26 Oct 2026 (vreme.com/vesti/istrazivaci-javnog-mnjenja-ko-laze-a-ko-ne-ume), Danas, 29 Oct 2026 (danas.rs/vesti/politika/istrazivanja-javnog-mnjenja-izbori-25-oktobar) and N1, 1 Nov 2026 (n1info.rs/vesti/cemu-ankete-kada-toliko-grese).", "https://www.021.rs/info/srbija/459302/izborna-istrazivanja-koja-su-bas-omanula-sta-se-predvidjalo-a-sta-se-dogodilo",
+  "rs23_rik",    "Result", "Danas (January 2024). <i>Šta stoji u konačnom izveštaju RIK-a</i> — RIK's final report on the parliamentary election of 17 December 2023 (adopted 12 Jan 2024): 6,500,666 registered voters, 3,820,746 turned out (58.77%); Aleksandar Vučić – Srbija ne sme da stane 1,783,701 votes (46.75%), Srbija protiv nasilja 902,450. Newspaper transcription of the RIK report.", "https://www.danas.rs/vesti/politika/sta-stoji-u-konacnom-izvestaju-rik-a-koliko-je-ko-osvojio-glasova-i-mandata/",
+  # ---- Serbia 2012 -----------------------------------------------------------
+  "rs12_aljazeera", "Poll", "Al Jazeera Balkans (11 May 2012). <i>Pljušte optužbe za 'izbornu krađu' u Srbiji</i> — reports the “najnovije istraživanje srbijanske agencije Ipsos Strategic marketing” for the runoff: Tadić 58%, Nikolić 42%; fieldwork 10 May 2012, n = 1,198; 54.7% certain to vote, 25.7% “maybe”. The base of the 58/42 split is not stated (it cannot be all respondents).", "https://balkans.aljazeera.net/news/balkan/2012/5/11/pljuste-optuzbe-za-izbornu-kradu-u-srbiji",
+  "rs12_ap",     "Poll",   "Associated Press via Fox News (18 May 2012). <i>Pro-EU Tadic leading polls ahead of runoff vote</i> — reports an Ipsos Strategic Marketing survey “published last week” as Tadić 52%, Nikolić 48% (no n, no date). The 58/42 and 52/48 figures are not reconciled by any source.", "https://www.foxnews.com/world/pro-eu-tadic-leading-polls-ahead-of-runoff-vote",
+  "rs12_rik",    "Result", "Republička izborna komisija (2012). <i>Grafički prikazi, II krug, 20. maj 2012</i> — Nikolić 1,552,063, Tadić 1,481,952 (49.54% and 47.31% of all 3,133,682 ballots; 51.16% and 48.84% of the 3,034,015 valid votes), invalid 98,664, turnout 46.26% (RTS, 24 May 2012, reports RIK's final figures with turnout 46.28%: rts.rs/page/stories/sr/story/1950/izbori-2012/1108308).", "https://arhiva.rik.parlament.gov.rs/doc/arhiva/predsednik/2012/8.%202012%20graficki%20prikazi%20II%20krug.pdf",
+  "rs12_bogosavljevic", "Pollster", "Marković, R. (21 July 2021). <i>Kampanja protiv Ipsosa je promašena</i> (interview with Srđan Bogosavljević), <i>Vreme</i> — Ipsos did not officially publish runoff figures and had no runoff survey of its own; in 2012 it collected data on a US client's questionnaire for a project commissioned by DS, and most of what it saw showed a tight race; someone gave media data under Ipsos's name; Ipsos staff said in interviews that the candidates were level. Tadić's loss attributed to an equal opponent, DS exhaustion after the first round, a weak runoff campaign, low Belgrade turnout and the blank-ballot campaign; a demobilising effect of the reported poll is offered as speculation.", "https://vreme.com/vreme/kampanja-protiv-ipsosa-je-promasena/",
+  "rs12_novimagazin", "Pollster", "Bogosavljević, S. & Kurčubić, P. (5 May 2022). <i>Čemu izbori kad postoje istraživanja</i>, <i>Novi magazin</i> — polls published under Ipsos's name before the 2004 and 2012 elections did not reflect its data; a falsely attributed 2012 poll may have reduced turnout among government voters; most data at the time showed DS gaining late in the campaign.", "https://javniservis.net/mediji/dnevnici-nedeljnici-mesecnici/novi-magazin/cemu-izbori-kad-postoje-istrazivanja/",
+  "rs12_vreme2012", "Press", "Drčelić, Z. (23 May 2012). <i>Noć posle koje više ništa nije isto</i>, <i>Vreme</i> — agency estimates on the eve of the campaign silence gave Tadić an 8–16-point lead; attributes the result to two weeks of DS triumphalism, the election-theft narrative keeping some voters at home, coalition partners failing to deliver their voters, and Belgrade.", "https://vreme.com/?p=4465992",
+  # ---- UK 2015 ---------------------------------------------------------------
+  "uk15_ipsos",  "Poll",   "Ipsos MORI (7 May 2015). <i>Ipsos MORI final election poll</i> (Evening Standard) — fieldwork 5–6 May, n = 1,186 GB adults (headline on 862 registered and “absolutely certain to vote”), telephone: Con 36, Lab 35.", "https://www.ipsos.com/en-uk/ipsos-final-election-poll-0",
+  "uk15_result", "Result", "UK Parliament, <i>Election results: 2015 General Election</i> — UK: Con 36.8% (11,299,609), Lab 30.4% (9,347,273). The Great Britain shares used for comparison (Con 37.8, Lab 31.2) are those of the BPC/MRS Inquiry.", "https://electionresults.parliament.uk/general-elections/2",
+  "uk15_inquiry", "Inquiry", "Sturgis, P., Baker, N., Callegaro, M., Fisher, S., Green, J., Jennings, W., Kuha, J., Lauderdale, B. & Smith, P. (2016). <i>Report of the Inquiry into the 2015 British general election opinion polls</i>, British Polling Council / Market Research Society — primary cause: unrepresentative samples (too many Labour, too few Conservative respondents) that weighting did not correct; late swing at most around one point; deliberate misreporting and “shy Tories” rejected; final-week convergence consistent with herding but not with collusion; final-poll average Con 34, Lab 34; GB result Con 37.8, Lab 31.2.", "https://eprints.ncrm.ac.uk/id/eprint/3789/1/Report_final_revised.pdf",
+  # ---- Brexit 2016 -----------------------------------------------------------
+  "eu16_bpc",    "Industry body", "British Polling Council (June 2016). <i>Performance of the polls in the EU referendum</i> — statement and table of all final polls (Populus 55/45 online, 21–22 Jun, n = 4,740, error +7, the largest; Ipsos MORI 52/48 phone; ComRes 54/46; YouGov 51/49; Opinium 49/51); mean error on Remain 4.3 points; the BPC decided not to hold a formal inquiry.", "https://britishpollingcouncil.org/?p=274",
+  "eu16_populus", "Poll",  "Sharecast (23 June 2016). <i>Populus online poll puts Remain at 55%</i> — contemporaneous report of the Populus final poll (Populus's own release is no longer online).", "https://sharecast.com/amp/news/news-and-announcements--/populus-online-poll-puts-remain-at-55--1221081.html",
+  "eu16_ipsos",  "Poll",   "Ipsos MORI (23 June 2016). <i>Ipsos MORI EU referendum prediction poll</i> — fieldwork 21–22 June, n = 1,592 GB adults, telephone: Remain 52, Leave 48 among likely voters who say the outcome matters to them, don't-knows excluded (51/49 on the turnout filter alone).", "https://www.ipsos.com/en-uk/ipsos-eu-referendum-prediction-poll",
+  "eu16_result", "Result", "House of Commons Library (2016). <i>EU referendum 2016: results</i>, CBP-7639 — Leave 51.9% (17,410,742), Remain 48.1% (16,141,241), turnout 72.2% (Electoral Commission figures).", "https://commonslibrary.parliament.uk/research-briefings/cbp-7639/",
+  "eu16_curtice", "Academic", "Curtice, J. / NatCen (May 2016, before the vote). <i>Education, education, education: key factor in EU referendum vote not adequately taken into account by polls</i>, WhatUKThinks — the phone/online gap lies in the composition of the samples rather than the questions; polls were not regularly reporting or weighting for educational composition.", "https://www.whatukthinks.org/eu/media-centre/education-education-education-key-factor-in-eu-referendum-vote-not-adequately-taken-into-account-by-polls/",
+  "eu16_mrs",    "Industry body", "Atkinson, S. (Ipsos) / IJMR–MRS (4 January 2017). <i>Opinion polling in the EU referendum: challenges and lessons</i> (summary of the BPC/MRS/NCRM seminar of 8 Dec 2016) — turnout 72% against the ~60% most pollsters expected, with new voters splitting about 60/40 for Leave; five of ten firms weighted by education; online polls did better than phone; the polls did better than in 2015.", "https://mrs.org.uk/blog/ijmr/opinion-polling-in-the-eu-referendum-challenges-and-lessons",
+  # ---- UK 2017 ---------------------------------------------------------------
+  "uk17_bpc",    "Industry body", "British Polling Council (June 2017). <i>Performance of the polls in the 2017 General Election</i> — statement and final-poll table incl. ICM (6–7 Jun, n = 1,532, online: Con 46, Lab 34); mean of nine finals Con 43.7, Lab 35.8; Labour understated by about 5; no formal inquiry judged necessary.", "https://www.britishpollingcouncil.org/?p=354",
+  "uk17_result", "Result", "UK Parliament, <i>Election results: 2017 General Election</i> — UK: Con 42.3% (13,636,684), Lab 40.0% (12,877,918) of 32,204,184 valid votes; Great Britain shares recomputed by subtracting Northern Ireland: Con 43.4, Lab 41.0.", "https://electionresults.parliament.uk/general-elections/3",
+  "uk17_curtice", "Academic", "Curtice, J. (2017). <i>Why 2017 UK election polls underestimated Labour</i>, The Conversation — raw samples had Labour about one point behind; the turnout and engagement adjustments introduced after 2015 pushed the headline Conservative lead too high.", "https://theconversation.com/why-2017-uk-election-polls-underestimated-labour-79513",
+  "uk17_jennings", "Academic", "Jennings, W. (2019). The polls in 2017. In Wring, Mortimore & Atkinson (eds), <i>Political Communication in Britain</i>, Palgrave — effect of turnout adjustments on accuracy; polls have not become consistently less accurate.", "https://eprints.soton.ac.uk/426703",
+  # ---- UK 2024 ---------------------------------------------------------------
+  "uk24_survation", "Poll", "Survation (3 July 2024). <i>Final Survation poll of the 2024 General Election</i> — fieldwork 1–3 July, n = 1,679 GB adults, telephone: Lab 37.6, Con 19.9, Reform 17.0.", "https://www.survation.com/final-survation-poll-of-the-2024-general-election/",
+  "uk24_result", "Result", "UK Parliament, <i>Election results: 2024 General Election</i> — UK: Lab 33.7% (9,708,716), Con 23.7% (6,828,925); Great Britain shares (Lab 34.7, Con 24.4) from the BPC table.", "https://electionresults.parliament.uk/general-elections/6",
+  "uk24_bpc",    "Industry body", "British Polling Council (8 July 2024). <i>The performance of the polls in the 2024 General Election</i> — table of 19 final polls: mean Lab 38.6, Con 21.4 against GB result Lab 34.7, Con 24.4 (Labour overstated by 3.9, Conservatives understated by 3.0); the long-term tendency to overstate Labour persisted; YouGov's final MRP (19 Jun–2 Jul, n = 42,758): Lab 39, Con 22.", "https://www.britishpollingcouncil.org/the-performance-of-the-polls-in-the-2024-general-election/",
+  "uk24_bpc_lessons", "Industry body", "British Polling Council / MRS (6 May 2025). <i>Polling lessons from 2024</i> — the largest overestimation of Labour since 1979; the specific causes remain unclear.", "https://www.britishpollingcouncil.org/?p=1345",
+  "uk24_yougov", "Pollster", "Wells, A. / YouGov (18 December 2024). Review of the 2024 polls — a genuine late swing away from Labour; samples contained too many people who went on to vote; past-vote weighting less effective; coarse ethnicity categories hurt the MRP in some seats.", "https://yougov.com/en-gb/articles/51186",
+  # ---- Scotland 2014 ---------------------------------------------------------
+  "sc14_yougov", "Poll",   "YouGov (17 September 2014). <i>No campaign retain 4 point lead</i> (Times/Sun; YouGov's final pre-referendum survey) — fieldwork 15–17 Sep, n = 3,237, online: No 52, Yes 48 excluding the 6% don't-knows.", "https://yougov.com/en-gb/articles/10477-no-campaign-retain-4-point-lead-scottish-referendu",
+  "sc14_result", "Result", "Electoral Management Board for Scotland, <i>Scottish Independence Referendum, 18 September 2014</i> — No 55.3% (2,001,926), Yes 44.7% (1,617,989), turnout 84.6%.", "https://emb.scot/scottish-independence-referendum-2014-3/scottish-independence-referendum-18-september-2014",
+  "sc14_curtice", "Academic", "Curtice, J. (22 September 2014). <i>Scotland's decision: so how well did the polls do?</i>, Centre on Constitutional Change — every final poll within ±3 on shares but all erring in the same direction (understating No); a late swing to No suggested; YouGov's on-the-day recontact survey, published after the polls closed, had No at 54.", "https://www.centreonconstitutionalchange.ac.uk/opinions/scotlands-decision-so-how-well-did-polls-do",
+  "sc14_ipsos",  "Pollster", "Ipsos MORI (19 September 2014). Comment on its final Scottish referendum poll (No 53, Yes 47; 16–17 Sep, n = 991, telephone) — differential turnout suggested as the likely explanation of the polls' understatement of No.", "https://www.ipsos.com/en-uk/node/184871",
+  # ---- US 2014 Senate --------------------------------------------------------
+  "us14_marist", "Poll",   "Marist Poll / NBC News (2 November 2014). <i>Kentucky: McConnell outpaces Grimes</i> — fieldwork 27–30 Oct, n = 556 likely voters, live telephone: McConnell 50, Grimes 41 (incl. leaners).", "https://maristpoll.marist.edu/polls/112-kentucky-mcconnell-outpaces-grimes-in-u-s-senate-race/",
+  "us14_ky_result", "Result", "Kentucky State Board of Elections, <i>2014 General Election Results</i> — McConnell 806,787, Grimes 584,698 of 1,435,868 votes for candidates (56.19% and 40.72%).", "https://elect.ky.gov/SiteCollectionDocuments/Election%20Results/2010-2019/2014/2014%20General%20Election%20Results.pdf",
+  "us14_roanoke", "Poll",  "Roanoke College Poll (28 October 2014). <i>Gillespie closes gap</i> — fieldwork 20–25 Oct, n = 738 likely voters, telephone: Warner 47, Gillespie 35 with leaners (45/32 without); the poll with the largest Warner margin in the race.", "https://www.roanoke.edu/news/rc_poll_gillespie_closes_gap",
+  "us14_va_result", "Result", "Virginia Department of Elections, historical results — Warner 1,073,667, Gillespie 1,055,940 of 2,184,520 votes (49.15% and 48.34%).", "https://historical.elections.virginia.gov/candidates/view/Mark-Robert-Warner",
+  "us14_quinnipiac", "Poll", "RealClearPolling, <i>Iowa Senate 2014: Ernst vs. Braley</i> — final polls incl. Quinnipiac (28 Oct–2 Nov): Ernst 47, Braley 47 (n = 778 likely voters per the compiled table on Wikipedia, not shown on the RCP page); RCP average Ernst +2.3.", "https://www.realclearpolling.com/polls/senate/general/2014/iowa/ernst-vs-braley",
+  "us14_ia_result", "Result", "Iowa Secretary of State, <i>2014 General Election Canvass Summary</i> — Ernst 588,575, Braley 494,370 of 1,129,700 votes for candidates (52.10% and 43.76%; 51.53/43.28 of all ballots incl. under- and over-votes).", "https://sos.iowa.gov/elections/pdf/2014/general/canvsummary.pdf",
+  "us14_silver", "Analysis", "Silver, N. (5 November 2014). <i>The polls were skewed toward Democrats</i>, FiveThirtyEight — Senate polls in the final three weeks overestimated the Democrat by about 4 points on average (about 6 in the ten most competitive races), nearly all in the same direction; the direction of bias is largely unpredictable from election to election. (The original URL now redirects; contemporaneous summary at outsidethebeltway.com/?p=162245.)", "https://fivethirtyeight.com/2014/11/05/the-polls-were-skewed-toward-democrats",
+  # ---- US 2016 Wisconsin -----------------------------------------------------
+  "us16_marquette", "Poll", "Marquette Law School Poll (2 November 2016). <i>Detailed results, October 26–31, 2016</i> — likely voters n = 1,255 (1,190 weighted), live telephone, weighted on age, education, region, marital status and sex: Clinton 46, Trump 40.", "https://law.marquette.edu/poll/2016/11/02/detailed-results-of-the-marquette-law-school-poll-october-26-31-2016/",
+  "us16_fec",    "Result", "Federal Election Commission (2017). <i>Federal Elections 2016</i> — Wisconsin: Trump 1,405,284 (47.22%), Clinton 1,382,536 (46.45%); national: Clinton 48.18%, Trump 46.09%.", "https://www.fec.gov/resources/cms-content/documents/federalelections2016.pdf",
+  "us16_aapor",  "Inquiry", "Kennedy, C. et al. / AAPOR Ad Hoc Committee (2017). <i>An Evaluation of 2016 Election Polls in the U.S.</i> (journal version: <i>Public Opinion Quarterly</i> 82(1), 2018, doi:10.1093/poq/nfx047) — national polls among the most accurate since 1936; state polls had the largest average error in decades, Wisconsin the largest signed error (6.5); late deciders broke for Trump by nearly 30 points in Wisconsin; adjusting for the over-representation of graduates was critical but many state polls did not do it; evidence on a “shy Trump” effect informative but not conclusive.", "https://aapor.org/wp-content/uploads/2023/01/AAPOR-2016-Election-Polling-Report.pdf",
+  # ---- US 2020 Wisconsin -----------------------------------------------------
+  "us20_langer", "Poll",   "Langer Research Associates / ABC News–Washington Post (28 October 2020). <i>State battlegrounds: Michigan and Wisconsin</i> — Wisconsin fieldwork 20–25 Oct, n = 809 likely voters, live telephone: Biden 57, Trump 40.", "https://www.langerresearch.com/wp-content/uploads/1216a52020StateBattlegrounds-MIWI.pdf",
+  "us20_wi_result", "Result", "National Archives, <i>Certificate of Ascertainment, Wisconsin 2020</i> (certified by the Wisconsin Elections Commission, 30 Nov 2020) — Biden 1,630,866 (49.45%), Trump 1,610,184 (48.82%) of 3,298,041 ballots.", "https://www.archives.gov/files/electoral-college/2020/ascertainment-wisconsin.pdf",
+  "us20_aapor",  "Inquiry", "AAPOR Task Force on 2020 Pre-Election Polling (2021). <i>2020 Pre-Election Polling: An Evaluation of the 2020 General Election Polls</i> — national polls overstated Biden's margin by 3.9 points on average, the highest in 40 years; state presidential polls by 4.3 (Wisconsin +8); late deciders, education weighting and “shy Trump” argued against as primary causes; non-response correlated with partisanship the most likely cause, but the primary source cannot be conclusively identified.", "https://aapor.org/wp-content/uploads/2022/11/AAPOR-Task-Force-on-2020-Pre-Election-Polling_Report-FNL.pdf",
+  # ---- Canada ----------------------------------------------------------------
+  "bc13_ipsos",  "Poll",   "Ipsos Reid (13 May 2013). <i>BC NDP lead by 8 points as campaign ends</i> — fieldwork 13 May, n = 800, online household panel: NDP 45, Liberals 37 among decided voters.", "https://www.ipsos.com/en-ca/bc-ndp-lead-8-points-campaign-ends",
+  "bc13_result", "Result", "Elections BC (2013). <i>Statement of Votes, 40th Provincial General Election</i> — BC Liberal 795,274 (44.13%), BC NDP 715,855 (39.72%) of 1,802,149 valid votes; turnout 55.32% of eligible voters.", "https://elections.bc.ca/docs/rpt/2013GE/2013-GE-SOV.pdf",
+  "bc13_ipsos_post", "Pollster", "Ipsos Reid (15 May 2013). <i>Inside the BC election: what happened and why</i> — election-day survey of 1,400 voters: 23% decided in the final week and chose the Liberals 41–34; NDP supporters did not turn out as promised.", "https://www.ipsos.com/en-ca/inside-bc-election-what-happened-and-why",
+  "bc13_reid",   "Pollster", "Reid, A. (May 2013). <i>What went wrong with the polls in British Columbia</i>, Maclean's — Angus Reid's final poll (NDP 45, Liberals 36) weighted under-35s to about 30% of the population rather than about 15% of actual voters; correcting this alone would have cut the NDP lead to about three points; its post-campaign follow-up found no evidence of late switching.", "https://macleans.ca/news/canada/angus-reid-what-went-wrong-with-the-polls-in-british-columbia",
+  "ab12_global", "Poll",   "Global News (24 April 2012). <i>Alberta PCs win a poll-defying feat</i> — Forum Research's final poll, conducted 22 April, found the Wildrose lead had narrowed to two points (Wildrose 38, PC 36); its 21 April poll (n = 2,010, IVR, decided or leaning respondents certain to vote) had Wildrose 41, PC 32 (Globe and Mail, 22 Apr 2012: beta.theglobeandmail.com/news/politics/wildrose-party-set-for-sweeping-majority-latest-poll-shows/article4101730). Maclean's (<i>Wildly off the mark</i>) also reports the 22 April narrowing.", "https://globalnews.ca/news/237720/alberta-pcs-win-a-poll-defying-feat/",
+  "ab12_result", "Result", "Elections Alberta (2012). <i>2012 Provincial General Election Report</i> — PC 567,312 (43.97%), Wildrose 442,325 (34.28%) of 1,290,352 valid votes; turnout 54.37%.", "https://www.elections.ab.ca/uploads/2012PGErpt.pdf",
+  "ab12_thinkhq", "Pollster", "Henry, M. / ThinkHQ (25 April 2012). <i>A post-mortem of Alberta's 'fear & loathing' election and a lesson for pollsters</i> — ThinkHQ's own tracking saw the Wildrose lead fall from 13 to 8 points in four to five days as Liberal and NDP supporters shifted to the PCs after the “conscience rights” controversies; media polls typically stop three to four days before the vote.", "https://thinkhq.ca/?p=82",
+  "qc18_polls",  "Poll",   "Wikipedia, <i>Opinion polling for the 2018 Quebec general election</i> — compiled table with links to releases: Léger (to 27 Sep, online, n = 1,502): CAQ 32, PLQ 30; later polls of 30 Sep: Forum 33/28, Research Co 33/30, Angus Reid 32/25. Cited as a pointer; Léger's release was not retrieved directly.", "https://en.wikipedia.org/wiki/Opinion_polling_for_the_2018_Quebec_general_election",
+  "qc18_result", "Result", "Élections Québec, <i>General election results, 1 October 2018</i> — CAQ 37.42%, turnout 66.45%; PLQ 24.82% (1,001,037 of 4,033,538 valid votes) from the same results as compiled on Wikipedia.", "https://www.electionsquebec.qc.ca/english/provincial/election-results/general-elections.php?e=90&s=2",
+  "qc18_durand", "Academic", "Durand, C. & Blais, A. (2020). Quebec 2018: a failure of the polls? <i>Canadian Journal of Political Science</i> 53(1), 133–150 — changing voter behaviour (last-minute shifts and the vote of non-disclosers) explains most of the discrepancy; among the worst misses on record but not necessarily a major poll failure. Durand's earlier commentary (<i>Policy Options</i>, 24 Oct 2018: policyoptions.irpp.org/2018/10/quebec-2018-a-tough-night-for-pollsters) reports a two-party error of about 10 points similar across modes and lower turnout among non-francophones.", "https://doi.org/10.1017/S0008423919000787",
+  # ---- Israel 2015 -----------------------------------------------------------
+  "il15_polls",  "Poll",   "JTA (13 March 2015). <i>Poll confirms Netanyahu's fear of losing election</i> — Yedioth Ahronoth/Midgam (Mina Tzemach) final poll before the legal blackout: Zionist Union 26 seats, Likud 22; n = 1,032. Other final polls (compiled on Wikipedia, <i>Opinion polling for the 2015 Israeli legislative election</i>): Dialog/Haaretz 24/21, Teleseker/Walla 25/23.", "https://www.jta.org/2015/03/13/israel/poll-confirms-netanyahus-fear-of-losing-election",
+  "il15_result", "Result", "Inter-Parliamentary Union, PARLINE, <i>Israel, Knesset election 17 March 2015</i> — Likud 30 seats, Zionist Union 24; turnout 72.3%. Vote shares (Likud 23.40%, Zionist Union 18.67%) are the Central Elections Committee's as compiled on Wikipedia, <i>2015 Israeli legislative election</i>.", "https://data.ipu.org/parliament/IL/IL-LC01/election/IL-LC01-E20150317",
+  "il15_fisher", "Academic", "Fisher, S. (18 March 2015). <i>Salutary lessons from the Israeli election polls 2015</i>, Elections Etc. — Likud won 30 seats against final polls of about 22–25; aggregating the right-wing bloc makes the polls look better but does not necessarily explain the discrepancy.", "https://electionsetc.com/2015/03/18/salutary-lessons-from-the-israeli-election-polls-2015/",
+  "il15_toi",    "Press",  "Ghert-Zand, R. (18 March 2015). <i>Botched TV exit polls earn vote of non-confidence</i>, Times of Israel — on the exit polls: Tzemach cites refusal rates of about 15% concentrated at pro-Likud and immigrant polling stations; Hermann (IDI) notes the Peace Index found no change in the final week.", "https://www.timesofisrael.com/botched-tv-exit-polls-earn-vote-of-non-confidence/",
+  # ---- Greece 2015 -----------------------------------------------------------
+  "gr15_publicissue", "Poll", "Public Issue (3 July 2015). <i>Referendum 2015</i> (for Avgi) — fieldwork 30 Jun–2 Jul, n = 1,053, telephone: Yes 42.5, No 43.0, undecided 9, won't vote 3.5 (raw); 45.5/45 after allocating undecideds; “the result remains open”.", "https://www.publicissue.gr/referendum-2015/",
+  "gr15_polls",  "Poll",   "Wikipedia, <i>2015 Greek bailout referendum</i> — compiled final polls: GPO (1–3 Jul) 44.1/43.7; Ipsos (30 Jun–3 Jul) 44/43; Alco (2–3 Jul) 41.9/42.7; Metron Analysis (3 Jul) Yes 44, No 48 raw (48/52 reduced). Pointer.", "https://en.wikipedia.org/wiki/2015_Greek_bailout_referendum",
+  "gr15_result", "Result", "Hellenic Ministry of Interior, results portal — Referendum 5 July 2015: No 61.31% (3,558,450), Yes 38.69% (2,245,537) of valid votes, turnout 62.5% (detailed table as compiled on Wikipedia).", "https://ekloges.ypes.gr/",
+  "gr15_young",  "Analysis (pollster-authored)", "Young, C. & Ziemer, K. (Ipsos) (2024). The case of Grexit and assessing the polls in aggregate. In <i>Polls, Pollsters, and Public Opinion</i>, Cambridge University Press, ch. 7 — total-survey-error framework applied to why the polls in aggregate predicted the wrong outcome.", "https://doi.org/10.1017/9781108855310.009",
+  "gr15_pi_post", "Pollster", "Public Issue (6 July 2015). <i>Referendum 2015: the profile of the No vote</i> — pooled pre-vote data (n = 2,069, 29 Jun–3 Jul) re-weighted to the referendum result.", "https://www.publicissue.gr/referendum-2015-no/",
+  # ---- Poland 2015 -----------------------------------------------------------
+  "pl15_polls",  "Poll",   "Wikipedia, <i>2015 Polish presidential election</i> — compiled final polls: IBRiS (8 May) Komorowski 39, Duda 31, Kukiz 19; TNS Polska (6–7 May) 35/27; Millward Brown (7 May) 39/27. Pointer; sample sizes not stated; releases not retrieved.", "https://en.wikipedia.org/wiki/2015_Polish_presidential_election",
+  "pl15_result", "Result", "Państwowa Komisja Wyborcza, <i>Obwieszczenie z dnia 11 maja 2015</i>, Dz.U. 2015 poz. 650 — Duda 34.76%, Komorowski 33.77%, Kukiz 20.80% of valid votes, turnout 48.96%.", "https://api.sejm.gov.pl/eli/acts/DU/2015/650/text.html",
+  "pl15_cbos",   "Analysis", "Cybulska, A. & Pankowski, K. (2015). <i>Reakcje na wyniki wyborów oraz oczekiwania wobec nowego prezydenta</i>, CBOS Report 79/2015 — post-election public-opinion report: 27% were surprised by the result; the incumbent's loss of support was the campaign's most striking feature; reassuring polls may have dampened his campaign. No audit of the polls was conducted.", "https://cbos.pl/PL/publikacje/raporty/open_file.php?id=5228",
+  # ---- Hungary 2022 ----------------------------------------------------------
+  "hu22_polls",  "Poll",   "Wikipedia, <i>Opinion polling for the 2022 Hungarian parliamentary election</i> — Medián (24–26 Mar, n = 1,096, published 30 Mar via hvg.hu): Fidesz–KDNP 50, United for Hungary 40; Publicus (29–31 Mar, n = 1,025): 47/47; Závecz (21–27 Mar, n = 1,000): 50/46; IDEA (n = 1,800): 50/45. Pointer. Medián's 49/41 was released on RTL at 19:00 on election day, after the polls closed (444.hu, 3 Apr 2022).", "https://en.wikipedia.org/wiki/Opinion_polling_for_the_2022_Hungarian_parliamentary_election",
+  "hu22_result", "Result", "Nemzeti Választási Iroda, <i>Országgyűlési választás 2022, országos listák</i> (final, 16 Apr 2022) — Fidesz–KDNP 3,060,706 (54.13%), United for Hungary 1,947,331 (34.44%), Mi Hazánk 5.88%, turnout 69.59% (portal renders by script; figures as compiled on Wikipedia).", "https://vtr.valasztas.hu/ogy2022/orszagos-listak?tab=parties",
+  "hu22_telex",  "Press",  "Bakró-Nagy, F. & Joób, S. (4 April 2022). <i>Minden közvélemény-kutató tévedett</i>, Telex — all firms under-measured Fidesz by 3–4 and over-measured the opposition by 5–11 points; ex-Jobbik voters moved to Fidesz and Mi Hazánk; lists Medián's final pre-election figures as 50/40.", "https://telex.hu/valasztas-2022/2022/04/04/kozvelemeny-kutatok-felmeres-valasztas-tevedes-zavecz-nezopont-szazadveg-idea-republikon-median",
+  "hu22_zavecz", "Pollster", "Telex (5 April 2022). Interview with Tibor Závecz — the government's “stay out of the war” message swung undecided voters in the final days.", "https://telex.hu/valasztas-2022/2022/04/05/zavecz-kozvelemenykutatok-a-fidesz-sem-szamitott-ketharmadra",
+  "hu22_hann",   "Pollster", "444.hu (4 April 2022). <i>Komoly önvizsgálatot várna el a közvélemény-kutatóktól a Medián igazgatója</i> — Endre Hann (Medián) calls for serious self-examination by the profession.", "https://444.hu/2022/04/04/komoly-onvizsgalatot-varna-el-a-kozvelemeny-kutatoktol-a-median-igazgatoja",
+  # ---- Spain 2023 ------------------------------------------------------------
+  "es23_polls",  "Poll",   "Wikipedia, <i>Opinion polling for the 2023 Spanish general election</i> — GAD3/ABC (29 Jun–17 Jul, cumulative tracker n = 8,001): PP 36.9, PSOE 28.6; GAD3/Mediaset (10–22 Jul, n = 10,004): 35.5/28.6; Sigma Dos/El Mundo (10–17 Jul, n = 8,183): 35.4/28.0; 40dB/El País (18–21 Jul, n = 2,000): 31.7/29.4; CIS (30 Jun–5 Jul): PSOE 31.0, PP 29.6. Pointer; releases not retrieved.", "https://en.wikipedia.org/wiki/Opinion_polling_for_the_2023_Spanish_general_election",
+  "es23_result", "Result", "Junta Electoral Central, <i>Acuerdo de proclamación de resultados</i>, BOE 1 September 2023 — PP 8,160,837 (33.06% of 24,688,087 valid votes; 137 seats), PSOE incl. PSC 7,821,718 (31.68%; 121), turnout 66.59%.", "https://www.boe.es/boe/dias/2023/09/01/pdfs/BOE-A-2023-18907.pdf",
+  "es23_press",  "Press",  "Ordóñez, R. (25 July 2023). <i>Así fallaron las encuestas del 23-J</i>, El Independiente — all forecasts (including the CIS) missed; the industry analyst Francisco Martín points to late undecideds leaning PSOE, polarisation mobilising would-be abstainers toward their historical party, tactical voting in Catalonia, and too few interviews per province for the seat models.", "https://www.elindependiente.com/espana/2023/07/25/asi-fallaron-las-encuestas-del-23-j/amp/",
+  # ---- Netherlands 2023 ------------------------------------------------------
+  "nl23_io",     "Poll",   "I&O Research (21 November 2023). <i>Politieke peiling november IV: slotpeiling</i> — fieldwork 20 Nov 19:15 to 21 Nov 09:00; n = 2,473 (projection on 2,076 likely voters with a party preference), online panels: PVV 28 seats (17.7%), GL-PvdA 27 (17.7%), VVD 27 (17.4%), NSC 21 (13.8%); 30–37% of voters certain of their choice.", "https://ipsos-publiek.nl/wp-content/uploads/2023/11/politieke-peiling-november-iv-slotpeiling.pdf",
+  "nl23_result", "Result", "Kiesraad (1 December 2023). <i>Proces-verbaal van de uitslag van de Tweede Kamerverkiezing 2023</i> — PVV 2,450,855 (23.49% of 10,432,662 valid list votes; 37 seats), GL-PvdA 1,643,032 (15.75%; 25), VVD 1,589,518 (15.24%; 24), turnout 77.7%.", "https://www.kiesraad.nl/binaries/kiesraad/documenten/proces-verbalen/2023/12/1/proces-verbaal-van-de-uitslag-van-de-verkiezing-van-de-tweede-kamer-2023/Proces-verbaal+van+de+uitslag+van+de+Tweede+Kamerverkiezing+2023_Model_P22-1.pdf",
+  "nl23_nos",    "Analysis", "NOS (21 November 2023). <i>Peilingwijzer: VVD, PVV en GL-PvdA in de race om de grootste te worden</i> (with Tom Louwerse) — the aggregator had a three-way race; the PVV gained in the final week after the debates; fewer than half of voters were certain of their choice.", "https://nos.nl/artikel/2498709-peilingwijzer-vvd-pvv-en-gl-pvda-in-de-race-om-de-grootste-te-worden",
+  # ---- Czechia 2021 ----------------------------------------------------------
+  "cz21_polls",  "Poll",   "Wikipedia, <i>Opinion polling for the 2021 Czech parliamentary election</i> — STEM (24–30 Sep, n = 1,247): ANO 27.3, SPOLU 21.4, PirSTAN 17.4; Median (23–29 Sep): 25.2/20.9; Kantar/ČT (13–22 Sep): 24.5/23.0. Pointer.", "https://en.wikipedia.org/wiki/Opinion_polling_for_the_2021_Czech_parliamentary_election",
+  "cz21_result", "Result", "Český statistický úřad, <i>Volby do Poslanecké sněmovny 8.–9.10.2021</i> — SPOLU 27.79%, ANO 27.12%, PirSTAN 15.62%, turnout 65.43%.", "https://www.volby.cz/pls/ps2021/ps2?xjazyk=EN",
+  "cz21_e15",    "Press",  "Gajduková, K. & Čermáková, A. (4 October 2021). <i>Volební průzkumy a jejich předpovědi</i>, e15 — about a fifth of voters decide in the last week and some 15% on the day; polls may not be conducted in the last four days.", "https://www.e15.cz/volby/volby-do-snemovny/volebni-pruzkumy-a-jejich-predpovedi-petina-lidi-nema-jasno-ani-tyden-pred-volbami-1383008",
+  # ---- Slovakia 2023 ---------------------------------------------------------
+  "sk23_polls",  "Poll",   "Wikipedia, <i>Opinion polling for the 2023 Slovak parliamentary election</i> — AKO (20–26 Sep, n = 1,000): Smer 17.7, PS 18.0; Focus (22–26 Sep, n = 1,017): 18.0/16.6; Ipsos (22–25 Sep, n = 1,000): 20.6/19.8; NMS: 19.4/19.7. Pointer; AKO's release not retrieved; mode not stated.", "https://en.wikipedia.org/wiki/Opinion_polling_for_the_2023_Slovak_parliamentary_election",
+  "sk23_result", "Result", "Štatistický úrad SR, <i>Voľby do NR SR 2023</i>, table 3a — Smer-SD 22.94%, Progresívne Slovensko 17.96% of valid votes.", "https://volby.statistics.sk/nrsr/nrsr2023/files/xlsx/NRSR2023_EN_tab03a.xlsx",
+  "sk23_medzihorsky", "Press (quoting a political scientist)", "Startitup (1 October 2023). Analysis by Juraj Medzihorský — AKO's data suggest late switching to Smer and some reluctance to admit a Smer vote; the polls (AKO, Focus) matched the outcome reasonably when summed by bloc, whereas bookmakers under-priced Smer.", "https://www.startitup.sk/mega-analyza-predvolebnych-prieskumov-sme-rodina-odpisali-a-smer-podcenili-tvrdi-politolog/",
+  # ---- Turkey 2023 -----------------------------------------------------------
+  "tr23_konda",  "Poll",   "Duvar English (11 May 2023). <i>Top Turkish pollster: gap between Kılıçdaroğlu and Erdoğan is 5.6 points</i> — KONDA, fieldwork 6–7 May, n = 3,480, face-to-face, 35 provinces: Kılıçdaroğlu 49.3, Erdoğan 43.7, Oğan 4.8, İnce 2.2 (shares sum to 100, so undecideds appear to have been distributed).", "https://www.duvarenglish.com/top-turkish-pollster-gap-between-kilicdaroglu-and-erdogan-is-56-points-news-62383",
+  "tr23_result", "Result", "Bloomberg HT (19 May 2023). <i>Cumhurbaşkanı seçiminin kesin sonuçları Resmî Gazete'de yayımlandı</i> — YSK final results as published in the Official Gazette: Erdoğan 27,133,849 (49.52%), Kılıçdaroğlu 24,595,178 (44.88%), Oğan 5.17% of 54,796,049 valid votes; turnout 87.04%.", "https://www.bloomberght.com/cumhurbaskani-seciminin-kesin-sonuclari-resmi-gazete-de-yayimlandi-2331710",
+  "tr23_konda_post", "Pollster", "KONDA (25 May 2023). <i>Sorumluluktan kaçınmıyoruz</i>, via Bianet — the deviation exceeded the sampling margin; candidate causes: social desirability / “shy” Erdoğan voters, and weighting to a recalled vote from five years earlier; an academic review board announced.", "https://bianet.org/haber/konda-sorumluluktan-kacinmiyoruz-279291",
+  # ---- Colombia 2016 ---------------------------------------------------------
+  "co16_ipsos",  "Poll",   "Semana (27 September 2016). <i>Plebiscito por la paz: última encuesta de Ipsos para Semana, RCN Radio y RCN Televisión</i> — Ipsos Napoleón Franco, fieldwork 21–25 Sep, 1,524 interviews (face-to-face and telephone), of which 851 weighted likely voters: Sí 66, No 34 among likely voters (±4.7).", "http://www.semana.com/nacion/articulo/plebiscito-por-la-paz-ultima-encuesta-de-ipsos-para-semana-rcn-radio-y-rcn-television/495669",
+  "co16_result", "Result", "Registraduría Nacional del Estado Civil, <i>Histórico plebiscito 2016</i> (escrutinio) — No 6,438,552, Sí 6,382,901 (50.22% and 49.78% of 12,821,453 valid votes); turnout 37.43% (IFES ElectionGuide citing the Registraduría: electionguide.org/elections/id/2978).", "https://www.registraduria.gov.co/IMG/pdf/20230815_historico-plebiscito.pdf",
+  "co16_elcomercio", "Press", "Quillupangui, S. (3 October 2016). <i>Por qué fracasaron las encuestas en el plebiscito por la paz en Colombia</i>, El Comercio — Datexco's last poll assumed 67% turnout against 37.4% actual; rain from Hurricane Matthew complicated voting and the ten departments with the highest abstention were pro-agreement; Sí-camp complacency (Carlos Malamud).", "https://www.elcomercio.com/actualidad/fracasaron-encuestas-plebiscito-paz-colombia.html",
+  "co16_semana", "Press",  "Semana (2 October 2016). <i>La debacle de las encuestadoras</i> — many respondents would not admit a No intention; firms must adjust their methods; reports Invamer (Sí 67.6) and Cifras & Conceptos (Sí 62) among the final polls.", "https://www.semana.com/nacion/articulo/plebiscito-por-la-paz-encuestadoras-se-equivocaron-con-resultados/496543",
+  "co16_arboleda", "Academic", "Universidad Sergio Arboleda (2022). <i>Encuestas de opinión pública y realidades electorales</i>, Cuadernos del Centro de Pensamiento 26 — compiles the 2016 series; no serious study has settled the cause; the legal blackout left about 120 hours unpolled after the Cartagena signing.", "https://www.usergioarboleda.edu.co/wp-content/uploads/2015/04/CUADERNOS-DEL-CENTRO-DE-PENSAMIENTO-26.pdf",
+  # ---- Costa Rica 2018 -------------------------------------------------------
+  "cr18_ciep",   "Poll",   "Semanario Universidad (March 2018). <i>Última encuesta CIEP-UCR: Fabricio y Carlos llevan el empate hasta el final</i> — CIEP-UCR, fieldwork 19–21 Mar 2018, n = 1,202, mobile telephone (±2.8): Fabricio Alvarado 43, Carlos Alvarado 42 among decided voters, 15% undecided.", "https://semanariouniversidad.com/ultima-hora/ultima-encuesta-ciep-ucr-fabricio-y-carlos-llevan-el-empate-hasta-el-final/",
+  "cr18_opol",   "Poll",   "elmundo.cr (16 March 2018). <i>Encuesta: Fabricio Alvarado 56.9%, Carlos Alvarado 43.1%</i> — OPol Consultores, fieldwork 12–16 Mar 2018, n = 3,300, in-person (±1.7): 56.9/43.1 among decided voters (36.5/27.7 of the whole sample, 13.6 undecided, 22.2 would not vote).", "https://elmundo.cr/costa-rica/encuesta-fabricio-alvarado-569-carlos-alvarado-431/",
+  "cr18_result", "Result", "Tribunal Supremo de Elecciones (2018). <i>Cómputo de votos, elecciones febrero y abril 2018</i> — runoff of 1 April: Carlos Alvarado 1,322,908 (60.59%), Fabricio Alvarado 860,388 (39.41%) of 2,183,296 valid votes; participation 66.4%.", "https://www.tse.go.cr/pdf/elecciones/computovotos_febrero_abril_2018.pdf",
+  "cr18_panel",  "Academic", "La Nación (24 April 2018). <i>Estudio de UCR: Carlos Alvarado captó más votantes</i> — CIEP-UCR panel study (n = 559): Carlos Alvarado took about seven in ten PLN and eight in ten PUSC first-round voters and 60% of first-round abstainers. UCR-OPNA special bulletin on the runoff: opna.ucr.ac.cr/images/AdC2018/2_Boletn_especial_segunda_vuelta_electoral.pdf.", "https://www.nacion.com/el-pais/politica/estudio-de-ucr-carlos-alvarado-capto-mas/BG2MI2TE4JCUBP2OYLJPKVAZ6U/story/",
+  "cr18_opol_client", "Press", "La Nación (24 May 2018). <i>Encuestas de OPol se hicieron por encargo de jefe de campaña de Restauración</i> — OPol's six runoff polls were commissioned by the campaign chief of Fabricio Alvarado's party, which was not disclosed at the time.", "https://www.nacion.com/el-pais/politica/encuestas-de-opol-se-hicieron-por-encargo-de/67BL2AJD2FGCPHG7CMMIPTCXFU/story/",
+  # ---- Argentina 2019 --------------------------------------------------------
+  "ar19_mf",     "Poll",   "Letra P (2 August 2019). <i>A días de las PASO, Fernández tiene una ventaja de dos puntos sobre Macri</i> — Management & Fit for Clarín, n = 2,000 (fieldwork dates and mode not stated): Fernández 40.2, Macri 38.3 raw; 41.2 / 38.2 with the 2.3% undecided projected (other reports give 41.2 / 39.2).", "https://www.letrap.com.ar/nota/2019-8-2-9-43-0-a-dias-de-las-paso-fernandez-tiene-una-ventaja-de-dos-puntos-sobre-macri",
+  "ar19_avg",    "Poll",   "iProfesional (2 August 2019). <i>Voto a voto: 18 encuestas que marcan la diferencia entre Macri y Alberto F.</i> — the 18 final polls: average Fernández 39.3, Macri 34.6; the Management & Fit gap (+1.7) was the smallest of the 18, Hugo Haime's (+13.7) the largest.", "https://www.iprofesional.com/politica/297147-elecciones-presidente-ley-Voto-a-voto-18-encuestas-que-marcan-la-diferencia-entre-Macri-y-Alberto-F-",
+  "ar19_result", "Result", "Dirección Nacional Electoral, <i>Presidente y Vicepresidente — PASO y Generales 2019</i> (escrutinio definitivo, CNE) — Frente de Todos 12,205,085 (49.49% of positive votes; 47.78% of valid), Juntos por el Cambio 8,121,596 (32.94%; 31.80%), turnout 76.40%.", "https://www.argentina.gob.ar/sites/default/files/2019_pv_definitivos_total_pais_paso_y_generales_1.xlsx",
+  "ar19_chequeado", "Press", "Sohr, O. & Slipczuk, M. (12 August 2019). <i>Las encuestas estuvieron muy lejos del resultado de las PASO</i>, Chequeado — no poll had Fernández above 45; sample selection, young-skewed online panels and high-refusal IVR blamed; only 20 firms filed technical sheets with the electoral court.", "https://chequeado.com/el-explicador/las-encuestas-estuvieron-muy-lejos-del-resultado-de-las-paso-cual-fue-la-mas-cercana/",
+  "ar19_fornoni", "Pollster", "Fornoni, M. / Management & Fit (15 August 2019), iProfesional — Fernández underestimated by about seven points and Macri overestimated by about six; a “voto vergonzante” not disclosed to interviewers offered as part of the explanation.", "https://www.iprofesional.com/politica/297946-cambiemos-cristina-kirchner-elecciones-Por-que-las-encuestas-se-equivocaron-con-el-resultado-de-las-PASO",
+  # ---- Argentina 2023 --------------------------------------------------------
+  "ar23_atlas",  "Poll",   "AtlasIntel (4 August 2023). <i>Encuesta Atlas – Argentina PASO 2023</i> — fieldwork 31 Jul–4 Aug, n = 9,517, online random digital recruitment, ±1: Juntos por el Cambio 31.9, Unión por la Patria 30.8, La Libertad Avanza 20.8, undecided 3.5, blank 1, null 1.4 (release PDF: cdn.atlasintel.org/922873a0-…pdf, linked from the poll page).", "https://atlasintel.org/poll/argentina-national-2023-08-04",
+  "ar23_result", "Result", "Bloomberg Línea (31 August 2023). <i>Resultados finales de las PASO</i> — CNE escrutinio definitivo: LLA 29.86%, JxC 28.00%, UP 27.28% of valid votes incl. blank.", "https://www.bloomberglinea.com/2023/08/31/resultados-finales-de-las-paso-cuantos-votos-obtuvo-milei-y-la-diferencia-entre-bullrich-y-massa/",
+  "ar23_chequeado", "Press", "Leiva, M. (14 August 2023). <i>Ninguna encuesta pronosticó que Javier Milei obtendría el 30% de los votos: ¿por qué fallaron?</i>, Chequeado — academics (Tagina, UNSAM; Tesio) cite very high non-response, non-probability online and phone samples, a large undecided bloc and a “voto vergüenza” for Milei; no poll had Milei above 24.5.", "https://chequeado.com/el-explicador/ninguna-encuesta-pronostico-que-javier-milei-obtendria-el-30-de-los-votos-por-que-fallaron/",
+  # ---- Paraguay 2023 ---------------------------------------------------------
+  "py23_atlas",  "Poll",   "AtlasIntel (28 April 2023). <i>Encuesta Atlas – Elecciones Paraguay 2023</i> — fieldwork 20–24 Apr, n = 2,320, online random digital recruitment, ±2: Alegre 34, Peña 33, Cubas 23, undecided 1.9 (all respondents).", "https://cdn.atlasintel.org/92d996fd-c862-4067-8b91-a7ea2e327fc5.pdf",
+  "py23_result", "Result", "ABC Color (26 May 2023). <i>Los números definitivos de las elecciones</i> — TSJE definitive count: Peña 1,291,209 (42.74%), Alegre 830,302 (27.48%), Cubas 692,429 of 3,021,069 votes; turnout 63.29%. The TSJE portal now serves only the 2026 municipal election; figures as reported from the TSJE proclamation (Última Hora, 25–26 May 2023).", "https://www.abc.com.py/politica/2023/05/26/los-numeros-definitivos-de-las-elecciones-asi-quedaron-los-votos/",
+  "py23_lanacion", "Press", "La Nación (8 May 2023). <i>La victoria de Santiago Peña reivindica la confianza hacia las encuestas</i> — Atlas was the only poll departing from the consensus (Ati Snead 42.9/31.3, EcoDat 41.4/31.0, CBN 43.8/24.6); critics cite its online-only sample and questionnaire.", "https://www.lanacion.com.py/politica/2023/05/08/la-victoria-de-santiago-pena-reivindica-la-confianza-hacia-las-encuestas/",
+  # ---- Brazil 2022 -----------------------------------------------------------
+  "br22_datafolha", "Poll", "Bloomberg Línea Brasil (1 October 2022). <i>Datafolha: Lula mantém 50% dos votos válidos para o 1º turno e Bolsonaro, 36%</i> — fieldwork 30 Sep–1 Oct, n = 12,800, face-to-face, 310 municipalities (TSE BR-00245/2022).", "https://www.bloomberglinea.com.br/2022/10/01/datafolha-lula-mantem-50-dos-votos-validos-para-o-1-turno-e-bolsonaro-36/",
+  "br22_result", "Result", "Tribunal Superior Eleitoral (4 October 2022). <i>100% das seções totalizadas</i> — Lula 57,259,504 (48.43% of valid votes), Bolsonaro 51,072,345 (43.20%), turnout 79.05%.", "https://www.tse.jus.br/comunicacao/noticias/2022/Outubro/100-das-secoes-totalizadas-confira-como-ficou-o-quadro-eleitoral-apos-o-1o-turno",
+  "br22_chong",  "Pollster", "Chong, L. / Datafolha, via Folhapress (3 October 2022). <i>Bolsonaro recebeu voto útil na última hora</i> — a late “useful vote” from Ciro and Tebet to Bolsonaro in the final 24 hours judged very probable (13% had said they might switch); hostility to field teams; no methodological error acknowledged.", "https://www.bandab.com.br/politica/bolsonaro-recebeu-voto-util-na-ultima-hora-diz-datafolha/amp/",
+  "br22_toledo", "Think tank (PT-affiliated foundation)", "Toledo, M. T. / NOPPE–Fundação Perseu Abramo (5 October 2022). <i>Onde as pesquisas podem ter errado</i> — preliminary hypotheses: asymmetric abstention (Lula, Ciro and Tebet intenders turned out at lower rates than Bolsonaro intenders), shy voters, and outdated census sampling frames.", "https://fpabramo.org.br/2022/10/05/onde-as-pesquisas-podem-ter-errado",
+  # ---- Peru 2021 -------------------------------------------------------------
+  "pe21_ipsos",  "Poll",   "América TV (4 April 2021). <i>Elecciones 2021: Yonhy Lescano lidera simulacro de votación</i> — Ipsos Perú for El Comercio, simulacro of 31 March, n = 1,526, face-to-face with replica ballot and secret box: Lescano 14.7, De Soto 13.9, Mendoza 12.4, Forsyth 11.9, Fujimori 11.2, López Aliaga 8.2, Castillo 7.9 (7th) of valid votes; the last legally publishable poll.", "https://www.americatv.com.pe/noticias/actualidad/elecciones-2021-yonhy-lescano-lidera-simulacro-votacion-y-hernando-soto-sube-segundo-lugar-segun-ipsos-peru-n437310",
+  "pe21_result", "Result", "ONPE/JNE final count as compiled on Wikipedia, <i>2021 Peruvian general election</i> — Castillo 2,724,752 (18.92% of 14,400,630 valid votes), Fujimori 1,930,762 (13.41%). (RPP, 16 Apr 2021, reported ONPE's 100%-processed provisional figures of 19.10/13.37: rpp.pe/politica/elecciones/…-noticia-1331209.)", "https://en.wikipedia.org/wiki/2021_Peruvian_general_election",
+  "pe21_zarate", "Pollster", "Zárate, P. / Instituto de Estudios Peruanos (April 2021). <i>¿Las encuestas se equivocaron?</i> — commentary by a researcher at IEP, itself a pollster whose final poll had Castillo at 6.6: Castillo's support grew exponentially in the final weeks; the publication ban from 4 April hid the later surveys that captured it; online panels under-represented rural voters.", "https://iep.org.pe/wp-content/uploads/2021/04/Las-encuestas-se-equivocaron_por-Patricia-Zarate.pdf",
+  # ---- Chile 2022 ------------------------------------------------------------
+  "cl22_cadem",  "Poll",   "Pauta (19 August 2022). <i>Última encuesta Cadem: Apruebo vs Rechazo</i> — Cadem Plaza Pública, fieldwork 17–19 Aug, n = 1,007, telephone (±3.1): Rechazo 46, Apruebo 37, undecided 17; 55/45 without undecided. One of the last polls published before the ban from 21 August (UDD, 17–19 Aug, n = 8,691: 55.7/44.3, and Activa/Pulso Ciudadano, 16–19 Aug: 58.2/41.8, were published in the same window).", "https://www.pauta.cl/politica/ultima-encuesta-cadem-apruebo-rechazo-plebiscito-de-salida",
+  "cl22_result", "Result", "Biblioteca del Congreso Nacional de Chile, <i>Proceso constituyente: plebiscito de salida</i> — Servel count at 99.97%: Rechazo 61.86%, Apruebo 38.14%; 13,019,278 voters of 15,173,857 registered (85.8%). Tricel final: Rechazo 7,891,415 (61.89%), Apruebo 4,859,103 (38.11%) of 12,750,518 valid votes.", "https://www.bcn.cl/procesoconstituyente/videos",
+  "cl22_lagos",  "Press",  "Lillo, D. (5 September 2022). <i>Mea culpa de las encuestas: Marta Lagos anuncia investigación tras errores en sondeos</i>, El Desconcierto — six firms under-measured the gap; Lagos (WAPOR representative in Chile) proposes a review commission; Cadem's Izikson: what the polls did not see was the almost 13 million votes.", "https://eldesconcierto.cl/2022/09/05/mea-culpa-de-las-encuestas-marta-lagos-anuncia-investigacion-tras-errores-en-sondeos",
+  "cl22_pardo",  "Pollster", "Pardo, J. E. (ex-president of AIM, director of Feedback) (29 August 2022). Interview, The Clinic — no baseline existed for the first election under compulsory voting; online and phone panels over-represent higher-income and under-reach rural and politically disconnected voters.", "https://www.theclinic.cl/2022/08/29/pdte-asoc-de-investigadores-de-mercado-y-opinion-publica-y-el-desafio-de-las-encuestas-ante-el-plebiscito-los-encuestadores-siempre-estamos-expuestos-al-fracaso/",
+  # ---- Bolivia 2020 ----------------------------------------------------------
+  "bo20_ipsos",  "Poll",   "Erbol (8 October 2020). <i>Encuesta Ipsos: Arce lleva delantera en primera vuelta</i> — Ipsos for RTP, fieldwork 21 Sep–4 Oct, n = 2,000, face-to-face: raw Arce 34.0, Mesa 27.9, Camacho 13.8, blank/null/undecided 19.4; valid-vote projection Arce 42.2, Mesa 34.7. Ciesmori (29 Sep–8 Oct) published later: 42.2/33.1 on valid votes (compiled on Wikipedia).", "https://erbol.com.bo/el-%C3%A1nfora-1/encuesta-ipsos-arce-lleva-delantera-en-primera-vuelta-y-mesa-se-perfila-en-eventual",
+  "bo20_result", "Result", "Órgano Electoral Plurinacional (2020). <i>Separata: Resultados Elecciones Generales 2020</i> — Arce 3,394,052 (55.11%), Mesa 1,775,953 (28.83%), Camacho 862,186 (14.00%) of 6,159,211 valid votes; participation 88.42%.", "https://fuentedirecta.oep.org.bo/wp-content/uploads/2020/10/Separata_Resultados_EG_2020.pdf",
+  "bo20_cedla",  "Press",  "BBC News Brasil interview with José Luis Gálvez (Ciesmori), as reposted (via AlKhaleej Today) by CEDLA, 24 October 2020 — the last poll, ten days before the vote, had 27.8% blank, null or undecided; Arce was seen as the preferred option of the undecided; no pollster self-assessment or academic post-mortem was located.", "https://cedla.org/?p=79144",
+  # ---- Kenya 2013 ------------------------------------------------------------
+  "ke13_polls",  "Poll",   "Wikipedia, <i>2013 Kenyan general election</i>, opinion polls — Ipsos Synovate (15–19 Feb 2013, n = 5,971): Kenyatta 44.8, Odinga 44.4, undecided 2.95; Infotrak (24–26 Feb, n = 3,244): 45/46; later polls had Odinga ahead and missed by more. Pointer; sample size, dates and mode rest on the compiled table (Capital FM, 22 Feb 2013, reports the 44.8/44.4 figures: capitalfm.co.ke/news/2013/02/uhuru-will-beat-raila-latest-poll-shows).", "https://en.wikipedia.org/wiki/2013_Kenyan_general_election",
+  "ke13_result", "Result", "Independent Electoral and Boundaries Commission (2013). <i>4th March 2013 General Election Data</i> — Kenyatta 6,173,433, Odinga 5,340,546; valid 12,221,053, rejected 108,975, total 12,330,028; IEBC's headline shares of all ballots: 50.07% and 43.31% (50.51/43.70 of valid votes); turnout 86%.", "https://www.iebc.or.ke/docs/4TH%20MARCH%202013%20GENERAL%20ELECTION%20DATA.pdf",
+  "ke13_ipsos_post", "Pollster", "Ipsos Synovate Kenya (15 March 2013). <i>Post-election analysis</i> (ACE Electoral Knowledge Network copy) — all candidates within the margin of error except Kenyatta, who outperformed the final poll by 5.25 points; attributed to differential turnout in the candidates' strongholds (about 88–90% vs 84%). Summarised by Opalo, K. O., 15 Mar 2013 (kenopalo.com/2013/03/15).", "https://aceproject.org/ero-en/regions/africa/KE/kenya-post-election-analysis-iposos-2013",
+  # ---- Australia 2019 --------------------------------------------------------
+  "au19_newspoll", "Poll", "Poll Bludger (17 May 2019). <i>Newspoll: 51.5–48.5 to Labor</i> — the final Newspoll (The Australian): two-party-preferred ALP 51.5, L/NP 48.5; primaries Coalition 38, Labor 37, Greens 9; a sample of 3,008, of which 2,108 interviews in the final 24 hours; fieldwork 15–16 May. Other finals (Bonham, 18 May 2019: kevinbonham.blogspot.com/2019/05/election-eve-final-newspoll-and-seat.html): Ipsos 51, Essential 51.5, Galaxy 51, Morgan 52.", "https://www.pollbludger.net/2019/05/17/newspoll-51-5-48-5-labor/",
+  "au19_result", "Result", "Australian Electoral Commission, <i>2019 Federal Election: House of Representatives two-party-preferred by state</i> — Liberal/National 7,344,813 (51.53%), ALP 6,908,580 (48.47%).", "https://results.aec.gov.au/24310/Website/HouseTppByState-24310.htm",
+  "au19_amsro",  "Inquiry", "Pennay, D. et al. / AMSRO Inquiry Panel (November 2020). <i>Inquiry into the Performance of the Opinion Polls at the 2019 Australian Federal Election</i> — a “polling failure”: samples over-represented the better educated and politically engaged and weighting did not correct it; the panel could not rule out herding because pollsters would not provide their data sets (Statistical Society of Australia summary: statsoc.org.au/News-and-media-releases/9356513; ABC News, 5 Apr 2022: abc.net.au/news/2022-04-05/election-2022-can-we-trust-opinion-polls-again/100965412).", "https://statsoc.org.au/News-and-media-releases/9356513",
+  "au19_bonham", "Analysis", "Bonham, K. (21 May 2019). <i>The miracle is over: 2019 Australian federal election polling failure</i> — 17 published final polls, combined sample about 23,600, two-party-preferred wrong by about three points, far outside combined sampling error; late swing and “shy Tory” rejected; self-herding possible.", "https://kevinbonham.blogspot.com/2019/05/the-miracle-is-over-2019-australian.html",
+  # ---- Contested counts (excluded) -------------------------------------------
+  "ge24_polls",  "Poll",   "JAMnews (23 October 2024). <i>Latest poll results before elections in Georgia</i> — Edison Research for Formula TV (1–18 Oct, n = 1,200, face-to-face): Georgian Dream 34, Unity–UNM 18, Coalition for Change 14; Savanta for Mtavari (11–20 Oct, n = 1,520): 35/18/16; GORBI for Imedi (12–21 Oct, n = 1,704): GD 60.2, UNM 15.4.", "https://jam-news.net/latest-poll-results-before-elections-in-georgia-ruling-party-leads/",
+  "ge24_result", "Result", "First Channel (16 November 2024). <i>CEC endorses October 26 elections final results</i> — Georgian Dream 1,120,053 (53.93%), Coalition for Change 229,161 (11.03%), Unity–UNM 10.17%; 2,111,834 voters of 3,508,294.", "https://1tv.ge/lang/en/news/cec-endorses-october-26-elections-final-results/",
+  "ge24_odihr",  "Observer", "OSCE/ODIHR (20 December 2024). <i>Georgia, Parliamentary Elections, 26 October 2024: Final Report</i> — widespread intimidation and pressure on voters; potential compromises of vote secrecy in 24% of observations; the complaints process did not comprehensively address concerns about the integrity of the results. Edison Research (1 Nov 2024) states the gap between its exit poll and the count cannot be explained by normal variation: ssrs.com/news/edison-research-2024-republic-of-georgia-exit-poll.", "https://cdn.osce.org/sites/default/files/f/documents/1/6/584029.pdf",
+  "ve24_polls",  "Poll",   "Voz de América (July 2024). <i>Dos encuestas dan amplia ventaja al opositor Edmundo González</i> — Delphos/UCAB (5–11 Jul, n = 1,200): González 59.1, Maduro 24.6; ORC Consultores (5–13 Jul, n = 1,205): 59.7/12.6; Meganálisis (4–7 Jul, n = 1,076): 71.9/12.1; the government-aligned Hinterlaces (June): Maduro 55.6, González 22.1.", "https://www.vozdeamerica.com/a/venezuela-dos-encuestas-dan-amplia-ventaja-al-opositor-edmundo-gonzalez/7703416.html",
+  "ve24_carter", "Observer", "The Carter Center (17 February 2025). <i>Venezuela 2024 Presidential Election: Final Report</i> — the CNE announced Maduro 51.95%, González 43.18% without publishing precinct results; the opposition's tally sheets from 81.7% of polling stations gave González 67.1%, Maduro 30.4%; the election did not meet international standards and cannot be considered democratic. UN Panel of Electoral Experts interim report, 9 Aug 2024: digitallibrary.un.org/record/4062104.", "https://cartercentee50c07c05.blob.core.windows.net/blobcartercentee50c07c05/wp-content/uploads/2025/02/venezuela-final-report-2025.pdf"
+)
+refs <- refs |> dplyr::mutate(num = dplyr::row_number())
+ref_num <- setNames(refs$num, refs$id)
+# inline citation: cite("uk15_ipsos", "uk15_result") -> <sup>11,12</sup> with anchors
+cite <- function(...) {
+  ids <- unlist(strsplit(paste(c(...), collapse = ";"), ";"))
+  stopifnot(all(ids %in% names(ref_num)))
+  paste0("<sup>", paste(sprintf('<a href="#ref-%s">%d</a>', ids, ref_num[ids]), collapse = ","), "</sup>")
+}
+```
+
+## The catalogue
+
+Each row is one final pre-election poll. `poll_w` / `poll_r` are the polled shares of the eventual winner and runner-up (or winning and losing referendum option); `act_w` / `act_r` the official shares; `n` the poll's sample size as published (NA where no primary or contemporaneous source states it). Shares are on the base the poll itself used (decided voters, valid votes, two-party-preferred, …) and the official result is taken on the same base wherever the sources allow; the `basis` column says which. For Israel 2015, where polls report seats, polled "shares" are seat shares (seats / 120).
+
+```{r data}
+misses <- tibble::tribble(
+  ~id, ~date, ~event, ~event_sr, ~country, ~type, ~agency, ~agency_group, ~fieldwork, ~mode, ~n, ~basis,
+  ~winner, ~runner, ~poll_w, ~poll_r, ~act_w, ~act_r, ~poll_refs, ~result_refs, ~explanation, ~expl_refs, ~caveat,
+
+  "ab12", "2012-04-23", "Alberta (Canada) provincial election", "Alberta (Kanada), pokrajinski izbori", "Canada", "Election",
+  "Forum Research", "Other agencies", "22 Apr 2012", "IVR telephone", NA, "decided or leaning, certain to vote",
+  "Progressive Conservatives", "Wildrose", 36, 38, 43.97, 34.28, "ab12_global", "ab12_result",
+  "<b>Pollster (ThinkHQ):</b> its own tracking saw the Wildrose lead fall from 13 to 8 points within four or five days as Liberal and NDP supporters shifted to the PCs after the “conscience rights” controversies; most media polls stop three or four days before the vote.", "ab12_thinkhq",
+  "Forum's election-eve poll is known only through press reports (no sample size). Its 21 April poll (n = 2,010) had Wildrose 41, PC 32, as did Angus Reid's — a margin error of −18.7; the table uses the agency's actual final poll.",
+
+  "rs12", "2012-05-20", "Serbia presidential election, 2nd round (Tadić–Nikolić)", "Srbija, predsednički izbori, 2. krug (Tadić–Nikolić)", "Serbia", "Election",
+  "Poll attributed to Ipsos Strategic Marketing", "Ipsos SM, Serbia (2026; 2012 attributed)", "10 May 2012", "not stated", 1198, "two-candidate split, base not stated",
+  "Nikolić", "Tadić", 42, 58, 51.16, 48.84, "rs12_aljazeera;rs12_ap", "rs12_rik",
+  "<b>Pollster (Ipsos, 2021 and 2022):</b> Ipsos did not officially publish runoff figures and had no runoff survey of its own; data it collected for a client in 2012 mostly showed a tight race; someone gave media data under Ipsos's name. Tadić's loss is attributed to an equal opponent, DS exhaustion after the first round, a weak runoff campaign, low Belgrade turnout and the blank-ballot campaign; a demobilising effect of the reported poll is offered as speculation. <b>Press (2012):</b> agency estimates of an 8–16-point Tadić lead, two weeks of DS triumphalism, and the election-theft narrative keeping some voters at home.", "rs12_bogosavljevic;rs12_novimagazin;rs12_vreme2012",
+  "Two contemporaneous reports give different figures: 58/42 (Al Jazeera Balkans, with n and fieldwork date) and 52/48 (AP, a week later, no n). The table uses 58/42 because it is the report with methodology and the figure that entered the public record; with 52/48 the margin error is −6.3 (shown as a hollow point in the charts). No Ipsos release exists and Ipsos disputes authorship. Result on valid votes (RIK's shares of all ballots: 49.54/47.31).",
+
+  "bc13", "2013-05-14", "British Columbia (Canada) provincial election", "Britanska Kolumbija (Kanada), pokrajinski izbori", "Canada", "Election",
+  "Ipsos Reid", "Other Ipsos entities", "13 May 2013", "online panel", 800, "decided voters",
+  "BC Liberals", "BC NDP", 37, 45, 44.13, 39.72, "bc13_ipsos", "bc13_result",
+  "<b>Pollster (Ipsos):</b> 23% of voters decided in the final week and broke 41–34 for the Liberals; NDP supporters did not turn out. <b>Pollster (Angus Reid, whose final poll had NDP 45, Liberals 36):</b> under-35s weighted to about 30% of the population rather than about 15% of actual voters; correcting this alone would have cut the NDP lead to about three points; its follow-up found no late switching.", "bc13_ipsos_post;bc13_reid",
+  "The two pollsters give incompatible diagnoses of the same miss. Angus Reid's final poll (margin error −13.4) is not a separate row because its fieldwork dates could not be established from a primary source.",
+
+  "ke13", "2013-03-04", "Kenya presidential election, 1st round", "Kenija, predsednički izbori, 1. krug", "Kenya", "Election",
+  "Ipsos Synovate", "Other Ipsos entities", "15–19 Feb 2013", "face-to-face (as compiled)", 5971, "all respondents incl. 3% undecided; result on all ballots",
+  "Kenyatta", "Odinga", 44.8, 44.4, 50.07, 43.31, "ke13_polls", "ke13_result",
+  "<b>Pollster:</b> Ipsos's own post-election analysis found every candidate within the margin except Kenyatta, who outperformed the final poll by 5.25 points; attributed to differential turnout in the candidates' strongholds (about 88–90% vs 84%).", "ke13_ipsos_post",
+  "Sample size, dates and mode rest on a compiled table; fieldwork closed 13 days before the vote. Later polls had Odinga ahead and missed by more (Infotrak 45/46: −7.8).",
+
+  "sc14", "2014-09-18", "Scottish independence referendum", "Škotska, referendum o nezavisnosti", "United Kingdom", "Referendum",
+  "YouGov", "Other agencies", "15–17 Sep 2014", "online panel", 3237, "excluding don't-knows",
+  "No", "Yes", 52, 48, 55.3, 44.7, "sc14_yougov", "sc14_result",
+  "<b>Academic (Curtice):</b> every final poll within ±3 on shares but all erring the same way; a late swing to No suggested. <b>Pollster (Ipsos MORI):</b> differential turnout. No formal inquiry was held.", "sc14_curtice;sc14_ipsos",
+  "Borderline on share error (3 points) but every final poll missed the same way. YouGov's on-the-day recontact survey, published after the polls closed, had No at 54.",
+
+  "us14va", "2014-11-04", "US Senate, Virginia (Warner–Gillespie)", "SAD, Senat, Virdžinija (Warner–Gillespie)", "United States", "Election",
+  "Roanoke College Poll", "Other agencies", "20–25 Oct 2014", "telephone", 738, "likely voters, with leaners",
+  "Warner (D)", "Gillespie (R)", 47, 35, 49.15, 48.34, "us14_roanoke", "us14_va_result",
+  "<b>Analysis (Silver):</b> 2014 Senate polls overestimated the Democrat by about 4 points on average (about 6 in the most competitive races), nearly all in the same direction; the direction of bias is not predictable from one cycle to the next. No industry post-mortem was published for 2014 that this document could locate.", "us14_silver",
+  "Not the final Virginia poll (Christopher Newport, 23–29 Oct: Warner +7; PPP, 29–30 Oct: +9) but the one with the largest margin; the RCP average (+9.7) missed by 8.9.",
+
+  "us14ky", "2014-11-04", "US Senate, Kentucky (McConnell–Grimes)", "SAD, Senat, Kentaki (McConnell–Grimes)", "United States", "Election",
+  "NBC News / Marist", "Other agencies", "27–30 Oct 2014", "telephone", 556, "likely voters",
+  "McConnell (R)", "Grimes (D)", 50, 41, 56.19, 40.72, "us14_marist", "us14_ky_result",
+  "<b>Analysis:</b> as above — systematic pro-Democratic skew across 2014 Senate polls.", "us14_silver",
+  "SurveyUSA (26–30 Oct: 48/43) missed by 10.5.",
+
+  "us14ia", "2014-11-04", "US Senate, Iowa (Ernst–Braley)", "SAD, Senat, Ajova (Ernst–Braley)", "United States", "Election",
+  "Quinnipiac", "Other agencies", "28 Oct–2 Nov 2014", "telephone", 778, "likely voters; result on votes for candidates",
+  "Ernst (R)", "Braley (D)", 47, 47, 52.10, 43.76, "us14_quinnipiac", "us14_ia_result",
+  "<b>Analysis:</b> as above. The Des Moines Register/Selzer poll (Ernst +7) was the exception that got it right.", "us14_silver",
+  "Sample size from the compiled table (not shown on the RCP page).",
+
+  "il15", "2015-03-17", "Israel, Knesset election", "Izrael, izbori za Kneset", "Israel", "Election",
+  "Midgam / Yedioth Ahronoth", "Other agencies", "to 13 Mar 2015", "not stated", 1032, "seat shares (seats/120), poll and result alike",
+  "Likud", "Zionist Union", 18.3, 21.7, 25.0, 20.0, "il15_polls", "il15_result",
+  "<b>Academic (Fisher):</b> Likud won 30 seats against final polls of about 22–25; aggregating the right-wing bloc makes the polls look better but does not necessarily explain the discrepancy. <b>Press:</b> pollsters' comments on the (exit-poll) refusals concentrated at pro-Likud stations; the IDI's Peace Index found no change in the final week, which argues against a late swing.", "il15_fisher;il15_toi",
+  "Israeli polls report seats, so both sides are seat shares: polled 22/120 and 26/120, actual 30/120 and 24/120 (on vote shares, 23.40/18.67, the error is −8.1). Legal blackout from 13 March.",
+
+  "uk15", "2015-05-07", "UK general election", "Velika Britanija, parlamentarni izbori", "United Kingdom", "Election",
+  "Ipsos MORI", "Other Ipsos entities", "5–6 May 2015", "telephone", 1186, "certain to vote (GB)",
+  "Conservative", "Labour", 36, 35, 37.8, 31.2, "uk15_ipsos", "uk15_result;uk15_inquiry",
+  "<b>Inquiry (BPC/MRS, Sturgis et al.):</b> the primary cause was unrepresentative samples (too many Labour, too few Conservative respondents) that weighting did not correct; late swing contributed at most around one point; deliberate misreporting and “shy Tories” rejected; final-week convergence consistent with herding, not collusion.", "uk15_inquiry",
+  "The poll-of-polls (Con 34, Lab 34, 12 polls) missed by 6.6.",
+
+  "pl15", "2015-05-10", "Poland presidential election, 1st round", "Poljska, predsednički izbori, 1. krug", "Poland", "Election",
+  "IBRiS", "Other agencies", "to 8 May 2015", "not stated", NA, "all respondents incl. undecided (as compiled)",
+  "Duda", "Komorowski", 31, 39, 34.76, 33.77, "pl15_polls", "pl15_result",
+  "<b>Analysis (CBOS):</b> no audit of the polls was conducted; CBOS's post-election report records public surprise and notes that reassuring polls may have dampened the incumbent's campaign.", "pl15_cbos",
+  "Sample size not stated in the compiled table; the IBRiS release was not retrieved. TNS (35/27) and Millward Brown (39/27) missed by 9 and 13.",
+
+  "gr15", "2015-07-05", "Greece bailout referendum", "Grčka, referendum o paketu pomoći", "Greece", "Referendum",
+  "Public Issue (for Avgi)", "Other agencies", "30 Jun–2 Jul 2015", "telephone", 1053, "all respondents (raw)",
+  "No (Oxi)", "Yes (Nai)", 43.0, 42.5, 61.31, 38.69, "gr15_publicissue;gr15_polls", "gr15_result",
+  "<b>Analysis (Ipsos researchers):</b> total-survey-error framework applied to why the polls in aggregate pointed the wrong way. No formal post-mortem was published; the capital controls of 29 June preceded all final fieldwork, and Public Issue's own poll had 9% undecided and 3.5% non-voters.", "gr15_young;gr15_pi_post",
+  "One of several final polls, all within three points of a tie except Metron Analysis (3 Jul: No 48, Yes 44 raw), which still missed by 18.6. Raw (undecided-inclusive) poll base against valid votes; on the allocated figures (45.5/45) the error is −22.1 as well.",
+
+  "eu16a", "2016-06-23", "UK EU membership referendum (Brexit)", "Velika Britanija, referendum o članstvu u EU (Bregzit)", "United Kingdom", "Referendum",
+  "Populus", "Other agencies", "21–22 Jun 2016", "online panel", 4740, "excluding don't-knows",
+  "Leave", "Remain", 45, 55, 51.9, 48.1, "eu16_populus;eu16_bpc", "eu16_result",
+  "<b>Industry body (BPC):</b> every final poll overstated Remain (mean error 4.3 points); three within ±3; no formal inquiry held. <b>Industry seminar (BPC/MRS/NCRM, summarised by Atkinson):</b> turnout 72% against the ~60% most pollsters expected, with new voters splitting about 60/40 for Leave; only five of ten firms weighted by education; online did better than phone. <b>Academic (Curtice, before the vote):</b> the phone/online gap lay in sample composition, and education was not adequately accounted for.", "eu16_bpc;eu16_mrs;eu16_curtice",
+  "Populus was the largest final-poll miss; the poll-of-polls (Remain 52, Leave 48) missed by 7.8. Populus's own release is no longer online; figures from the BPC table and a contemporaneous report.",
+
+  "eu16b", "2016-06-23", "UK EU membership referendum (Brexit)", "Velika Britanija, referendum o članstvu u EU (Bregzit)", "United Kingdom", "Referendum",
+  "Ipsos MORI", "Other Ipsos entities", "21–22 Jun 2016", "telephone", 1592, "likely voters who say the outcome matters, DK excluded",
+  "Leave", "Remain", 48, 52, 51.9, 48.1, "eu16_ipsos", "eu16_result",
+  "<b>Industry body / Academic:</b> as above.", "eu16_bpc;eu16_mrs",
+  "On the turnout filter alone the figure was 51/49 (error −5.8); Ipsos's previous week had Leave ahead 53/47.",
+
+  "co16", "2016-10-02", "Colombia peace-agreement plebiscite", "Kolumbija, plebiscit o mirovnom sporazumu", "Colombia", "Referendum",
+  "Ipsos Napoleón Franco (for Semana/RCN)", "Other Ipsos entities", "21–25 Sep 2016", "face-to-face and telephone", 851, "likely voters (851 of 1,524 interviewed), two-way",
+  "No", "Sí", 34, 66, 50.22, 49.78, "co16_ipsos", "co16_result",
+  "<b>Press:</b> Datexco's last poll assumed 67% turnout against 37.4% actual; rain from Hurricane Matthew complicated voting and the ten departments with the highest abstention were pro-agreement; Sí-camp complacency; respondents concealing a No intention. <b>Academic:</b> no serious study has settled the cause; the legal blackout left about 120 hours unpolled.", "co16_elcomercio;co16_semana;co16_arboleda",
+  "The largest miss in the catalogue. Invamer (Sí 67.6) and Cifras & Conceptos (Sí 62) missed by 35.6 and 24.4. n is the likely-voter base on which 66/34 was computed.",
+
+  "us16", "2016-11-08", "US presidential election, Wisconsin", "SAD, predsednički izbori, Viskonsin", "United States", "Election",
+  "Marquette Law School Poll", "Other agencies", "26–31 Oct 2016", "telephone", 1255, "likely voters",
+  "Trump", "Clinton", 40, 46, 47.22, 46.45, "us16_marquette", "us16_fec",
+  "<b>Inquiry (AAPOR):</b> national polls were accurate, but state polls had their largest error in decades, Wisconsin the largest; late deciders broke for Trump by nearly 30 points in Wisconsin; many state polls failed to weight by education; evidence of a “shy Trump” effect informative but not conclusive.", "us16_aapor",
+  "Marquette did weight by education, so that part of the AAPOR finding does not apply to this poll. The RCP Wisconsin average (Clinton +6.5) missed by 7.3.",
+
+  "uk17", "2017-06-08", "UK general election", "Velika Britanija, parlamentarni izbori", "United Kingdom", "Election",
+  "ICM (for The Guardian)", "Other agencies", "6–7 Jun 2017", "online panel", 1532, "GB",
+  "Conservative", "Labour", 46, 34, 43.4, 41.0, "uk17_bpc", "uk17_result",
+  "<b>Industry body (BPC):</b> Conservative share accurate, Labour understated by about 5; no inquiry judged necessary. <b>Academic (Curtice; Jennings):</b> raw samples had Labour about a point behind; the turnout and engagement adjustments introduced after 2015 pushed the headline Conservative lead too high.", "uk17_bpc;uk17_curtice;uk17_jennings",
+  "Winner correct; the miss was the margin (a predicted landslide became a hung parliament). ICM's 12-point lead was the second largest of the final polls (BMG: 13); YouGov's MRP (Con 42, Lab 38) missed by only 1.6.",
+
+  "cr18a", "2018-04-01", "Costa Rica presidential election, runoff", "Kostarika, predsednički izbori, 2. krug", "Costa Rica", "Election",
+  "OPol Consultores", "Other agencies", "12–16 Mar 2018", "face-to-face", 3300, "decided voters",
+  "Carlos Alvarado (PAC)", "Fabricio Alvarado (PRN)", 43.1, 56.9, 60.59, 39.41, "cr18_opol", "cr18_result",
+  "<b>Academic (CIEP-UCR panel):</b> Carlos Alvarado took about seven in ten PLN and eight in ten PUSC first-round voters and 60% of first-round abstainers — a late consolidation of the field behind the eventual winner. <b>Press:</b> OPol's six runoff polls had been commissioned by the campaign chief of Fabricio Alvarado's party, undisclosed at the time.", "cr18_panel;cr18_opol_client",
+  "The largest election miss in the catalogue; published 16 days before the vote, the longest interval among the rows.",
+
+  "cr18b", "2018-04-01", "Costa Rica presidential election, runoff", "Kostarika, predsednički izbori, 2. krug", "Costa Rica", "Election",
+  "CIEP-UCR", "Other agencies", "19–21 Mar 2018", "mobile telephone", 1202, "decided voters (15% undecided excluded)",
+  "Carlos Alvarado (PAC)", "Fabricio Alvarado (PRN)", 42, 43, 60.59, 39.41, "cr18_ciep", "cr18_result",
+  "<b>Academic (CIEP-UCR panel):</b> as above; the university's own panel study documented the late movement its final poll had not captured.", "cr18_panel",
+  "An independent university poll, eleven days out, missing by the same order as Ipsos 2026.",
+
+  "qc18", "2018-10-01", "Quebec (Canada) provincial election", "Kvebek (Kanada), pokrajinski izbori", "Canada", "Election",
+  "Léger", "Other agencies", "to 27 Sep 2018", "online panel", 1502, "decided voters",
+  "CAQ", "PLQ", 32, 30, 37.42, 24.82, "qc18_polls", "qc18_result",
+  "<b>Academic (Durand & Blais):</b> changing voter behaviour — last-minute shifts and the vote of non-disclosers — explains most of the discrepancy; Durand's earlier commentary reports a two-party error of about 10 points similar across modes and lower turnout among non-francophone (PLQ-leaning) voters.", "qc18_durand",
+  "Poll figures from a compiled table (Léger's release not retrieved); later polls of 30 September had gaps of 3–7.",
+
+  "au19", "2019-05-18", "Australia federal election", "Australija, savezni izbori", "Australia", "Election",
+  "Newspoll (for The Australian)", "Other agencies", "15–16 May 2019", "not stated", 3008, "two-party-preferred",
+  "Liberal/National Coalition", "Labor", 48.5, 51.5, 51.53, 48.47, "au19_newspoll", "au19_result",
+  "<b>Inquiry (AMSRO, Pennay et al.):</b> a “polling failure”: samples over-represented the better educated and politically engaged, and weighting did not correct it; herding could not be ruled out because pollsters withheld their data. <b>Analysis (Bonham):</b> about three points off across 17 clustered final polls (combined n ≈ 23,600), far outside combined sampling error; late swing and “shy Tory” rejected.", "au19_amsro;au19_bonham",
+  "Ipsos (51–49) missed by 5.1.",
+
+  "ar19", "2019-08-11", "Argentina PASO primaries, presidential", "Argentina, PASO (otvoreni primarni izbori), predsednički", "Argentina", "Election",
+  "Management & Fit (for Clarín)", "Other agencies", "published 2 Aug 2019", "not stated", 2000, "undecided projected; result on positive votes",
+  "Fernández (FdT)", "Macri (JxC)", 41.2, 38.2, 49.49, 32.94, "ar19_mf;ar19_avg", "ar19_result",
+  "<b>Press (Chequeado):</b> no poll had Fernández above 45; sample selection, young-skewed online panels and high-refusal IVR blamed; only 20 firms filed technical sheets. <b>Pollster (Fornoni, M&F):</b> Fernández underestimated by about seven and Macri overestimated by about six, partly a “shame vote” not disclosed to interviewers.", "ar19_chequeado;ar19_fornoni",
+  "Management & Fit had the smallest Fernández lead of the 18 final polls; the 18-poll average (+4.8) missed by 11.8. One report gives Macri as 39.2 (error −13.6 either way).",
+
+  "bo20", "2020-10-18", "Bolivia general election", "Bolivija, opšti izbori", "Bolivia", "Election",
+  "Ipsos (for RTP)", "Other Ipsos entities", "21 Sep–4 Oct 2020", "face-to-face", 2000, "valid-vote projection (19.4% blank/null/undecided excluded)",
+  "Arce (MAS)", "Mesa (CC)", 42.2, 34.7, 55.11, 28.83, "bo20_ipsos", "bo20_result",
+  "<b>Press (BBC News Brasil interview with Ciesmori's director):</b> the last poll, ten days before the vote, had 27.8% blank, null or undecided, and Arce was seen as the preferred option of the undecided. No pollster self-assessment or academic post-mortem was located.", "bo20_cedla",
+  "Fieldwork closed 14 days before the vote; Ciesmori's later poll (42.2/33.1) missed by 17.2 and CELAG (44.4/34.0) by 15.9. Every poll projected a runoff.",
+
+  "us20", "2020-11-03", "US presidential election, Wisconsin", "SAD, predsednički izbori, Viskonsin", "United States", "Election",
+  "ABC News / Washington Post (Langer Research)", "Other agencies", "20–25 Oct 2020", "telephone", 809, "likely voters",
+  "Biden", "Trump", 57, 40, 49.45, 48.82, "us20_langer", "us20_wi_result",
+  "<b>Inquiry (AAPOR Task Force):</b> national polls overstated Biden's margin by 3.9 points on average (the highest in 40 years), state polls by 4.3 (Wisconsin +8); late deciders, education weighting and “shy Trump” argued against as primary causes; non-response correlated with partisanship the most likely cause, but not conclusively identified.", "us20_aapor",
+  "An outlier even at the time; the RCP Wisconsin average (Biden +6.7) missed by 6.1 and Marquette (Biden +5) by 4.4. Winner correct; the margin was off by a factor of 27.",
+
+  "pe21", "2021-04-11", "Peru presidential election, 1st round", "Peru, predsednički izbori, 1. krug", "Peru", "Election",
+  "Ipsos Perú (for El Comercio)", "Other Ipsos entities", "31 Mar 2021", "face-to-face, replica ballot", 1526, "valid votes",
+  "Castillo", "Fujimori", 7.9, 11.2, 18.92, 13.41, "pe21_ipsos", "pe21_result",
+  "<b>Pollster-affiliated analysis (IEP):</b> Castillo's support grew exponentially in the final weeks; the publication ban from 4 April hid the later surveys that captured it; online panels under-represented rural voters.", "pe21_zarate",
+  "Castillo was 7th in the final Ipsos simulacro; the polled leader (Lescano, 14.7) finished 5th. The last legally publishable poll, eleven days out; the miss is a documented late surge under a blackout as much as a sampling failure.",
+
+  "cz21", "2021-10-09", "Czechia parliamentary election", "Češka, parlamentarni izbori", "Czechia", "Election",
+  "STEM", "Other agencies", "24–30 Sep 2021", "not stated", 1247, "decided voters",
+  "SPOLU", "ANO", 21.4, 27.3, 27.79, 27.12, "cz21_polls", "cz21_result",
+  "<b>Press:</b> about a fifth of voters decide in the last week and some 15% on the day; polls may not be conducted in the last four days. The Pirates/STAN alliance, polled at 17–20, finished at 15.6.", "cz21_e15",
+  "Every final poll had the wrong winner; Kantar (ANO 24.5, SPOLU 23.0) missed by only 2.2.",
+
+  "hu22", "2022-04-03", "Hungary parliamentary election", "Mađarska, parlamentarni izbori", "Hungary", "Election",
+  "Medián (for hvg.hu)", "Other agencies", "24–26 Mar 2022", "not stated", 1096, "decided voters",
+  "Fidesz–KDNP", "United for Hungary", 50, 40, 54.13, 34.44, "hu22_polls;hu22_telex", "hu22_result",
+  "<b>Press / Pollster:</b> all firms under-measured Fidesz by 3–4 and over-measured the opposition by 5–11 points; ex-Jobbik voters moved to Fidesz and Mi Hazánk; Závecz: the government's “stay out of the war” message swung undecideds in the final days; Medián's director called for serious self-examination by the profession.", "hu22_telex;hu22_zavecz;hu22_hann",
+  "Medián's last poll published before the vote; its 49/41 figure was released after the polls closed on election day and is not used. Publicus (47/47, n = 1,025) missed by 19.7, Závecz (50/46) by 15.7.",
+
+  "cl22", "2022-09-04", "Chile constitutional plebiscite", "Čile, plebiscit o novom ustavu", "Chile", "Referendum",
+  "Cadem Plaza Pública", "Other agencies", "17–19 Aug 2022", "telephone", 1007, "excluding undecided",
+  "Rechazo", "Apruebo", 55, 45, 61.89, 38.11, "cl22_cadem", "cl22_result",
+  "<b>Press / Pollster:</b> six firms under-measured the gap; Cadem's Izikson: what the polls did not see was the almost 13 million votes; Pardo (ex-president of the industry association): no baseline existed for the first election under compulsory voting, and online and phone panels under-reach rural and disconnected voters; WAPOR's Chile representative proposed a review commission.", "cl22_lagos;cl22_pardo",
+  "Published in the last window before the 15-day ban, with UDD (55.7/44.3), Activa (58.2/41.8) and AtlasIntel (58.4/41.6). Direction right everywhere; Cadem's private final poll (52.9/47.1) missed by 18.0.",
+
+  "br22", "2022-10-02", "Brazil presidential election, 1st round", "Brazil, predsednički izbori, 1. krug", "Brazil", "Election",
+  "Datafolha", "Other agencies", "30 Sep–1 Oct 2022", "face-to-face", 12800, "valid votes",
+  "Lula", "Bolsonaro", 50, 36, 48.43, 43.20, "br22_datafolha", "br22_result",
+  "<b>Pollster (Datafolha):</b> a late “useful vote” from Ciro and Tebet to Bolsonaro in the final 24 hours judged very probable (13% had said they might switch); hostility to field teams; no methodological error acknowledged. <b>Think tank (PT-affiliated):</b> asymmetric abstention — Lula, Ciro and Tebet intenders turned out at lower rates — offered with shy voters and outdated sampling frames as hypotheses.", "br22_chong;br22_toledo",
+  "Winner correct; Bolsonaro finished above every pollster's upper bound. Ipec (51/37) missed by the same 8.8.",
+
+  "py23", "2023-04-30", "Paraguay presidential election", "Paragvaj, predsednički izbori", "Paraguay", "Election",
+  "AtlasIntel", "Other agencies", "20–24 Apr 2023", "online (random digital recruitment)", 2320, "all respondents incl. 1.9% undecided; result on all votes",
+  "Peña (ANR)", "Alegre (Concertación)", 33, 34, 42.74, 27.48, "py23_atlas", "py23_result",
+  "<b>Press:</b> Atlas was the only poll departing from the consensus (Ati Snead 42.9/31.3, EcoDat 41.4/31.0, CBN 43.8/24.6, which missed by 4–5); critics cite its online-only sample and questionnaire. No pollster self-assessment located.", "py23_lanacion",
+  "A single-pollster miss in a race the other polls had right; the TSJE portal no longer serves 2023, so the official figures are as reported from its proclamation.",
+
+  "tr23", "2023-05-14", "Turkey presidential election, 1st round", "Turska, predsednički izbori, 1. krug", "Turkey", "Election",
+  "KONDA", "Other agencies", "6–7 May 2023", "face-to-face", 3480, "undecided apparently distributed (shares sum to 100)",
+  "Erdoğan", "Kılıçdaroğlu", 43.7, 49.3, 49.52, 44.88, "tr23_konda", "tr23_result",
+  "<b>Pollster (KONDA):</b> the deviation exceeded the sampling margin; candidate causes: social desirability / “shy” Erdoğan voters, and weighting to a recalled vote from five years earlier; an academic review board was announced.", "tr23_konda_post",
+  "KONDA's fieldwork preceded Muharrem İnce's withdrawal on 11 May. MetroPOLL (49.1/46.9, n = 2,038) missed by 6.8; pro-government firms had Erdoğan ahead.",
+
+  "es23", "2023-07-23", "Spain general election", "Španija, parlamentarni izbori", "Spain", "Election",
+  "GAD3 (for ABC)", "Other agencies", "29 Jun–17 Jul 2023", "not stated (rolling tracker)", 8001, "valid votes",
+  "PP", "PSOE", 36.9, 28.6, 33.06, 31.68, "es23_polls", "es23_result",
+  "<b>Press:</b> every forecast, including the state CIS, missed; an industry analyst points to late undecideds leaning PSOE, polarisation mobilising would-be abstainers toward their historical party, tactical voting in Catalonia, and too few interviews per province for the seat models. No official review.", "es23_press",
+  "Winner correct; the predicted PP–Vox majority did not materialise. GAD3's later Mediaset tracker (10–22 Jul, n = 10,004: 35.5/28.6) missed by 5.5, Sigma Dos by 6.0; the CIS had the wrong winner (PSOE +1.4) but a small margin error (2.8).",
+
+  "ar23", "2023-08-13", "Argentina PASO primaries, presidential", "Argentina, PASO (otvoreni primarni izbori), predsednički", "Argentina", "Election",
+  "AtlasIntel", "Other agencies", "31 Jul–4 Aug 2023", "online (random digital recruitment)", 9517, "all respondents incl. 5.9% undecided/blank/null; result on valid votes incl. blank",
+  "Milei (LLA)", "Bullrich/Larreta (JxC)", 20.8, 31.9, 29.86, 28.00, "ar23_atlas", "ar23_result",
+  "<b>Press (Chequeado, quoting academics):</b> very high non-response; non-probability online and phone samples; a large undecided bloc that was hard to project; a “voto vergüenza” for Milei. No poll had Milei above 24.5.", "ar23_chequeado",
+  "Atlas's final poll before the 8-day ban; toplines from its own release.",
+
+  "sk23", "2023-09-30", "Slovakia parliamentary election", "Slovačka, parlamentarni izbori", "Slovakia", "Election",
+  "AKO", "Other agencies", "20–26 Sep 2023", "not stated", 1000, "decided voters (as compiled)",
+  "Smer-SD", "Progresívne Slovensko", 17.7, 18.0, 22.94, 17.96, "sk23_polls", "sk23_result",
+  "<b>Press (quoting a political scientist):</b> AKO's data suggest late switching to Smer and some reluctance to admit a Smer vote; summed by bloc the polls matched the outcome reasonably.", "sk23_medzihorsky",
+  "Borderline case (margin error 5.3); wrong winner in two of five final polls. Focus (18.0/16.6) missed by 3.6, Ipsos (20.6/19.8) by 4.2.",
+
+  "nl23", "2023-11-22", "Netherlands general election", "Holandija, parlamentarni izbori", "Netherlands", "Election",
+  "I&O Research", "Other agencies", "20–21 Nov 2023", "online panel", 2076, "vote share, likely voters with a preference (2,076 of 2,473)",
+  "PVV", "GroenLinks–PvdA", 17.7, 17.7, 23.49, 15.75, "nl23_io", "nl23_result",
+  "<b>Analysis (Peilingwijzer / Louwerse):</b> the aggregator had a three-way race; the PVV gained in the final week after the debates; fewer than half of voters were certain of their choice (30–37% in I&O's own data).", "nl23_nos",
+  "Fieldwork closed about 22 hours before the polling stations opened. Ipsos/EenVandaag (VVD 29, PVV 27, GL-PvdA 24 seats) missed by 5.7 and had the wrong leader.",
+
+  "uk24", "2024-07-04", "UK general election", "Velika Britanija, parlamentarni izbori", "United Kingdom", "Election",
+  "Survation", "Other agencies", "1–3 Jul 2024", "telephone", 1679, "GB",
+  "Labour", "Conservative", 37.6, 19.9, 34.7, 24.4, "uk24_survation", "uk24_result;uk24_bpc",
+  "<b>Industry body (BPC):</b> the mean of 19 final polls overstated Labour by 3.9 and understated the Conservatives by 3.0 — the largest Labour overestimate since 1979; the specific causes remain unclear. <b>Pollster (YouGov):</b> a genuine late swing from Labour; samples with too many voters; past-vote weighting less effective.", "uk24_bpc;uk24_bpc_lessons;uk24_yougov",
+  "Winner correct; the margin was off by about 70%. Not the worst final poll (Opinium had a 20-point lead); YouGov's MRP (Lab 39, Con 22, n = 42,758) missed by 6.7.",
+
+  "rs26", "2026-10-25", "Serbia parliamentary election", "Srbija, parlamentarni izbori", "Serbia", "Election",
+  "Ipsos Strategic Marketing", "Ipsos SM, Serbia (2026; 2012 attributed)", "20–22 Oct 2026", "telephone (90%) + online (10%)", 2110, "decided voters; shares of all ballots cast incl. invalid, same base as RIK",
+  "Studentska lista", "Ujedinjena Srbija", 40.0, 47.4, 53.01, 38.98, "rs26_ipsos", "rs26_rik",
+  "<b>Analysis (companion report, same author):</b> sampling error excluded (p ≈ 2 × 10<sup>−36</sup>); the remaining candidates — a late swing of about 450,000 voters, a turnout or undecided shift of unusual size, non-sampling bias far larger than final polls ordinarily carry, or the published numbers not reflecting what the survey measured — cannot be separated by statistics. No post-mortem by Ipsos had been found as of 2 November 2026.", "rs26_repo",
+  "z is computed with n<sub>eff</sub> = 2,110, the effective sample size the companion report backs out of Ipsos's published intervals (an approximate figure: the intervals are rounded and the median across lists is used); it combines the decided base and the design effect, neither of which Ipsos published, and is the choice most favourable to Ipsos. With the nominal 3,624 interviews this document's z rises from 10.4 to 13.5. RIK's percentages are shares of all ballots found in the boxes, the base Ipsos used (list shares plus an assumed 2.5% invalid), so no rescaling is needed; the companion report's preliminary snapshot (53.03/38.97) differs by 0.02."
+) |>
+  dplyr::mutate(
+    date   = as.Date(date),
+    year   = as.integer(format(date, "%Y")),
+    poll_lead   = poll_w - poll_r,
+    actual_lead = act_w - act_r,
+    E           = poll_lead - actual_lead,            # margin error, points (negative = winner underestimated)
+    absE        = abs(E),
+    wrong_winner = poll_lead < 0,
+    pw = act_w / 100, pr = act_r / 100,
+    se_margin = 100 * sqrt((pw + pr - (pw - pr)^2) / n),  # SE of the polled lead under random sampling, points
+    z = absE / se_margin
+  ) |>
+  dplyr::arrange(date, agency) |>
+  dplyr::mutate(no = dplyr::row_number())
+```
+
+```{r table}
+tbl <- misses |>
+  dplyr::mutate(
+    Event = sprintf("<b>%s</b><br><span style='color:#52514e'>%s · %s</span>", event, format(date, "%d %b %Y"), type),
+    n_label = ifelse(id == "rs26", "n = 3,624 published; n<sub>eff</sub> = 2,110 derived", paste0("n = ", fmt_n(n))),
+    Agency = sprintf("<b>%s</b>%s<br><span style='color:#52514e'>%s · %s · %s · %s</span>",
+                     agency,
+                     purrr::map_chr(poll_refs, ~ cite(.x)),
+                     fieldwork, mode, n_label, basis),
+    Poll = sprintf("%s <b>%s</b><br>%s %s<br><span style='color:#52514e'>lead %s</span>",
+                   winner, fmt_pct(poll_w), runner, fmt_pct(poll_r), fmt_sgn(poll_lead)),
+    Result = sprintf("%s <b>%s</b><br>%s %s<br><span style='color:#52514e'>lead %s</span>%s",
+                     winner, fmt_pct(act_w), runner, fmt_pct(act_r), fmt_sgn(actual_lead),
+                     purrr::map_chr(result_refs, ~ cite(.x))),
+    Miss = sprintf("<b>%s</b> pts%s<br><span style='color:#52514e'>z = %s</span>",
+                   fmt_sgn(E), ifelse(wrong_winner, "<br><span style='color:#eb6834'>wrong winner</span>", ""),
+                   ifelse(is.na(z), "n/a", sprintf("%.1f", z))),
+    Explanation = sprintf("%s%s%s", explanation, purrr::map_chr(expl_refs, ~ cite(.x)),
+                          ifelse(caveat == "", "", sprintf("<br><span style='color:#898781'><i>%s</i></span>", caveat)))
+  ) |>
+  dplyr::select(`#` = no, Event, Agency, `Poll (final)` = Poll, `Official result` = Result, `Margin error` = Miss, `Possible explanation (type: source)` = Explanation)
+
+kable_report(tbl, align = c("r", "l", "l", "l", "l", "r", "l"),
+             caption = sprintf("Table 1. %d final pre-election poll misses, 2010–2026, in chronological order. Margin error = (polled lead of the eventual winner) − (actual lead); negative means the winner was underestimated. z = |margin error| / standard error of the lead for a random sample of the poll's size (see Section 1.3); n/a where the sample size is not documented. Superscripts link to the numbered references.", nrow(misses))) |>
+  kableExtra::column_spec(1, width = "2em") |>
+  kableExtra::column_spec(2, width = "13em") |>
+  kableExtra::column_spec(3, width = "15em") |>
+  kableExtra::column_spec(4, width = "10em") |>
+  kableExtra::column_spec(5, width = "10em") |>
+  kableExtra::column_spec(6, width = "6em") |>
+  kableExtra::column_spec(7, width = "32em") |>
+  kableExtra::row_spec(which(misses$agency_group == "Ipsos SM, Serbia (2026; 2012 attributed)"), background = "#fdf6f2")
+```
+
+```{r summary-numbers}
+rs26 <- misses |> dplyr::filter(id == "rs26")
+rank_abs   <- misses |> dplyr::arrange(dplyr::desc(absE)) |> dplyr::mutate(r = dplyr::row_number())
+rank_abs_e <- misses |> dplyr::filter(type == "Election") |> dplyr::arrange(dplyr::desc(absE)) |> dplyr::mutate(r = dplyr::row_number())
+rank_z     <- misses |> dplyr::filter(!is.na(z)) |> dplyr::arrange(dplyr::desc(z)) |> dplyr::mutate(r = dplyr::row_number())
+r26_abs   <- rank_abs$r[rank_abs$id == "rs26"]
+r26_abs_e <- rank_abs_e$r[rank_abs_e$id == "rs26"]
+r26_z     <- rank_z$r[rank_z$id == "rs26"]
+z26_nominal <- rs26$absE / (100 * sqrt((rs26$pw + rs26$pr - (rs26$pw - rs26$pr)^2) / 3624))
+med_abs <- median(misses$absE[misses$id != "rs26"])
+share_wrong <- mean(misses$wrong_winner)
+ordinal <- function(k) paste0(k, c("th","st","nd","rd",rep("th",6))[ifelse(k %% 100 %in% 11:13, 1, k %% 10 + 1)])
+top5_abs_ids <- rank_abs$id[rank_abs$r <= 5]
+top5_z_ids   <- rank_z$id[rank_z$r <= 5]
+both_top5    <- setdiff(intersect(top5_abs_ids, top5_z_ids), "rs26")
+case_name    <- function(ids) { d <- misses[match(ids, misses$id), ]; sprintf("%s %d (%s)", d$country, d$year, short_agency(d$agency)) }
+case_name_sr <- function(ids) { d <- misses[match(ids, misses$id), ]; sprintf("%s %d. (%s)", country_sr[d$country], d$year, short_agency(d$agency, sr = TRUE)) }
+both_top5_txt <- if (length(both_top5)) paste(case_name(both_top5), collapse = " and ") else "none"
+both_top5_sr  <- if (length(both_top5)) paste(case_name_sr(both_top5), collapse = " i ") else "nijedan"
+top5_z_others <- setdiff(top5_z_ids, "rs26")
+n_above15 <- sum(misses$absE > 15)
+# alternative readings shown as hollow points: Serbia 2012 with the AP report (52/48); Serbia 2026 with the nominal n
+rs12 <- misses |> dplyr::filter(id == "rs12")
+E12_alt <- (48 - 52) - (rs12$act_w - rs12$act_r)
+alt_pts <- tibble::tibble(id = c("rs12", "rs26"), E_alt = c(E12_alt, rs26$E), z_alt = c(abs(E12_alt) / rs12$se_margin, z26_nominal))
+# rank text that admits ties within 0.1
+z_near <- rank_z |> dplyr::filter(id != "rs26", abs(z - rs26$z) < 0.1)
+z_rank_txt <- if (nrow(z_near)) sprintf("effectively tied for %s with %s", ordinal(min(r26_z, z_near$r)), paste(case_name(z_near$id), collapse = " and ")) else ordinal(r26_z)
+z_rank_sr  <- if (nrow(z_near)) sprintf("praktično izjednačen na %d. mestu sa %s", min(r26_z, z_near$r), paste(case_name_sr(z_near$id), collapse = " i ")) else sprintf("%d.", r26_z)
+```
+
+# The comparison
+
+## Raw margin error
+
+```{r fig-margin, fig.height=9, fig.width=10, fig.cap=sprintf("Figure 1. Margin error of every poll in the catalogue, ranked by absolute value. Dot position is the signed error (negative: the eventual winner was underestimated); the bar length is its absolute value. Orange: Ipsos Strategic Marketing, Serbia (2026, and the 2012 poll attributed to it). Blue: other Ipsos entities. Grey: other agencies. Rows marked ✕ had the wrong winner. The hollow point on the 2012 row is the alternative contemporaneous report of that poll (52/48). Median absolute error of the other %d rows: %.1f points.", nrow(misses) - 1, med_abs)}
+plot_df <- misses |>
+  dplyr::mutate(
+    label = sprintf("%s %d · %s", country, year, short_agency(agency)),
+    label = ifelse(wrong_winner, paste0(label, " ✕"), label),
+    label = forcats::fct_reorder(label, absE),
+    agency_group = factor(agency_group, levels = names(col)[1:3])
+  )
+
+ggplot(plot_df, aes(y = label)) +
+  geom_segment(aes(x = 0, xend = E, yend = label, colour = agency_group), linewidth = 1.6, alpha = 0.55) +
+  geom_point(aes(x = E, colour = agency_group), size = 3.4) +
+  geom_point(data = plot_df |> dplyr::inner_join(alt_pts |> dplyr::filter(id == "rs12"), by = "id"), aes(x = E_alt), shape = 21, size = 3.4, colour = col[1], fill = "white", stroke = 1.2) +
+  geom_vline(xintercept = 0, colour = "#52514e", linewidth = 0.4) +
+  geom_vline(xintercept = c(-5, 5), colour = "#c3c2b7", linetype = "dashed", linewidth = 0.4) +
+  scale_colour_manual(values = col[1:3]) +
+  scale_x_continuous(breaks = seq(-35, 20, 5), labels = function(x) ifelse(x == 0, "0", sprintf("%+d", x))) +
+  labs(x = "Margin error, points (polled lead of the eventual winner minus actual lead)", y = NULL,
+       title = "How far the final poll missed the winner's margin",
+       subtitle = sprintf("%d final pre-election polls, 2010–2026. Dashed lines: ±5 points. ✕ = wrong winner.", nrow(misses))) +
+  theme_report() +
+  theme(axis.text.y = element_text(size = 9.5), legend.position = "top")
+```
+
+## Standardised error
+
+```{r fig-z, fig.height=8, fig.width=10, fig.cap="Figure 2. Standardised error: the absolute margin error divided by the standard error of the polled lead for a simple random sample of the poll's published size. Only polls with a documented sample size are shown. The grey band marks z ≤ 2, the range an honest random sample stays within 19 times out of 20. For Ipsos 2026 the effective sample size of 2,110 is used (the choice most favourable to Ipsos); the hollow point on the 2026 row shows the value with the nominal n = 3,624, and on the 2012 row the value for the alternative report (52/48)."}
+plot_z <- plot_df |> dplyr::filter(!is.na(z)) |>
+  dplyr::mutate(label = forcats::fct_reorder(label, z))
+nominal_pt <- plot_z |> dplyr::inner_join(alt_pts, by = "id") |> dplyr::mutate(z = z_alt)
+
+ggplot(plot_z, aes(y = label)) +
+  annotate("rect", xmin = 0, xmax = 2, ymin = -Inf, ymax = Inf, fill = "#e1e0d9", alpha = 0.5) +
+  geom_segment(aes(x = 0, xend = z, yend = label, colour = agency_group), linewidth = 1.6, alpha = 0.55) +
+  geom_point(aes(x = z, colour = agency_group), size = 3.4) +
+  geom_point(data = nominal_pt, aes(x = z), shape = 21, size = 3.4, colour = col[1], fill = "white", stroke = 1.2) +
+  scale_colour_manual(values = col[1:3]) +
+  scale_x_continuous(breaks = seq(0, 22, 2)) +
+  labs(x = "Standardised error (standard errors of a random sample of the poll's size)", y = NULL,
+       title = "The same misses, scaled by what sampling error could produce",
+       subtitle = "Larger samples have less excuse: a 5-point miss is z ≈ 2.5 at n = 600 and z ≈ 10 at n = 9,500.\nGrey band: z ≤ 2. Hollow points: Ipsos 2026 with the nominal n = 3,624; Serbia 2012 on the 52/48 report.") +
+  theme_report() +
+  theme(axis.text.y = element_text(size = 9.5), legend.position = "top")
+```
+
+## What the comparison shows
+
+```{r top-tables}
+top_abs <- rank_abs |> dplyr::slice_head(n = 8) |>
+  dplyr::transmute(Rank = r, Case = sprintf("%s %d · %s", country, year, agency), Type = type,
+                   `Margin error` = fmt_sgn(E), z = ifelse(is.na(z), "n/a", sprintf("%.1f", z)))
+top_z <- rank_z |> dplyr::slice_head(n = 8) |>
+  dplyr::transmute(Rank = r, Case = sprintf("%s %d · %s", country, year, agency), n = fmt_n(n),
+                   `Margin error` = fmt_sgn(E), z = sprintf("%.1f", z))
+kable_report(top_abs, caption = "Table 2. The eight largest misses by raw margin error.")
+kable_report(top_z, caption = "Table 3. The eight largest misses by standardised error (documented sample sizes only).")
+```
+
+<div class="callout callout-result">
+**Where Ipsos 2026 sits.** With a margin error of **`r fmt_sgn(rs26$E)` points**, the Ipsos Strategic Marketing poll of 22 October 2026 is the **`r ordinal(r26_abs)`-largest** miss in a catalogue of `r nrow(misses)` documented final-poll failures from 16 years and `r length(unique(misses$country))` countries, and the **`r ordinal(r26_abs_e)`-largest among elections** (as opposed to referendums). Above it are two referendums in which the situation changed between fieldwork and the vote — the Colombian peace plebiscite of 2016 (Ipsos Napoleón Franco, −32.4, turnout half of what the polls assumed) and the Greek bailout referendum of 2015 (Public Issue, `r fmt_sgn(misses$E[misses$id=="gr15"])`) — and the two final polls of the Costa Rican presidential runoff of 2018: OPol (`r fmt_sgn(misses$E[misses$id=="cr18a"])`, a poll commissioned by the losing candidate's campaign, which was not disclosed at the time) and the independent CIEP-UCR (`r fmt_sgn(misses$E[misses$id=="cr18b"])`), in a race where the university's own panel study later found that 60% of first-round abstainers had turned out for the winner. The median absolute margin error of the other `r nrow(misses)-1` rows — rows selected *because* they are famous misses — is `r sprintf("%.1f", med_abs)` points; Ipsos 2026 is `r sprintf("%.1f", rs26$absE/med_abs)` times that.
+
+On the **standardised** scale it is **`r z_rank_txt`** of `r nrow(rank_z)` with the effective sample size of 2,110 (z = `r sprintf("%.1f", rs26$z)`), and `r ordinal(1 + sum(rank_z$z[rank_z$id != "rs26"] > z26_nominal))` with the nominal 3,624 (z = `r sprintf("%.1f", z26_nominal)`). The other cases in the top five on *both* scales: `r both_top5_txt`.
+</div>
+
+**Three readings of the two charts.**
+
+*First, the raw scale.* Most of the catalogue sits between 5 and 14 points. That band contains the misses that produced formal inquiries — the 2015 British election (−5.6 for Ipsos MORI, −6.6 for the average), Brexit (−7.8 for Ipsos MORI and the poll of polls, −13.8 for Populus), Australia 2019 (−6.1), the 2016 Wisconsin polls (−6.8), Israel 2015 (−8.4). The inquiries treated errors of this size as serious institutional failures: the British Polling Council and the Market Research Society commissioned an independent panel after 2015, AAPOR convened committees after 2016 and 2020, the Australian industry body held an inquiry after 2019.<sup><a href="#ref-uk15_inquiry">`r ref_num["uk15_inquiry"]`</a>,<a href="#ref-us20_aapor">`r ref_num["us20_aapor"]`</a>,<a href="#ref-au19_amsro">`r ref_num["au19_amsro"]`</a></sup> Above 15 points there are `r n_above15` rows. Apart from Ipsos 2026, each carries a visible explanation in its post-mortem: an electorate that changed shape between fieldwork and the vote (a turnout collapse in Colombia, a 28% undeclared bloc in Bolivia, the consolidation of the field and of first-round abstainers behind the winner in Costa Rica), capital controls imposed on the eve of fieldwork (Greece), a single online pollster at odds with every other poll in the race (Paraguay), a ten-day-old poll of disputed provenance (Serbia 2012), or a single outlier poll that still had the winner right (ABC/WaPo in Wisconsin 2020, where the average missed by 6). Ipsos 2026 has none of these on its face: fieldwork ended three days before the vote, the poll was the agency's own, it had the wrong winner, and — as Section 3.5 shows — the one independent survey published in the same month had the right one.
+
+*Second, the standardised scale.* Dividing by the sampling standard error does two things. It pulls the large-sample polls to the top (OPol in Costa Rica at n = 3,300, AtlasIntel in Argentina 2023 at n = 9,517, Datafolha at n = 12,800), which is the point: a big sample buys precision, not accuracy, and a 9–35-point miss on a sample that size is a bias of ten standard errors or more. And it drops the small-sample misses of the US Senate races, British Columbia and the 2015 Ipsos MORI poll (n = 556–1,186) to z ≈ 1.5–4 — a different order of failure, and a reminder that the standardised scale is blind to the thing the British and Australian inquiries actually found: a bias that was small in any one poll but identical across all of them (pooling Australia's 17 final polls gives n ≈ 23,600 and a z of about 9).<sup><a href="#ref-au19_bonham">`r ref_num["au19_bonham"]`</a></sup> Ipsos 2026, at z = `r sprintf("%.1f", rs26$z)` even on the Ipsos-friendliest sample size, is in the first group. This is the two-category shadow of the companion report's result: there, with all lists and the exact multinomial tail, the equivalent figure is about 12 standard deviations on *Studentska lista* alone and a tail probability of 10<sup>−36</sup>.<sup><a href="#ref-rs26_repo">`r ref_num["rs26_repo"]`</a></sup>
+
+*Third, what the post-mortems found, and what that does and does not say about 2026.* The explanations column converges on a short list, and it is worth stating what each would require here.
+
+- **Unrepresentative samples that weighting did not fix** (UK 2015, Australia 2019, Brexit's education gap, AAPOR 2016 on state polls).<sup><a href="#ref-uk15_inquiry">`r ref_num["uk15_inquiry"]`</a>,<a href="#ref-au19_amsro">`r ref_num["au19_amsro"]`</a>,<a href="#ref-eu16_mrs">`r ref_num["eu16_mrs"]`</a>,<a href="#ref-us16_aapor">`r ref_num["us16_aapor"]`</a></sup> These produced errors of 3–7 points on the margin. To produce 21 points by this route, the sample would have to be skewed on a scale the inquiries never found.
+- **Non-response and concealment correlated with the vote** (AAPOR 2020; KONDA 2023; the Argentine “voto vergüenza”; Israel 2015).<sup><a href="#ref-us20_aapor">`r ref_num["us20_aapor"]`</a>,<a href="#ref-tr23_konda_post">`r ref_num["tr23_konda_post"]`</a>,<a href="#ref-ar19_fornoni">`r ref_num["ar19_fornoni"]`</a>,<a href="#ref-il15_toi">`r ref_num["il15_toi"]`</a></sup> This is the mechanism a defender of the 2026 poll would reach for first, and it is directionally consistent with what happened: in a 90%-telephone survey conducted under a polarised campaign, opposition supporters declining to answer or to declare would under-measure *Studentska lista*. The documented cases cut both ways on *who* is under-declared — the incumbent in the US 2020, Turkey 2023 and Israel 2015; the opposition in Argentina 2019 and Slovakia 2023 — and the documented magnitudes are 5–10 points on the margin. Producing 21 would require concealment on a scale none of these post-mortems found, and it would not by itself explain why sixteen small lists were all overestimated.
+- **Late swing after fieldwork** (Alberta 2012, Brazil 2022, Netherlands 2023, Hungary 2022).<sup><a href="#ref-ab12_thinkhq">`r ref_num["ab12_thinkhq"]`</a>,<a href="#ref-br22_chong">`r ref_num["br22_chong"]`</a>,<a href="#ref-nl23_nos">`r ref_num["nl23_nos"]`</a>,<a href="#ref-hu22_zavecz">`r ref_num["hu22_zavecz"]`</a></sup> The companion report puts a number on this: about 450,000 voters would have had to move to *Studentska lista* between 22 and 25 October for the poll to be an ordinary unlucky draw, and such a swing would not explain why the small lists were all overestimated in the same direction.<sup><a href="#ref-rs26_repo">`r ref_num["rs26_repo"]`</a></sup>
+- **Turnout and the composition of the electorate** (Colombia, Costa Rica, Chile, Bolivia, Brexit).<sup><a href="#ref-co16_elcomercio">`r ref_num["co16_elcomercio"]`</a>,<a href="#ref-cr18_panel">`r ref_num["cr18_panel"]`</a>,<a href="#ref-cl22_lagos">`r ref_num["cl22_lagos"]`</a>,<a href="#ref-bo20_cedla">`r ref_num["bo20_cedla"]`</a>,<a href="#ref-eu16_mrs">`r ref_num["eu16_mrs"]`</a></sup> The misses in this group are the largest in the catalogue, and each involved a turnout the pollsters had not modelled or an undecided share above 15%; the case closest in size to Ipsos 2026 (Costa Rica 2018) is of exactly this kind. It is therefore the mechanism that deserves the most careful statement for Serbia. Turnout was 68.9% against 58.8% at the previous parliamentary election of December 2023 — about 620,000 more voters on a slightly smaller register — and against the 64.7% Ipsos itself expected.<sup><a href="#ref-rs26_rik">`r ref_num["rs26_rik"]`</a>,<a href="#ref-rs23_rik">`r ref_num["rs23_rik"]`</a>,<a href="#ref-rs26_ipsos">`r ref_num["rs26_ipsos"]`</a></sup> The relevant counterfactual for the poll is its own turnout model: relative to it, about 275,000 more people voted than Ipsos expected, and the companion report's Scenario 3 shows that even if every one of them had voted for *Studentska lista*, a further 300,000 of the voters Ipsos did sample would still have had to switch.<sup><a href="#ref-rs26_repo">`r ref_num["rs26_repo"]`</a></sup> A composition change on the Costa Rican or Colombian scale would have required a turnout error of ten points or more; Ipsos's was four.
+- **Herding and polls published too early** (UK 2015, Australia 2019, Czechia, Peru).<sup><a href="#ref-uk15_inquiry">`r ref_num["uk15_inquiry"]`</a>,<a href="#ref-au19_bonham">`r ref_num["au19_bonham"]`</a>,<a href="#ref-cz21_e15">`r ref_num["cz21_e15"]`</a>,<a href="#ref-pe21_zarate">`r ref_num["pe21_zarate"]`</a></sup> Not applicable in form: Ipsos was the last poll, three days out, and the only other October survey pointed the other way.
+
+None of this identifies the cause of the 2026 miss, and this document does not try to. What the catalogue establishes is narrower: **among election polls with fieldwork in the final week, from samples of two thousand or more, with a disclosed commissioning party and an undisputed count, an error of this size has no counterpart in this catalogue.** The two election misses that exceed it (Costa Rica 2018) were published 11–16 days before a runoff in which the field consolidated behind the winner, and the larger of them was commissioned by the losing campaign without disclosure. Resolving which, if any, of the mechanisms above operated in Serbia requires what every serious inquiry in the catalogue began by requesting: the raw data, the weighting scheme, the likely-voter model and the treatment of undecided respondents.<sup><a href="#ref-uk15_inquiry">`r ref_num["uk15_inquiry"]`</a>,<a href="#ref-au19_amsro">`r ref_num["au19_amsro"]`</a></sup>
+
+## Serbia 2012 and 2026, side by side
+
+```{r rs-table}
+misses |> dplyr::filter(country == "Serbia") |>
+  dplyr::transmute(Year = year, Event = event, Poll = sprintf("%s %s – %s %s", winner, fmt_pct(poll_w), runner, fmt_pct(poll_r)),
+                   Result = sprintf("%s %s – %s %s", winner, fmt_pct(act_w), runner, fmt_pct(act_r)),
+                   `Margin error` = fmt_sgn(E), n = fmt_n(n), z = sprintf("%.1f", z),
+                   `Days from fieldwork to vote` = c(10, 3)) |>
+  kable_report(caption = "Table 4. The two Serbian cases. For 2012 the figures are those reported by Al Jazeera Balkans; with the AP report (52/48) the margin error is −6.3.")
+```
+
+The 2012 case is included on the figures reported at the time (Tadić 58, Nikolić 42; fieldwork 10 May, n = 1,198) because those are the figures that circulated under Ipsos's name and entered the public record as "Ipsos missed in 2012".<sup><a href="#ref-rs12_aljazeera">`r ref_num["rs12_aljazeera"]`</a>,<a href="#ref-rs12_vreme2012">`r ref_num["rs12_vreme2012"]`</a></sup> They are the only version with a sample size and a fieldwork date; a second contemporaneous report gives 52/48, which would reduce the margin error to −6.3, and both are shown in the charts.<sup><a href="#ref-rs12_ap">`r ref_num["rs12_ap"]`</a></sup> Ipsos's own account, given in 2021 and 2022, is that it did not officially publish any runoff figures, that it had no runoff survey of its own, that data it collected for a client that year mostly showed a tight race, and that someone gave media data under its name.<sup><a href="#ref-rs12_bogosavljevic">`r ref_num["rs12_bogosavljevic"]`</a>,<a href="#ref-rs12_novimagazin">`r ref_num["rs12_novimagazin"]`</a></sup> That account cannot be checked against a release, because none exists. Either way the two Serbian rows differ in kind: in 2012 a disputed poll ten days out had a 16-point lead collapse in a low-turnout runoff; in 2026 the poll was Ipsos's own, published three days out with a stated margin of ±2.1, and the *Studentska lista* share alone missed by 13.0 points, six times that margin (the 95% margin on the *lead*, for the implied sample size, is about ±4 points, and the lead missed by 21, roughly five such margins).
+
+## The other Serbian polls of 2026
+
+A single poll can be an outlier or part of a pattern, and the two are judged differently: the Wisconsin 2020 poll was one firm's outlier against an average that missed by 6; the British polls of 2015 all missed together. Which was Ipsos 2026? In October 2026 exactly one other agency published voting-intention figures, and three earlier estimates exist.<sup><a href="#ref-rs26_roundup">`r ref_num["rs26_roundup"]`</a></sup>
+
+```{r other-rs-polls}
+rik_lead <- rs26$act_w - rs26$act_r
+other_rs <- tibble::tribble(
+  ~Source, ~Published, ~Fieldwork, ~n, ~Base, ~SL, ~US, ~refs,
+  "NSPM (own expense)",                 "20 Oct 2026", "25 Sep–5 Oct 2026", 1050, "decided voters (18.3% undecided excluded)", 44.5, 42.7, "rs26_nspm",
+  "Ipsos Strategic Marketing (for the Ujedinjena Srbija list)", "22 Oct 2026", "20–22 Oct 2026", 3624, "decided voters, incl. 2.5% assumed invalid", 40.0, 47.4, "rs26_ipsos",
+  "Faktor plus (commissioner not stated; via Blic)", "21 Sep 2026", "16–20 Sep 2026", 986, "those who would vote", 37.1, 48.6, "rs26_faktor",
+  "CRTA / Stanford DAL (own)",          "15 Jul 2026", "10–24 Jun 2026", 2324, "decided voters, face-to-face", 44.9, 35.7, "rs26_crta",
+  "BIRODI forecast model (not a survey)", "30 Aug 2026", "model on RIK results and published polls", NA, "valid votes", 48.5, 38.6, "rs26_birodi"
+) |> dplyr::mutate(E = (SL - US) - rik_lead,
+                   days = c(20, 3, 35, 123, NA))
+other_rs |>
+  dplyr::transmute(Source = paste0(Source, purrr::map_chr(refs, cite)), Published, Fieldwork, n = fmt_n(n), Base,
+                   `Studentska lista` = fmt_pct(SL), `Ujedinjena Srbija` = fmt_pct(US),
+                   `Lead` = fmt_sgn(SL - US), `Margin error vs RIK` = fmt_sgn(E),
+                   `Days from end of fieldwork to vote` = ifelse(is.na(days), "", days)) |>
+  kable_report(caption = sprintf("Table 5. Every published pre-election estimate for the Serbian parliamentary election of 25 October 2026, against RIK's lead of %s points. Only the Ipsos row meets the catalogue's fieldwork rule (within 16 days of the vote).", fmt_sgn(rik_lead)))
+```
+
+Every estimate understated *Studentska lista*'s lead, so 2026 is not a lone-outlier case; but the magnitudes separate sharply. The civic-sector estimates (CRTA in June, the BIRODI model in August) were within five points of the eventual margin. NSPM, polling at its own expense in late September and early October, had the winner right and the lead 12.2 points short, with 18% undecided excluded. The two polls that had the wrong winner were the two with a party connection or an undisclosed commissioner: Faktor plus, five weeks out, missed by 25.5, and Ipsos, three days out with the largest sample and the only published margins of error, by `r sprintf("%.1f", rs26$absE)`.<sup><a href="#ref-rs26_nspm">`r ref_num["rs26_nspm"]`</a>,<a href="#ref-rs26_faktor">`r ref_num["rs26_faktor"]`</a>,<a href="#ref-rs26_crta">`r ref_num["rs26_crta"]`</a>,<a href="#ref-rs26_birodi">`r ref_num["rs26_birodi"]`</a></sup> The pattern is therefore closer to Costa Rica 2018 (an independent poll short by 22 and a campaign-commissioned one short by 35) than to Britain 2015 (every firm short by the same 5–7), and it does not fit the Wisconsin 2020 pattern of one firm against an accurate field. What distinguishes Ipsos within the Serbian set is that it is the poll with the most recent fieldwork and the largest sample, and that only Faktor plus, five weeks out, had a larger error.
+
+# Cases considered and not included
+
+For transparency, the candidate cases that were examined and left out, with the reason:
+
+```{r excluded}
+tibble::tribble(
+  ~Case, ~Reason,
+  "Venezuela presidential 2024", paste0("Official count disputed. Delphos/UCAB (5–11 Jul, n = 1,200) had González 59.1, Maduro 24.6; the CNE announced Maduro 51.95, González 43.18 without publishing precinct results, while the opposition's tally sheets from 82% of polling stations gave González 67.1, Maduro 30.4. Against the CNE figure the margin error would be +43; against the tally sheets, −2. The Carter Center and the UN panel found the count did not meet basic standards of transparency, so the metric has no anchor. Excluded by rule (b).", cite("ve24_polls", "ve24_carter")),
+  "Georgia parliamentary 2024", paste0("Official count disputed. Edison Research for Formula TV (1–18 Oct, n = 1,200) had Georgian Dream 34 against 18 for the largest opposition list; the CEC counted 53.9 against 11.0 (margin error about −27). OSCE/ODIHR reported widespread intimidation and compromised secrecy in a quarter of observations, and Edison states the gap between its exit poll and the count cannot be explained by normal variation. Excluded by rule (b).", cite("ge24_polls", "ge24_result", "ge24_odihr")),
+  "Serbia 2026: NSPM (20 Oct) and Faktor plus (21 Sep)", "Fieldwork ended 20 and 35 days before the vote, outside rule (a); margin errors −12.2 and −25.5, reported in Section 3.5.",
+  "British Columbia 2013: Angus Reid (NDP 45, Liberals 36)", "Margin error −13.4, but the fieldwork dates could not be established from a primary source (the pollster's own account refers to a final poll completed on 8 May); folded into the Ipsos Reid row.",
+  "Hungary 2022: Medián 49/41", "Released on election day after the polls closed; not a pre-election publication. Medián's last pre-election poll (50/40) is the row.",
+  "Alberta 2012: Forum 41/32 and Angus Reid 41/32 (21 Apr)", "Not the agencies' final polls (Forum polled again on 22 Apr: 38/36); margin error −18.7 noted in the row.",
+  "US presidential 2016, national", "Not a miss: RCP average Clinton +3.2 vs actual +2.1 (error +1.1); the national polls were among the most accurate since 1936 (AAPOR 2017).",
+  "US presidential 2020, national", "Below threshold on the margin: AAPOR's all-poll average overstated Biden by 3.9 points. The Wisconsin poll is the representative row.",
+  "US midterms 2022 (“red wave”)", "Not a miss on the national generic ballot: RCP R+2.5 and FiveThirtyEight R+1.2 vs actual R+2.7 (House popular vote, Clerk of the House). The “red wave” was a seat-expectation and partisan-pollster story, not a margin miss by the averages.",
+  "Poll-of-polls figures (UK 2015, Brexit, Argentina 2019)", "Averages are reported in the text but are not rows, since the catalogue compares named polls with published sample sizes.",
+  "Poland parliamentary 2015", "Not a miss: final polls had PiS +6 to +16 (median ≈ 13) vs actual +13.5.",
+  "Spain April 2019", "Not a miss on the margin: PSOE lead 11–12 in the final polls vs 12.0 actual.",
+  "France legislative 2024, 2nd round", "A seat-projection miss (RN projected first, NFP finished first), not a vote-share miss: RN and allies finished first in votes (37.1%); seat models are out of scope.",
+  "Italy 2013", "Coalition-level final polls could not be retrieved from a primary or contemporaneous source; indicative margin error +6 to +8 only.",
+  "Austria presidential 2016 (May runoff and December re-run)", "Clear misses (Gallup/Österreich Hofer 53–47 vs Van der Bellen 50.35; December Hofer 52–48 vs Van der Bellen 53.8) but no sourced post-mortem was located, so the explanation column could not be filled to the standard used here.",
+  "New Zealand 2020", "Final polls had Labour +15 vs actual +24.4 (error −9.4); winner obvious, no post-mortem located.",
+  "South Korea 2017", "Realmeter's last poll (Moon +23.8 over Hong) vs actual +17.0 (error +6.8), but the last polls were seven days old under the legal blackout and no post-mortem was located.",
+  "Ecuador 2021 runoff", "Mean of six final polls Arauz +0.2 vs Lasso +4.7 actual (error ≈ −4.9); borderline, and the pollster releases were not retrieved.",
+  "Malaysia 2018", "The famous miss was Merdeka Center's seat projection, not its vote share (PH +6 polled vs +12 actual, on a Peninsular-only sample); seat projections are out of scope.",
+  "Argentina general 2019; Slovakia 2023 (Focus); Czechia 2021 (Kantar); Scotland 2014 (Ipsos MORI); Spain 2023 (GAD3/Mediaset)", "Margin errors of 3.6–7 points from elections already represented by a larger miss by the same or another agency; not added as separate rows.",
+  "Jamaica 2016; Kenya 2017; Indonesia; Philippines", "Poll technical sheets could not be retrieved to the standard used here."
+) |> kable_report(caption = "Table 6. Candidate cases examined and excluded.")
+```
+
+# Caveats
+
+1. **Selection.** The catalogue is a list of well-documented failures, assembled from the post-mortem literature and a search of national cases in six languages, not a random sample of polls and not a census of misses: a miss in a country whose polling and results are poorly documented online will be missing here. It therefore says nothing about how often polls miss; Jennings & Wlezien's 351-election dataset puts the typical final-week absolute error at about 2 points on a party's share (they report no final-week figure for the margin).<sup><a href="#ref-jennings_wlezien">`r ref_num["jennings_wlezien"]`</a></sup> What it does allow is a like-for-like comparison of magnitudes among the misses that were large enough to be investigated.
+2. **One poll per row.** Choosing which final poll represents an election is a judgement, and the ranking below the top four depends on it: Publicus for Hungary 2022 (−19.7) or Forum's 21 April poll for Alberta (−18.7) would move into ranks 6–8; Invamer for Colombia (−35.6) or Metron Analysis for Greece (−18.6) would not change the top. Where an agency published more than one final-week poll, the table uses the later one even when it missed by less (Alberta, Hungary). The caveat column gives the alternatives wherever the choice matters.
+3. **Bases.** Polls publish shares on different bases (decided voters, valid votes, two-party-preferred, seats, raw figures including undecided). The margin error is insensitive to which base is used *as long as poll and result are on the same one*; where a poll's figures include an undecided share of u% and the result does not, the polled lead is understated by a factor of 1/(1−u), which for the rows concerned (Greece 2015, Alberta 2012, Argentina 2023, Bolivia 2020) moves E by one to two points — never enough to change a row's position by more than one or two places, and never the top three. The table says which base each row uses; Israel's seats are compared with seats, and the Serbian 2026 shares are on RIK's all-ballots base, which Ipsos also used.
+4. **Sample sizes.** Two rows have no documented n and no z. The standardised error assumes simple random sampling with the published n. Real design effects (from weighting, clustering, or non-probability online recruitment) differ by pollster and mode and are not published, so every z here is an upper bound of unknown looseness, and rows whose z values are within a factor of about 1.5 of each other should not be read as ordered. The 2026 row is the one case where a design effect *is* applied, because Ipsos's published intervals allow it to be backed out; that works in Ipsos's favour.
+5. **Secondary sources.** Where an agency's release is no longer online, the figures come from a contemporaneous report or a compiled table that cites it; each such case is marked in the table and in the reference. Four official results (Israel 2015, Hungary 2022, Peru 2021, Paraguay 2023) rest on documents reproducing the electoral authority's figures because the authority's own page could not be read. The Serbia 2012 poll rests entirely on media reports and is disputed by Ipsos.
+6. **Explanations.** The explanation column reports what inquiries, researchers, pollsters or journalists concluded about *their* case, labelled by type. Inquiry and academic findings carry more weight than pollster self-assessments, which carry more weight than press analyses. None of them is a finding about Serbia 2026.
+7. **The 2026 result** is RIK's count from all 8,392 polling stations as read on 2 November 2026 (after the repeat voting of 1 November); RIK's final report with absolute totals had not been published at that time. Re-enter the final figures in the data chunk and re-knit if they differ. The companion reports use RIK's preliminary count of 31 October 2026 (8,339 of 8,392 stations; Studentska lista 53.03%, Ujedinjena Srbija 38.97%), which gives a margin error of −21.5 rather than −21.4; the difference does not change any conclusion or rank here.
+8. **Self-citation.** The companion report cited for the 2026 row is by the author of this document.
+
+# References {#references}
+
+Every poll figure, official result and explanation in Table 1 cites one or more of the numbered entries below by superscript. Type labels: *Poll* (the agency's release or a contemporaneous report of it), *Result* (electoral authority or a document reproducing its figures), *Inquiry* (official or industry post-mortem), *Academic*, *Pollster* (the agency's own statement), *Press*, *Analysis*. All links were checked on 2 November 2026; where a site was unreachable at that time the entry says what was used instead.
+
+```{r reflist, results='asis'}
+cat('<ol class="refs">\n')
+for (i in seq_len(nrow(refs))) {
+  cat(sprintf('<li id="ref-%s" value="%d"><span style="color:#52514e;font-size:0.85em;text-transform:uppercase;letter-spacing:0.04em">%s</span> · %s <a href="%s">%s</a></li>\n',
+              refs$id[i], refs$num[i], refs$type[i], refs$text[i], refs$url[i], refs$url[i]))
+}
+cat('</ol>\n')
+```
+
+**General**
+
+- Jennings, W. & Wlezien, C. (2018). Election polling errors across time and space. *Nature Human Behaviour* 2, 276–283. [doi:10.1038/s41562-018-0315-6](https://doi.org/10.1038/s41562-018-0315-6).
+- Groves, R. M. & Lyberg, L. (2010). Total survey error: past, present, and future. *Public Opinion Quarterly* 74(5), 849–879.
+- Milovanović, G. S. (2026). *Could Ipsos Have Obtained Its Numbers by Chance?* [Technical report (R)](Ipsos-Izbori-2026.html) · [Python edition](Ipsos-Izbori-2026-py.html) · [Sažetak za javnost](Ipsos-Izbori-2026-SR.html) · [GitHub](https://github.com/GoranMilovanovic/izboriRepublikaSrbija_20261025).
+
+## Reproducibility
+
+```{r session-info}
+sessionInfo()
+```
