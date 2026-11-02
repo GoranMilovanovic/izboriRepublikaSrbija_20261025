@@ -3,6 +3,8 @@
 
 A statistical analysis of the final Ipsos pre-election poll (22 October 2026) against the official results of the Serbian parliamentary elections of 25 October 2026.
 
+**Version / Verzija:** 1.0.0 (2 November 2026 / 2. novembar 2026)
+
 **Author:** Goran S. Milovanović, PhD · [goran.s.milovanovic@gmail.com](mailto:goran.s.milovanovic@gmail.com) · [LinkedIn](https://www.linkedin.com/in/gmilovanovic/)
 
 ### Read the reports online / Čitajte izveštaje onlajn
